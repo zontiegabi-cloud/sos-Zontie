@@ -6,7 +6,7 @@ const classes = [
     name: "JUGGERNAUT",
     role: "Tank",
     description: "Heavy armor and suppressive firepower. Lead the charge and absorb enemy fire while your team advances.",
-    image: "https://www.shadowsofsoldiers.com/assets/webp/juggernaut.webp",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2023/07/Juggernaut-1024x576.png",
     color: "accent",
   },
   {
