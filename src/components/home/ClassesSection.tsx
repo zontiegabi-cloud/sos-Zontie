@@ -27,7 +27,7 @@ const classes = [
       "Intel gathering",
       "Flanking maneuvers"
     ],
-    image: "https://drive.google.com/file/d/1w7qPtAnCBpkDD32z21DxaPH-TVMq4URc/view?usp=drive_link",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
     icon: Eye,
     color: "primary",
   },
@@ -41,7 +41,7 @@ const classes = [
       "Support abilities",
       "Battlefield control"
     ],
-    image: "https://drive.google.com/file/d/1ORymR2HCUgTRBQv3Lm4Vffpve90drz9j/view?usp=drive_link",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
     icon: Target,
     color: "primary",
   },
