@@ -20,7 +20,7 @@
     --popover-foreground: 40 10% 90%;
 
     /* Military gold/tan accent */
-    --primary: 38 70% 50%;
+    --primary: 191 76% 32%;
     --primary-foreground: 220 15% 6%;
 
     --secondary: 220 10% 18%;
@@ -43,7 +43,7 @@
     --radius: 0.25rem;
 
     /* Custom tokens for tactical UI */
-    --glow-primary: 38 70% 50%;
+    --glow-primary: 191 76% 32%;
     --glow-accent: 8 85% 55%;
     --surface-dark: 220 15% 8%;
     --surface-darker: 220 15% 4%;
