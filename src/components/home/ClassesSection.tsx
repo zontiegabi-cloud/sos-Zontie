@@ -13,7 +13,7 @@ const classes = [
       "Suppressive fire capabilities",
       "Team shield abilities"
     ],
-    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=sharing",
+    image: "https://drive.usercontent.google.com/download?id=1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk&export=view&authuser=0",
     icon: Shield,
     color: "accent",
   },
