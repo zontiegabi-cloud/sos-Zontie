@@ -1,31 +1,55 @@
-import { motion } from "framer-motion";
-import { Users } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Shield, Eye, Target } from "lucide-react";
+import { useState } from "react";
 
 const classes = [
   {
     name: "JUGGERNAUT",
     role: "Tank",
     description: "Heavy armor and suppressive firepower. Lead the charge and absorb enemy fire while your team advances.",
+    details: [
+      "Maximum armor protection",
+      "Heavy weapons specialist",
+      "Suppressive fire capabilities",
+      "Team shield abilities"
+    ],
     image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2023/07/Juggernaut-1024x576.png",
+    icon: Shield,
     color: "accent",
   },
   {
     name: "SHADOW",
     role: "Recon",
     description: "Speed and stealth. Flank enemies, gather intel, and strike from unexpected angles.",
+    details: [
+      "Enhanced mobility",
+      "Stealth capabilities",
+      "Intel gathering",
+      "Flanking maneuvers"
+    ],
     image: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp",
+    icon: Eye,
     color: "primary",
   },
   {
     name: "COMMANDER",
     role: "Support",
     description: "Tactical leadership and team support. Coordinate strikes and provide crucial battlefield advantages.",
+    details: [
+      "Team coordination",
+      "Tactical strikes",
+      "Support abilities",
+      "Battlefield control"
+    ],
     image: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp",
+    icon: Target,
     color: "primary",
   },
 ];
 
 export function ClassesSection() {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   return (
     <section className="py-20 lg:py-32 bg-surface-dark overflow-hidden">
       <div className="container mx-auto px-4">
@@ -50,45 +74,88 @@ export function ClassesSection() {
 
         {/* Classes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {classes.map((classItem, index) => (
-            <motion.div
-              key={classItem.name}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              className="group relative"
-            >
-              {/* Card */}
-              <div className="relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 h-full">
-                {/* Image */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <img
-                    src={classItem.image}
-                    alt={classItem.name}
-                    className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  />
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-                  
-                  {/* Role Badge */}
-                  <div className="absolute top-4 right-4 px-3 py-1 bg-accent/90 text-accent-foreground text-xs font-heading uppercase tracking-wide rounded">
-                    {classItem.role}
+          {classes.map((classItem, index) => {
+            const IconComponent = classItem.icon;
+            return (
+              <motion.div
+                key={classItem.name}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+                className="relative"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {/* Card */}
+                <div className="relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 h-full">
+                  {/* Image */}
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <img
+                      src={classItem.image}
+                      alt={classItem.name}
+                      className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    />
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+                    
+                    {/* Role Badge */}
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-accent/90 text-accent-foreground text-xs font-heading uppercase tracking-wide rounded">
+                      {classItem.role}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="font-display text-3xl lg:text-4xl text-foreground mb-2 group-hover:text-primary transition-colors">
+                      {classItem.name}
+                    </h3>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="font-display text-3xl lg:text-4xl text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {classItem.name}
-                  </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {classItem.description}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                {/* Hover Details Card */}
+                <AnimatePresence>
+                  {hoveredIndex === index && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -10, height: 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="absolute left-0 right-0 top-full z-20 mt-2"
+                    >
+                      <div className="bg-card/95 backdrop-blur-sm border border-primary/50 rounded p-5 shadow-lg shadow-primary/10">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded bg-primary/20 flex items-center justify-center">
+                            <IconComponent className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-heading text-lg text-foreground">{classItem.name}</h4>
+                            <span className="text-xs text-primary uppercase tracking-wide">{classItem.role}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Description */}
+                        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                          {classItem.description}
+                        </p>
+                        
+                        {/* Details List */}
+                        <ul className="space-y-2">
+                          {classItem.details.map((detail, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                              <span className="text-foreground/80">{detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
