@@ -51,7 +51,7 @@ export function ClassesSection() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 lg:py-32 bg-surface-dark overflow-hidden">
+    <section className="py-20 lg:py-32 bg-surface-dark relative z-10 pb-40">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
@@ -83,7 +83,8 @@ export function ClassesSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
-                className="relative"
+                className="relative z-10"
+                style={{ zIndex: hoveredIndex === index ? 50 : 10 }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
               >
@@ -121,7 +122,7 @@ export function ClassesSection() {
                       animate={{ opacity: 1, y: 0, height: "auto" }}
                       exit={{ opacity: 0, y: -10, height: 0 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="absolute left-0 right-0 top-full z-20 mt-2"
+                      className="absolute left-0 right-0 top-full z-50 mt-2"
                     >
                       <div className="bg-card/95 backdrop-blur-sm border border-primary/50 rounded p-5 shadow-lg shadow-primary/10">
                         {/* Header */}
