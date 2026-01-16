@@ -6,7 +6,7 @@ const features = [
     icon: Crosshair,
     title: "Abilities",
     description: "Each class has unique abilities that can turn the tide of battle when used strategically.",
-    image: "https://www.shadowsofsoldiers.com/assets/webp/abilities.webp",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/shelter.gif",
   },
   {
     icon: Shield,
