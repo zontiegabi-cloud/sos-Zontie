@@ -13,7 +13,7 @@ const classes = [
       "Suppressive fire capabilities",
       "Team shield abilities"
     ],
-    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2023/07/Juggernaut-1024x576.png",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
     icon: Shield,
     color: "accent",
   },
@@ -27,7 +27,7 @@ const classes = [
       "Intel gathering",
       "Flanking maneuvers"
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp",
+    image: "https://drive.google.com/file/d/1w7qPtAnCBpkDD32z21DxaPH-TVMq4URc/view?usp=drive_link",
     icon: Eye,
     color: "primary",
   },
@@ -41,7 +41,7 @@ const classes = [
       "Support abilities",
       "Battlefield control"
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp",
+    image: "https://drive.google.com/file/d/1ORymR2HCUgTRBQv3Lm4Vffpve90drz9j/view?usp=drive_link",
     icon: Target,
     color: "primary",
   },
