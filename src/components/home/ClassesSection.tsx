@@ -13,7 +13,7 @@ const classes = [
       "Suppressive fire capabilities",
       "Team shield abilities"
     ],
-    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=sharing",
     icon: Shield,
     color: "accent",
   },
@@ -27,7 +27,7 @@ const classes = [
       "Intel gathering",
       "Flanking maneuvers"
     ],
-    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=sharing",
     icon: Eye,
     color: "primary",
   },
@@ -41,7 +41,7 @@ const classes = [
       "Support abilities",
       "Battlefield control"
     ],
-    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=drive_link",
+    image: "https://drive.google.com/file/d/1t-TdyCb2c_wHsIrOUcMso25AZcSIIXvk/view?usp=sharing",
     icon: Target,
     color: "primary",
   },
