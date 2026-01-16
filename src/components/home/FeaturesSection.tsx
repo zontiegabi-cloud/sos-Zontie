@@ -12,7 +12,7 @@ const features = [
     icon: Shield,
     title: "Cover System",
     description: "Advanced cover mechanics reward tactical positioning and smart movement.",
-    image: "https://www.shadowsofsoldiers.com/assets/cover.gif",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/cover-1-1.gif",
   },
   {
     icon: Wrench,
@@ -24,7 +24,7 @@ const features = [
     icon: Target,
     title: "Tactical Gameplay",
     description: "Every move matters. Every shot counts. Every victory is earned.",
-    image: "https://www.shadowsofsoldiers.com/assets/shelter.gif",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
   },
 ];
 
