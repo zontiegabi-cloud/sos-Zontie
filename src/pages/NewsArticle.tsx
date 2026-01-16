@@ -29,7 +29,7 @@ export default function NewsArticle() {
             alt={article.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-transparent" />
         </div>
         
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-4 pb-12">

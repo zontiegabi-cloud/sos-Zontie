@@ -56,7 +56,7 @@ With UE5, we're able to deliver:
 - Dynamic weather and time-of-day systems
 
 Stay tuned for more development updates as we continue to push the boundaries of what's possible in tactical shooters.`,
-    image: "https://www.shadowsofsoldiers.com/assets/webp/new-ue5-image.webp",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Development",
   },
   {
@@ -88,7 +88,7 @@ Selected playtesters will get access to:
 - Signing an NDA
 
 We're looking for players of all skill levels, from tactical shooter veterans to newcomers. Your feedback is invaluable to us!`,
-    image: "https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Community",
   },
   {
@@ -131,7 +131,7 @@ The cover system integrates with:
 - Objective control strategies
 
 Master the cover system, and you'll have a significant advantage on the battlefield.`,
-    image: "https://www.shadowsofsoldiers.com/assets/cover.gif",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Features",
   },
 ];
@@ -149,7 +149,7 @@ const defaultClasses: ClassItem[] = [
       "Enhanced mobility and sprint speed",
       "Breaching charges for entry",
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/classes/assault.png",
+    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
     icon: "Crosshair",
     color: "from-red-500/20 to-transparent",
   },
@@ -164,7 +164,7 @@ const defaultClasses: ClassItem[] = [
       "Suppression fire bonuses",
       "Deployable bipod for accuracy",
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/classes/support.png",
+    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
     icon: "Shield",
     color: "from-yellow-500/20 to-transparent",
   },
@@ -179,7 +179,7 @@ const defaultClasses: ClassItem[] = [
       "Ghillie suit camouflage",
       "Laser designator for support",
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/classes/recon.png",
+    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
     icon: "Eye",
     color: "from-blue-500/20 to-transparent",
   },
@@ -194,7 +194,7 @@ const defaultClasses: ClassItem[] = [
       "Faster revive speeds",
       "Health regeneration aura",
     ],
-    image: "https://www.shadowsofsoldiers.com/assets/classes/medic.png",
+    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
     icon: "Heart",
     color: "from-green-500/20 to-transparent",
   },
