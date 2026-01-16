@@ -7,12 +7,12 @@ export function CTASection() {
     <section className="relative py-20 lg:py-32 overflow-hidden">
       {/* Background */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90"
         style={{
-          backgroundImage: `url('https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif')`,
+          backgroundImage: `url('https://www.shadowsofsoldiers.com/wp-content/uploads/2020/08/WA1FNFS-scaled.jpg')`,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/55 to-background" />
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center">

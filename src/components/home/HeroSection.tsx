@@ -13,12 +13,12 @@ export function HeroSection() {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('https://www.shadowsofsoldiers.com/assets/shelter.gif')`,
+          backgroundImage: `url('https://www.shadowsofsoldiers.com/wp-content/uploads/2020/08/ZA1JOmc-scaled.jpg')`,
         }}
       />
       
       {/* Dark Overlay with Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
       
       {/* Vignette Effect */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background))_100%)] opacity-60" />
