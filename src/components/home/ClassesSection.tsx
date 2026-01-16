@@ -51,7 +51,7 @@ export function ClassesSection() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-20 lg:py-32 bg-surface-dark relative z-10 pb-40">
+    <section className="py-20 lg:py-32 bg-surface-dark overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div
@@ -114,43 +114,41 @@ export function ClassesSection() {
                   </div>
                 </div>
 
-                {/* Hover Details Card */}
+                {/* Hover Details Card - Overlay */}
                 <AnimatePresence>
                   {hoveredIndex === index && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10, height: 0 }}
-                      animate={{ opacity: 1, y: 0, height: "auto" }}
-                      exit={{ opacity: 0, y: -10, height: 0 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="absolute left-0 right-0 top-full z-50 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="absolute inset-0 z-50 bg-card/95 backdrop-blur-sm border border-primary/50 rounded p-6 flex flex-col justify-center"
                     >
-                      <div className="bg-card/95 backdrop-blur-sm border border-primary/50 rounded p-5 shadow-lg shadow-primary/10">
-                        {/* Header */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded bg-primary/20 flex items-center justify-center">
-                            <IconComponent className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-heading text-lg text-foreground">{classItem.name}</h4>
-                            <span className="text-xs text-primary uppercase tracking-wide">{classItem.role}</span>
-                          </div>
+                      {/* Header */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 rounded bg-primary/20 flex items-center justify-center">
+                          <IconComponent className="w-6 h-6 text-primary" />
                         </div>
-                        
-                        {/* Description */}
-                        <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
-                          {classItem.description}
-                        </p>
-                        
-                        {/* Details List */}
-                        <ul className="space-y-2">
-                          {classItem.details.map((detail, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                              <span className="text-foreground/80">{detail}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div>
+                          <h4 className="font-display text-2xl lg:text-3xl text-foreground">{classItem.name}</h4>
+                          <span className="text-sm text-primary uppercase tracking-wide font-heading">{classItem.role}</span>
+                        </div>
                       </div>
+                      
+                      {/* Description */}
+                      <p className="text-muted-foreground text-sm lg:text-base mb-6 leading-relaxed">
+                        {classItem.description}
+                      </p>
+                      
+                      {/* Details List */}
+                      <ul className="space-y-3">
+                        {classItem.details.map((detail, i) => (
+                          <li key={i} className="flex items-center gap-3 text-sm lg:text-base">
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                            <span className="text-foreground/90">{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </motion.div>
                   )}
                 </AnimatePresence>
