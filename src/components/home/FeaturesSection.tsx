@@ -36,7 +36,7 @@ export function FeaturesSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -55,7 +55,7 @@ export function FeaturesSection() {
               key={feature.title}
               initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="group relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 min-h-[280px] lg:min-h-[320px]"
             >
@@ -91,7 +91,7 @@ export function FeaturesSection() {
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="mt-16 lg:mt-24 text-center"
         >

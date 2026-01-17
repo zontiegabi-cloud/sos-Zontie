@@ -57,7 +57,7 @@ export function ClassesSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -81,7 +81,7 @@ export function ClassesSection() {
                 key={classItem.name}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: false }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
                 className="relative z-10"
                 style={{ zIndex: hoveredIndex === index ? 50 : 10 }}
