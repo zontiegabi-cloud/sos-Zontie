@@ -192,6 +192,7 @@ export default function Admin() {
       image: "",
       icon: "Crosshair",
       color: "from-red-500/20 to-transparent",
+      devices: [],
     });
     setIsCreating(true);
   };
@@ -803,6 +804,26 @@ function ClassEditModal({
     setFormData({ ...formData, details: newDetails });
   };
 
+  const updateDevice = (index: number, field: 'name' | 'icon', value: string) => {
+    const newDevices = [...(formData.devices || [])];
+    newDevices[index] = { ...newDevices[index], [field]: value };
+    setFormData({ ...formData, devices: newDevices });
+  };
+
+  const addDevice = () => {
+    setFormData({
+      ...formData,
+      devices: [...(formData.devices || []), { name: "", icon: "Shield" }],
+    });
+  };
+
+  const removeDevice = (index: number) => {
+    const newDevices = (formData.devices || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, devices: newDevices });
+  };
+
+  const iconOptions = ["Crosshair", "Shield", "Eye", "Target", "Users", "Heart", "Zap", "Wrench"];
+
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
@@ -884,6 +905,57 @@ function ClassEditModal({
                   placeholder={`Detail ${index + 1}`}
                 />
               ))}
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <label className="text-sm text-muted-foreground">Class Equipment/Devices</label>
+              <Button variant="outline" size="sm" onClick={addDevice}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Device
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {(formData.devices || []).map((device, index) => (
+                <div key={index} className="bg-surface-dark border border-border rounded p-4 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-primary font-heading">Device {index + 1}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeDevice(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={device.name}
+                      onChange={(e) => updateDevice(index, 'name', e.target.value)}
+                      placeholder="Device name"
+                    />
+                    <select
+                      value={device.icon}
+                      onChange={(e) => updateDevice(index, 'icon', e.target.value)}
+                      className="px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
+                    >
+                      {iconOptions.map((icon) => (
+                        <option key={icon} value={icon}>
+                          {icon}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {(!formData.devices || formData.devices.length === 0) && (
+                <p className="text-xs text-muted-foreground italic text-center py-4">
+                  No devices added. Click "Add Device" to add equipment for this class.
+                </p>
+              )}
             </div>
           </div>
         </div>

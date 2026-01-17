@@ -10,6 +10,11 @@ export interface NewsItem {
   tag: string;
 }
 
+export interface ClassDevice {
+  name: string;
+  icon: string; // Icon name like "Crosshair", "Shield", etc.
+}
+
 export interface ClassItem {
   id: string;
   name: string;
@@ -19,6 +24,7 @@ export interface ClassItem {
   image: string;
   icon: string;
   color: string;
+  devices?: ClassDevice[]; // Optional devices/equipment used by this class
 }
 
 export interface MediaItem {
@@ -165,6 +171,10 @@ const defaultClasses: ClassItem[] = [
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Crosshair",
     color: "from-red-500/20 to-transparent",
+    devices: [
+      { name: "Heavy Armor", icon: "Shield" },
+      { name: "LMG", icon: "Target" }
+    ],
   },
   {
     id: "2",
@@ -180,6 +190,10 @@ const defaultClasses: ClassItem[] = [
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Shield",
     color: "from-yellow-500/20 to-transparent",
+    devices: [
+      { name: "Tactical Radio", icon: "Zap" },
+      { name: "Binoculars", icon: "Eye" }
+    ],
   },
   {
     id: "3",
@@ -195,6 +209,10 @@ const defaultClasses: ClassItem[] = [
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Eye",
     color: "from-blue-500/20 to-transparent",
+    devices: [
+      { name: "Sniper Rifle", icon: "Crosshair" },
+      { name: "Silencer", icon: "Target" }
+    ],
   },
 ];
 

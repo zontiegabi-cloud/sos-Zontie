@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Shield, Eye, Target, Crosshair, Heart } from "lucide-react";
+import { Users, Shield, Eye, Target, Crosshair, Heart, Zap, Wrench } from "lucide-react";
 import { useState } from "react";
 import { useContent } from "@/hooks/use-content";
 
@@ -11,6 +11,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Target,
   Users,
   Heart,
+  Zap,
+  Wrench,
 };
 
 export function ClassesSection() {
@@ -117,7 +119,7 @@ export function ClassesSection() {
                       </p>
                       
                       {/* Details List */}
-                      <ul className="space-y-3">
+                      <ul className="space-y-3 mb-6">
                         {classItem.details.map((detail, i) => (
                           <li key={i} className="flex items-center gap-3 text-sm lg:text-base">
                             <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
@@ -125,6 +127,33 @@ export function ClassesSection() {
                           </li>
                         ))}
                       </ul>
+
+                      {/* Devices/Equipment */}
+                      {classItem.devices && classItem.devices.length > 0 && (
+                        <div className="mt-auto pt-6 border-t border-primary/20">
+                          <h5 className="text-xs text-muted-foreground uppercase tracking-wide font-heading mb-3">
+                            Equipment
+                          </h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            {classItem.devices.map((device, i) => {
+                              const DeviceIcon = iconMap[device.icon] || Shield;
+                              return (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2 bg-surface-dark border border-border rounded p-3 hover:border-primary/50 transition-all"
+                                >
+                                  <div className="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0">
+                                    <DeviceIcon className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <span className="text-xs font-heading uppercase text-foreground truncate">
+                                    {device.name}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
