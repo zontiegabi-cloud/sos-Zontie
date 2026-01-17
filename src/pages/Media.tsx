@@ -1,68 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Play, Image as ImageIcon, Film } from "lucide-react";
-
-const mediaItems = [
-  {
-    type: "gif",
-    title: "Shelter Environment",
-    src: "https://www.shadowsofsoldiers.com/assets/shelter.gif",
-    category: "Gameplay",
-  },
-  {
-    type: "gif",
-    title: "Cover System",
-    src: "https://www.shadowsofsoldiers.com/assets/cover.gif",
-    category: "Gameplay",
-  },
-  {
-    type: "gif",
-    title: "Weapon Customization",
-    src: "https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif",
-    category: "Features",
-  },
-  {
-    type: "image",
-    title: "Juggernaut Class",
-    src: "https://www.shadowsofsoldiers.com/assets/webp/juggernaut.webp",
-    category: "Classes",
-  },
-  {
-    type: "image",
-    title: "Shadow Class",
-    src: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp",
-    category: "Classes",
-  },
-  {
-    type: "image",
-    title: "Commander Class",
-    src: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp",
-    category: "Classes",
-  },
-  {
-    type: "image",
-    title: "Unreal Engine 5",
-    src: "https://www.shadowsofsoldiers.com/assets/webp/new-ue5-image.webp",
-    category: "Development",
-  },
-  {
-    type: "image",
-    title: "Abilities System",
-    src: "https://www.shadowsofsoldiers.com/assets/webp/abilities.webp",
-    category: "Features",
-  },
-];
-
-const categories = ["All", "Gameplay", "Features", "Classes", "Development"];
+import { Image as ImageIcon, Film } from "lucide-react";
+import { useContent } from "@/hooks/use-content";
 
 export default function Media() {
+  const { media } = useContent();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedMedia, setSelectedMedia] = useState<typeof mediaItems[0] | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<typeof media[0] | null>(null);
+
+  const categories = useMemo(() => {
+    const cats = new Set(media.map(item => item.category));
+    return ["All", ...Array.from(cats)];
+  }, [media]);
 
   const filteredMedia = activeCategory === "All" 
-    ? mediaItems 
-    : mediaItems.filter(item => item.category === activeCategory);
+    ? media 
+    : media.filter(item => item.category === activeCategory);
 
   return (
     <Layout>
@@ -104,7 +58,7 @@ export default function Media() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMedia.map((item, index) => (
               <motion.div
-                key={item.title}
+                key={item.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -121,7 +75,7 @@ export default function Media() {
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
                   <div className="flex items-center gap-2 text-primary mb-1">
-                    {item.type === "gif" ? <Film className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                    {item.type === "gif" || item.type === "video" ? <Film className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                     <span className="text-xs uppercase">{item.type}</span>
                   </div>
                   <h3 className="font-heading text-lg text-foreground">{item.title}</h3>

@@ -5,7 +5,7 @@ export interface NewsItem {
   title: string;
   date: string;
   description: string;
-  content: string; // Full article content
+  content: string;
   image: string;
   tag: string;
 }
@@ -21,9 +21,36 @@ export interface ClassItem {
   color: string;
 }
 
+export interface MediaItem {
+  id: string;
+  type: "image" | "gif" | "video";
+  title: string;
+  src: string;
+  category: string;
+}
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface PageContent {
+  title: string;
+  lastUpdated: string;
+  sections: {
+    heading: string;
+    content: string;
+  }[];
+}
+
 export interface SiteContent {
   news: NewsItem[];
   classes: ClassItem[];
+  media: MediaItem[];
+  faq: FAQItem[];
+  privacy: PageContent;
+  terms: PageContent;
 }
 
 const STORAGE_KEY = 'sos-content';
@@ -41,11 +68,11 @@ const defaultNews: NewsItem[] = [
 
 Unreal Engine 5 brings revolutionary features that allow us to create the most immersive tactical shooter experience possible:
 
-- **Nanite Virtualized Geometry**: This technology allows us to render incredibly detailed environments and characters without sacrificing performance. Every rock, every piece of debris, every surface in our maps is rendered with unprecedented detail.
+- **Nanite Virtualized Geometry**: This technology allows us to render incredibly detailed environments and characters without sacrificing performance.
 
-- **Lumen Global Illumination**: Real-time lighting that reacts dynamically to the environment. Watch as explosions light up dark corridors, or see the sun filtering through windows during a breach.
+- **Lumen Global Illumination**: Real-time lighting that reacts dynamically to the environment.
 
-- **Enhanced Physics**: More realistic destruction, particle effects, and environmental interactions make every firefight feel intense and authentic.
+- **Enhanced Physics**: More realistic destruction, particle effects, and environmental interactions.
 
 ## What This Means for Players
 
@@ -53,9 +80,7 @@ With UE5, we're able to deliver:
 - Photorealistic environments
 - Smooth 60+ FPS gameplay on modern hardware
 - Large-scale maps with no loading screens
-- Dynamic weather and time-of-day systems
-
-Stay tuned for more development updates as we continue to push the boundaries of what's possible in tactical shooters.`,
+- Dynamic weather and time-of-day systems`,
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Development",
   },
@@ -77,17 +102,7 @@ Stay tuned for more development updates as we continue to push the boundaries of
 Selected playtesters will get access to:
 - Early builds of the game
 - Direct communication with developers
-- Exclusive in-game rewards for launch
-- The ability to influence game development
-
-## Requirements
-
-- A gaming PC that meets minimum requirements
-- Willingness to provide detailed feedback
-- Ability to dedicate time to testing sessions
-- Signing an NDA
-
-We're looking for players of all skill levels, from tactical shooter veterans to newcomers. Your feedback is invaluable to us!`,
+- Exclusive in-game rewards for launch`,
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Community",
   },
@@ -111,26 +126,7 @@ Our system automatically detects:
 While in cover, players can:
 - Blind fire over or around cover
 - Quickly peek and snap back
-- Vault over low cover for aggressive pushes
-- Transition smoothly between cover points
-
-## Destruction System
-
-Cover isn't permanent. Depending on the material:
-- Wooden barriers can be destroyed
-- Metal provides longer protection
-- Concrete may chip and degrade over time
-
-This creates dynamic firefights where positions that were safe can become death traps.
-
-## Tactical Depth
-
-The cover system integrates with:
-- Suppression mechanics
-- Team movement coordination
-- Objective control strategies
-
-Master the cover system, and you'll have a significant advantage on the battlefield.`,
+- Vault over low cover for aggressive pushes`,
     image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     tag: "Features",
   },
@@ -142,7 +138,7 @@ const defaultClasses: ClassItem[] = [
     id: "1",
     name: "Assault",
     role: "Frontline Fighter",
-    description: "Masters of direct combat with high mobility and powerful close-range weaponry. Lead the charge and break through enemy lines.",
+    description: "Masters of direct combat with high mobility and powerful close-range weaponry.",
     details: [
       "High-powered assault rifles and SMGs",
       "Flash and frag grenades",
@@ -157,7 +153,7 @@ const defaultClasses: ClassItem[] = [
     id: "2",
     name: "Support",
     role: "Heavy Suppression",
-    description: "Provides sustained firepower with LMGs and supply capabilities. Keep enemies pinned while your team maneuvers.",
+    description: "Provides sustained firepower with LMGs and supply capabilities.",
     details: [
       "Light machine guns and heavy weapons",
       "Ammo resupply capabilities",
@@ -172,7 +168,7 @@ const defaultClasses: ClassItem[] = [
     id: "3",
     name: "Recon",
     role: "Intelligence Gatherer",
-    description: "Expert scouts with long-range precision and reconnaissance tools. Spot enemies and eliminate high-value targets.",
+    description: "Expert scouts with long-range precision and reconnaissance tools.",
     details: [
       "Sniper rifles and DMRs",
       "Motion sensors and cameras",
@@ -187,7 +183,7 @@ const defaultClasses: ClassItem[] = [
     id: "4",
     name: "Medic",
     role: "Combat Healer",
-    description: "Keep your squad in the fight with healing abilities and revival capabilities. Essential for sustained operations.",
+    description: "Keep your squad in the fight with healing abilities and revival capabilities.",
     details: [
       "Medical kits and defibrillators",
       "Smoke grenades for cover",
@@ -200,20 +196,83 @@ const defaultClasses: ClassItem[] = [
   },
 ];
 
+// Default media data
+const defaultMedia: MediaItem[] = [
+  { id: "1", type: "gif", title: "Shelter Environment", src: "https://www.shadowsofsoldiers.com/assets/shelter.gif", category: "Gameplay" },
+  { id: "2", type: "gif", title: "Cover System", src: "https://www.shadowsofsoldiers.com/assets/cover.gif", category: "Gameplay" },
+  { id: "3", type: "gif", title: "Weapon Customization", src: "https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif", category: "Features" },
+  { id: "4", type: "image", title: "Juggernaut Class", src: "https://www.shadowsofsoldiers.com/assets/webp/juggernaut.webp", category: "Classes" },
+  { id: "5", type: "image", title: "Shadow Class", src: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp", category: "Classes" },
+  { id: "6", type: "image", title: "Commander Class", src: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp", category: "Classes" },
+  { id: "7", type: "image", title: "Unreal Engine 5", src: "https://www.shadowsofsoldiers.com/assets/webp/new-ue5-image.webp", category: "Development" },
+  { id: "8", type: "image", title: "Abilities System", src: "https://www.shadowsofsoldiers.com/assets/webp/abilities.webp", category: "Features" },
+];
+
+// Default FAQ data
+const defaultFAQ: FAQItem[] = [
+  { id: "1", question: "What is Shadows of Soldiers?", answer: "Shadows of Soldiers is a tactical 5v5 shooter built on Unreal Engine 5. It features class-based gameplay with unique abilities, an advanced cover system, and deep weapon customization." },
+  { id: "2", question: "What platforms will the game be available on?", answer: "Shadows of Soldiers will initially launch on PC via Steam. Console versions may be considered after the PC release based on community demand." },
+  { id: "3", question: "When will the game be released?", answer: "We're currently in active development. Sign up for playtests and join our Discord to stay updated on release dates." },
+  { id: "4", question: "How can I participate in playtests?", answer: "Join our Discord community to be notified about upcoming playtest opportunities." },
+  { id: "5", question: "What are the different classes?", answer: "There are three classes: Juggernaut (Tank), Shadow (Recon), and Commander (Support). Each class has unique abilities." },
+  { id: "6", question: "Will there be weapon customization?", answer: "Yes! Shadows of Soldiers features deep weapon customization with realistic attachments and modifications." },
+  { id: "7", question: "Is there a cover system?", answer: "Absolutely. Our advanced cover system rewards tactical positioning and smart movement." },
+  { id: "8", question: "How can I support the game?", answer: "Wishlist on Steam, join our Discord, and follow us on social media!" },
+];
+
+// Default privacy policy
+const defaultPrivacy: PageContent = {
+  title: "Privacy Policy",
+  lastUpdated: "August 2024",
+  sections: [
+    { heading: "1. Introduction", content: "Welcome to Shadows of Soldiers. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data when you visit our website and tell you about your privacy rights." },
+    { heading: "2. Information We Collect", content: "We may collect, use, store and transfer different kinds of personal data about you:\n- Identity Data: first name, last name, username\n- Contact Data: email address\n- Technical Data: IP address, browser type, operating system\n- Usage Data: information about how you use our website and services" },
+    { heading: "3. How We Use Your Information", content: "We use your personal data for:\n- To provide and maintain our services\n- To notify you about changes to our services\n- To allow you to participate in playtests and community events\n- To provide customer support\n- To send newsletters and marketing communications (with your consent)" },
+    { heading: "4. Data Security", content: "We have implemented appropriate security measures to prevent your personal data from being accidentally lost, used, or accessed in an unauthorized way." },
+    { heading: "5. Your Rights", content: "Under certain circumstances, you have rights including:\n- The right to access your personal data\n- The right to correct inaccurate personal data\n- The right to request deletion of your personal data\n- The right to withdraw consent" },
+    { heading: "6. Contact Us", content: "If you have any questions about this privacy policy or our privacy practices, please contact us through our social media channels or Discord community." },
+  ],
+};
+
+// Default terms
+const defaultTerms: PageContent = {
+  title: "Terms & Conditions",
+  lastUpdated: "August 2024",
+  sections: [
+    { heading: "1. Agreement to Terms", content: "By accessing or using the Shadows of Soldiers website and services, you agree to be bound by these Terms and Conditions." },
+    { heading: "2. Intellectual Property", content: "The Shadows of Soldiers name, logo, game content, website design, and all related materials are protected by copyright, trademark, and other intellectual property laws." },
+    { heading: "3. User Conduct", content: "When using our services, you agree not to:\n- Violate any applicable laws or regulations\n- Harass, abuse, or harm other users\n- Distribute malware or engage in hacking activities\n- Attempt to gain unauthorized access to our systems" },
+    { heading: "4. Playtest Participation", content: "Participation in playtests is subject to additional terms. Playtest content is confidential and may not be shared, streamed, or recorded without explicit permission." },
+    { heading: "5. Disclaimer of Warranties", content: "Our services are provided 'as is' without warranties of any kind, either express or implied." },
+    { heading: "6. Limitation of Liability", content: "In no event shall Shadows of Soldiers be liable for any indirect, incidental, special, or consequential damages." },
+    { heading: "7. Changes to Terms", content: "We reserve the right to modify these terms at any time. Changes will be effective immediately upon posting." },
+    { heading: "8. Contact", content: "For any questions regarding these Terms and Conditions, please reach out through our official social media channels or Discord community." },
+  ],
+};
+
 export function getContent(): SiteContent {
   if (typeof window === 'undefined') {
-    return { news: defaultNews, classes: defaultClasses };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
   }
   
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) {
-    return { news: defaultNews, classes: defaultClasses };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
   }
   
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    // Merge with defaults for backward compatibility
+    return {
+      news: parsed.news || defaultNews,
+      classes: parsed.classes || defaultClasses,
+      media: parsed.media || defaultMedia,
+      faq: parsed.faq || defaultFAQ,
+      privacy: parsed.privacy || defaultPrivacy,
+      terms: parsed.terms || defaultTerms,
+    };
   } catch {
-    return { news: defaultNews, classes: defaultClasses };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
   }
 }
 
