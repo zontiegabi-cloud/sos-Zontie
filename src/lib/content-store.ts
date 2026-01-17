@@ -25,6 +25,7 @@ export interface ClassItem {
   icon: string;
   color: string;
   devices?: ClassDevice[]; // Optional devices/equipment used by this class
+  devicesUsedTitle?: string; // Custom title for devices section (e.g., "Equipment", "Abilities", "Components", etc.)
 }
 
 export interface MediaItem {

@@ -193,6 +193,7 @@ export default function Admin() {
       icon: "Crosshair",
       color: "from-red-500/20 to-transparent",
       devices: [],
+      devicesUsedTitle: "",
     });
     setIsCreating(true);
   };
@@ -916,6 +917,17 @@ function ClassEditModal({
                 Add Device
               </Button>
             </div>
+            <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Devices Used Title</label>
+            <Input
+              value={formData.devicesUsedTitle || ""}
+              onChange={(e) => setFormData({ ...formData, devicesUsedTitle: e.target.value })}
+              placeholder="Devices & Features (leave empty for default)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Custom title for the devices Used Class (e.g., "Abilities", "Components", "Tools", etc.)
+            </p>
+          </div>
 
             <div className="space-y-3">
               {(formData.devices || []).map((device, index) => (

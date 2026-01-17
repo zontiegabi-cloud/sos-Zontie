@@ -132,7 +132,7 @@ export function ClassesSection() {
                       {classItem.devices && classItem.devices.length > 0 && (
                         <div className="mt-auto pt-6 border-t border-primary/20">
                           <h5 className="text-xs text-muted-foreground uppercase tracking-wide font-heading mb-3">
-                            Equipment
+                          <span>{classItem.devicesUsedTitle || "Devices & Equipment"}</span>
                           </h5>
                           <div className="grid grid-cols-2 gap-3">
                             {classItem.devices.map((device, i) => {
