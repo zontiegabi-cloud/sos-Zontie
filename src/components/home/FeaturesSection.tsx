@@ -1,34 +1,45 @@
-import { motion } from "framer-motion";
-import { Crosshair, Shield, Wrench, Target } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Crosshair, Shield, Wrench, Target, ArrowRight, X, Users, Eye, Heart, Zap } from "lucide-react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useContent } from "@/hooks/use-content";
 
-const features = [
-  {
-    icon: Crosshair,
-    title: "Abilities",
-    description: "Each class has unique abilities that can turn the tide of battle when used strategically.",
-    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/shelter.gif",
-  },
-  {
-    icon: Shield,
-    title: "Cover System",
-    description: "Advanced cover mechanics reward tactical positioning and smart movement.",
-    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/cover-1-1.gif",
-  },
-  {
-    icon: Wrench,
-    title: "Weapon Customization",
-    description: "Deep weapon customization with realistic attachments and modifications.",
-    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
-  },
-  {
-    icon: Target,
-    title: "Tactical Gameplay",
-    description: "Every move matters. Every shot counts. Every victory is earned.",
-    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
-  },
-];
+interface Device {
+  name: string;
+  details: string;
+}
+
+// Icon mapping
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Crosshair,
+  Shield,
+  Wrench,
+  Target,
+  Users,
+  Eye,
+  Heart,
+  Zap,
+};
 
 export function FeaturesSection() {
+  const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const { features: featuresData } = useContent();
+  
+  // Convert features data to component format with icon components
+  const features = featuresData.map((feature) => {
+    const IconComponent = iconMap[feature.icon] || Crosshair;
+    return {
+      ...feature,
+      icon: IconComponent,
+    };
+  });
+
   return (
     <section className="py-20 lg:py-32 bg-background">
       <div className="container mx-auto px-4">
@@ -52,12 +63,13 @@ export function FeaturesSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {features.map((feature, index) => (
             <motion.div
-              key={feature.title}
+              key={feature.id}
               initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: false }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 min-h-[280px] lg:min-h-[320px]"
+              className="group relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 min-h-[280px] lg:min-h-[320px] cursor-pointer"
+              onClick={() => setOpenDialog(feature.id)}
             >
               {/* Background Image */}
               <div className="absolute inset-0">
@@ -70,17 +82,27 @@ export function FeaturesSection() {
               </div>
 
               {/* Content */}
-              <div className="relative z-10 p-10 lg:p-14 flex items-start gap-8">
-                <div className="flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 rounded bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:glow-primary transition-all duration-300">
-                  <feature.icon className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />
+              <div className="relative z-10 p-10 lg:p-14 flex flex-col h-full">
+                <div className="flex items-start gap-8 flex-1">
+                  <div className="flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 rounded bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:glow-primary transition-all duration-300">
+                    <feature.icon className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-heading text-2xl lg:text-3xl uppercase text-foreground mb-4 group-hover:text-primary transition-colors">
+                      {feature.title}
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed text-base lg:text-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 ease-out">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-heading text-2xl lg:text-3xl uppercase text-foreground mb-4 group-hover:text-primary transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed text-base lg:text-lg">
-                    {feature.description}
-                  </p>
+                
+                {/* Read More Button */}
+                <div className="mt-6 pt-6 border-t border-border/50">
+                  <div className="flex items-center gap-2 text-primary group-hover:gap-3 transition-all duration-300 font-heading uppercase text-sm">
+                    <span>Read More</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -101,6 +123,86 @@ export function FeaturesSection() {
           </blockquote>
         </motion.div>
       </div>
+
+      {/* Feature Details Dialog */}
+      {features.map((feature) => (
+        <Dialog
+          key={feature.id}
+          open={openDialog === feature.id}
+          onOpenChange={(open) => setOpenDialog(open ? feature.id : null)}
+        >
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-primary/20">
+            <DialogHeader>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <feature.icon className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="font-display text-3xl lg:text-4xl uppercase text-foreground">
+                    {feature.title}
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground mt-2 text-base">
+                    {feature.description}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="mt-6 space-y-6">
+              <div>
+                <h3 className="font-heading text-xl uppercase text-foreground mb-4 flex items-center gap-2">
+                  <span className="text-primary">{feature.devices.length}</span>
+                  <span>{feature.devicesSectionTitle || "Devices & Features"}</span>
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {feature.devices.map((device, index) => {
+                    const DeviceIcon = device.icon ? iconMap[device.icon] : null;
+                    return (
+                      <motion.div
+                        key={device.name}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        className="bg-surface-dark border border-border rounded-lg p-5 hover:border-primary/50 transition-all duration-300"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          {DeviceIcon && (
+                            <div className="w-8 h-8 rounded bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0">
+                              <DeviceIcon className="w-4 h-4 text-primary" />
+                            </div>
+                          )}
+                          <h4 className="font-heading text-lg uppercase text-primary">
+                            {device.name}
+                          </h4>
+                        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          {device.details}
+                        </p>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Feature Image - Editable */}
+              <div className="mt-8 space-y-2">
+                <label className="text-sm text-muted-foreground block">Feature Image</label>
+                <div className="rounded-lg overflow-hidden border border-border">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground italic">
+                  Note: To change this image, edit the feature in the Admin panel
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ))}
     </section>
   );
 }

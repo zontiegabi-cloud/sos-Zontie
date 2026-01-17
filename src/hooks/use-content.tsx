@@ -5,6 +5,7 @@ import {
   ClassItem,
   MediaItem,
   FAQItem,
+  FeatureItem,
   PageContent,
   getContent, 
   saveContent, 
@@ -105,6 +106,26 @@ export function useContent() {
     updateContent({ ...content, faq: newFAQ });
   }, [content, updateContent]);
 
+  // Features
+  const addFeatureItem = useCallback((item: Omit<FeatureItem, 'id'>) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    const newContent = { ...content, features: [...content.features, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updateFeatureItem = useCallback((id: string, updates: Partial<FeatureItem>) => {
+    const newFeatures = content.features.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, features: newFeatures });
+  }, [content, updateContent]);
+
+  const deleteFeatureItem = useCallback((id: string) => {
+    const newFeatures = content.features.filter(item => item.id !== id);
+    updateContent({ ...content, features: newFeatures });
+  }, [content, updateContent]);
+
   // Privacy & Terms
   const updatePrivacy = useCallback((privacy: PageContent) => {
     updateContent({ ...content, privacy });
@@ -126,6 +147,7 @@ export function useContent() {
     classes: content.classes,
     media: content.media,
     faq: content.faq,
+    features: content.features,
     privacy: content.privacy,
     terms: content.terms,
     addNewsItem,
@@ -140,6 +162,9 @@ export function useContent() {
     addFAQItem,
     updateFAQItem,
     deleteFAQItem,
+    addFeatureItem,
+    updateFeatureItem,
+    deleteFeatureItem,
     updatePrivacy,
     updateTerms,
     reset,

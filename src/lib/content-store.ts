@@ -44,11 +44,28 @@ export interface PageContent {
   }[];
 }
 
+export interface Device {
+  name: string;
+  details: string;
+  icon?: string; // Optional icon name for the device
+}
+
+export interface FeatureItem {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  icon: string; // Icon name like "Crosshair", "Shield", etc.
+  devices: Device[];
+  devicesSectionTitle?: string; // Custom title for devices section (e.g., "Devices & Features", "Abilities", "Components", etc.)
+}
+
 export interface SiteContent {
   news: NewsItem[];
   classes: ClassItem[];
   media: MediaItem[];
   faq: FAQItem[];
+  features: FeatureItem[];
   privacy: PageContent;
   terms: PageContent;
 }
@@ -136,63 +153,48 @@ While in cover, players can:
 const defaultClasses: ClassItem[] = [
   {
     id: "1",
-    name: "Assault",
-    role: "Frontline Fighter",
-    description: "Masters of direct combat with high mobility and powerful close-range weaponry.",
+    name: "JUGGERNAUT",
+    role: "Tank",
+    description: "Heavy armor and suppressive firepower. Lead the charge and absorb enemy fire while your team advances.",
     details: [
-      "High-powered assault rifles and SMGs",
-      "Flash and frag grenades",
-      "Enhanced mobility and sprint speed",
-      "Breaching charges for entry",
+      "Maximum armor protection",
+      "Heavy weapons specialist",
+      "Suppressive fire capabilities",
+      "Team shield abilities"
     ],
-    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Crosshair",
     color: "from-red-500/20 to-transparent",
   },
   {
     id: "2",
-    name: "Support",
-    role: "Heavy Suppression",
-    description: "Provides sustained firepower with LMGs and supply capabilities.",
+    name: "COMMANDER",
+    role: "Support",
+    description: "Tactical leadership and team support. Coordinate strikes and provide crucial battlefield advantages.",
     details: [
-      "Light machine guns and heavy weapons",
-      "Ammo resupply capabilities",
-      "Suppression fire bonuses",
-      "Deployable bipod for accuracy",
+      "Team coordination",
+      "Tactical strikes",
+      "Support abilities",
+      "Battlefield control"
     ],
-    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Shield",
     color: "from-yellow-500/20 to-transparent",
   },
   {
     id: "3",
-    name: "Recon",
-    role: "Intelligence Gatherer",
-    description: "Expert scouts with long-range precision and reconnaissance tools.",
+    name: "SHADOW",
+    role: "Recon",
+    description: "Speed and stealth. Flank enemies, gather intel, and strike from unexpected angles.",
     details: [
-      "Sniper rifles and DMRs",
-      "Motion sensors and cameras",
-      "Ghillie suit camouflage",
-      "Laser designator for support",
+      "Enhanced mobility",
+      "Stealth capabilities",
+      "Intel gathering",
+      "Flanking maneuvers"
     ],
-    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
+    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
     icon: "Eye",
     color: "from-blue-500/20 to-transparent",
-  },
-  {
-    id: "4",
-    name: "Medic",
-    role: "Combat Healer",
-    description: "Keep your squad in the fight with healing abilities and revival capabilities.",
-    details: [
-      "Medical kits and defibrillators",
-      "Smoke grenades for cover",
-      "Faster revive speeds",
-      "Health regeneration aura",
-    ],
-    image: "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1401200/4bb828b2c37ea3557c09e389a3c1008d7a6dd17c/capsule_616x353.jpg?t=1768486624",
-    icon: "Heart",
-    color: "from-green-500/20 to-transparent",
   },
 ];
 
@@ -218,6 +220,114 @@ const defaultFAQ: FAQItem[] = [
   { id: "6", question: "Will there be weapon customization?", answer: "Yes! Shadows of Soldiers features deep weapon customization with realistic attachments and modifications." },
   { id: "7", question: "Is there a cover system?", answer: "Absolutely. Our advanced cover system rewards tactical positioning and smart movement." },
   { id: "8", question: "How can I support the game?", answer: "Wishlist on Steam, join our Discord, and follow us on social media!" },
+];
+
+// Default features data
+const defaultFeatures: FeatureItem[] = [
+  {
+    id: "1",
+    title: "Abilities",
+    description: "Each class has unique abilities that can turn the tide of battle when used strategically.",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/shelter.gif",
+    icon: "Crosshair",
+    devices: [
+      {
+        name: "Tactical Shield",
+        details: "Deployable cover that provides protection and allows team movement"
+      },
+      {
+        name: "Combat Stim",
+        details: "Temporary boost to speed and reaction time for critical moments"
+      },
+      {
+        name: "Recon Drone",
+        details: "Scout ahead and mark enemies for your team"
+      },
+      {
+        name: "Med Kit",
+        details: "Advanced healing system that restores health over time"
+      }
+    ],
+  },
+  {
+    id: "2",
+    title: "Cover System",
+    description: "Advanced cover mechanics reward tactical positioning and smart movement.",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/cover-1-1.gif",
+    icon: "Shield",
+    devices: [
+      {
+        name: "Dynamic Cover",
+        details: "Interactive cover that can be destroyed or repositioned"
+      },
+      {
+        name: "Peek System",
+        details: "Lean and peek around corners with realistic body positioning"
+      },
+      {
+        name: "Cover Indicators",
+        details: "Visual feedback showing effective cover positions"
+      },
+      {
+        name: "Vault Mechanics",
+        details: "Smooth vaulting over obstacles and through windows"
+      }
+    ],
+  },
+  {
+    id: "3",
+    title: "Weapon Customization",
+    description: "Deep weapon customization with realistic attachments and modifications.",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
+    icon: "Wrench",
+    devices: [
+      {
+        name: "Optics & Scopes",
+        details: "Multiple sight options from red dots to long-range scopes"
+      },
+      {
+        name: "Barrel Attachments",
+        details: "Suppressors, compensators, and extended barrels"
+      },
+      {
+        name: "Grip Systems",
+        details: "Foregrips and stocks that affect recoil and handling"
+      },
+      {
+        name: "Magazine Mods",
+        details: "Extended magazines and specialized ammunition types"
+      },
+      {
+        name: "Rail Accessories",
+        details: "Flashlights, lasers, and tactical equipment"
+      }
+    ],
+  },
+  {
+    id: "4",
+    title: "Tactical Gameplay",
+    description: "Every move matters. Every shot counts. Every victory is earned.",
+    image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
+    icon: "Target",
+    devices: [
+      {
+        name: "Realistic Ballistics",
+        details: "Bullet drop, wind resistance, and material penetration"
+      },
+      {
+        name: "Stamina System",
+        details: "Manage your energy for sprinting, aiming, and combat"
+      },
+      {
+        name: "Sound Design",
+        details: "3D positional audio for tactical awareness"
+      },
+      {
+        name: "Team Coordination",
+        details: "Advanced communication tools and team markers"
+      }
+    ],
+  },
 ];
 
 // Default privacy policy
@@ -252,12 +362,12 @@ const defaultTerms: PageContent = {
 
 export function getContent(): SiteContent {
   if (typeof window === 'undefined') {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
   }
   
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
   }
   
   try {
@@ -268,11 +378,12 @@ export function getContent(): SiteContent {
       classes: parsed.classes || defaultClasses,
       media: parsed.media || defaultMedia,
       faq: parsed.faq || defaultFAQ,
+      features: parsed.features || defaultFeatures,
       privacy: parsed.privacy || defaultPrivacy,
       terms: parsed.terms || defaultTerms,
     };
   } catch {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, privacy: defaultPrivacy, terms: defaultTerms };
+    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
   }
 }
 

@@ -1,54 +1,30 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Shield, Eye, Target } from "lucide-react";
+import { Users, Shield, Eye, Target, Crosshair, Heart } from "lucide-react";
 import { useState } from "react";
+import { useContent } from "@/hooks/use-content";
 
-const classes = [
-  {
-    name: "JUGGERNAUT",
-    role: "Tank",
-    description: "Heavy armor and suppressive firepower. Lead the charge and absorb enemy fire while your team advances.",
-    details: [
-      "Maximum armor protection",
-      "Heavy weapons specialist",
-      "Suppressive fire capabilities",
-      "Team shield abilities"
-    ],
-    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
-    icon: Shield,
-    color: "accent",
-  },
-  {
-    name: "SHADOW",
-    role: "Recon",
-    description: "Speed and stealth. Flank enemies, gather intel, and strike from unexpected angles.",
-    details: [
-      "Enhanced mobility",
-      "Stealth capabilities",
-      "Intel gathering",
-      "Flanking maneuvers"
-    ],
-    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
-    icon: Eye,
-    color: "primary",
-  },
-  {
-    name: "COMMANDER",
-    role: "Support",
-    description: "Tactical leadership and team support. Coordinate strikes and provide crucial battlefield advantages.",
-    details: [
-      "Team coordination",
-      "Tactical strikes",
-      "Support abilities",
-      "Battlefield control"
-    ],
-    image: "https://images.steamusercontent.com/ugc/2513653416277255363/1D5BD6B48037C68F14ECD347F996F14924A53A71/?imw=1024&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
-    icon: Target,
-    color: "primary",
-  },
-];
+// Icon mapping
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Crosshair,
+  Shield,
+  Eye,
+  Target,
+  Users,
+  Heart,
+};
 
 export function ClassesSection() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const { classes: classesData } = useContent();
+  
+  // Convert classes data to component format with icon components
+  const classes = classesData.map((classItem) => {
+    const IconComponent = iconMap[classItem.icon] || Shield;
+    return {
+      ...classItem,
+      icon: IconComponent,
+    };
+  });
 
   return (
     <section className="py-20 lg:py-32 bg-surface-dark overflow-hidden">
@@ -78,7 +54,7 @@ export function ClassesSection() {
             const IconComponent = classItem.icon;
             return (
               <motion.div
-                key={classItem.name}
+                key={classItem.id}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false }}

@@ -20,10 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useContent } from "@/hooks/use-content";
-import { NewsItem, ClassItem, MediaItem, FAQItem, PageContent } from "@/lib/content-store";
+import { NewsItem, ClassItem, MediaItem, FAQItem, FeatureItem, PageContent } from "@/lib/content-store";
 import { toast } from "sonner";
 
-type Tab = "news" | "classes" | "media" | "faq" | "privacy" | "terms";
+type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<Tab>("news");
@@ -31,6 +31,7 @@ export default function Admin() {
   const [editingClass, setEditingClass] = useState<ClassItem | null>(null);
   const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
   const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
+  const [editingFeature, setEditingFeature] = useState<FeatureItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const {
@@ -38,6 +39,7 @@ export default function Admin() {
     classes,
     media,
     faq,
+    features,
     privacy,
     terms,
     addNewsItem,
@@ -52,6 +54,9 @@ export default function Admin() {
     addFAQItem,
     updateFAQItem,
     deleteFAQItem,
+    addFeatureItem,
+    updateFeatureItem,
+    deleteFeatureItem,
     updatePrivacy,
     updateTerms,
     reset,
@@ -137,6 +142,26 @@ export default function Admin() {
     }
   };
 
+  // Feature handlers
+  const handleSaveFeature = (item: FeatureItem) => {
+    if (isCreating) {
+      addFeatureItem(item);
+      toast.success("Feature created!");
+    } else {
+      updateFeatureItem(item.id, item);
+      toast.success("Feature updated!");
+    }
+    setEditingFeature(null);
+    setIsCreating(false);
+  };
+
+  const handleDeleteFeature = (id: string) => {
+    if (confirm("Are you sure you want to delete this feature?")) {
+      deleteFeatureItem(id);
+      toast.success("Feature deleted!");
+    }
+  };
+
   const handleReset = () => {
     if (confirm("Reset all content to defaults? This cannot be undone.")) {
       reset();
@@ -191,11 +216,25 @@ export default function Admin() {
     setIsCreating(true);
   };
 
+  const createNewFeature = () => {
+    setEditingFeature({
+      id: "",
+      title: "",
+      description: "",
+      image: "",
+      icon: "Crosshair",
+      devices: [{ name: "", details: "", icon: "" }],
+      devicesSectionTitle: "",
+    });
+    setIsCreating(true);
+  };
+
   const tabs = [
     { id: "news" as Tab, label: "News", icon: Newspaper },
     { id: "classes" as Tab, label: "Classes", icon: Users },
     { id: "media" as Tab, label: "Media", icon: Image },
     { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
+    { id: "features" as Tab, label: "Features", icon: Shield },
     { id: "privacy" as Tab, label: "Privacy", icon: Shield },
     { id: "terms" as Tab, label: "Terms", icon: FileText },
   ];
@@ -520,6 +559,83 @@ export default function Admin() {
               </motion.div>
             )}
 
+            {/* Features Tab */}
+            {activeTab === "features" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-heading text-xl text-foreground uppercase">
+                    Manage Features
+                  </h2>
+                  <Button onClick={createNewFeature}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Feature
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {features.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-card border border-border rounded p-4"
+                    >
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-heading text-foreground mb-1">{item.title}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                            {item.description}
+                          </p>
+                          <p className="text-xs text-primary mb-3">
+                            {item.devices.length} devices
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingFeature(item);
+                                setIsCreating(false);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteFeature(item.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingFeature && (
+                  <FeatureEditModal
+                    item={editingFeature}
+                    onSave={handleSaveFeature}
+                    onCancel={() => {
+                      setEditingFeature(null);
+                      setIsCreating(false);
+                    }}
+                    isCreating={isCreating}
+                  />
+                )}
+              </motion.div>
+            )}
+
             {/* Privacy Tab */}
             {activeTab === "privacy" && (
               <motion.div
@@ -730,6 +846,21 @@ function ClassEditModal({
               onChange={(e) => setFormData({ ...formData, image: e.target.value })}
               placeholder="https://..."
             />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Icon</label>
+            <select
+              value={formData.icon}
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
+            >
+              {["Crosshair", "Shield", "Eye", "Target", "Users", "Heart"].map((icon) => (
+                <option key={icon} value={icon}>
+                  {icon}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -1008,6 +1139,184 @@ function PageContentEditor({
           Save Changes
         </Button>
       </div>
+    </div>
+  );
+}
+
+// Feature Edit Modal
+function FeatureEditModal({
+  item,
+  onSave,
+  onCancel,
+  isCreating,
+}: {
+  item: FeatureItem;
+  onSave: (item: FeatureItem) => void;
+  onCancel: () => void;
+  isCreating: boolean;
+}) {
+  const [formData, setFormData] = useState(item);
+
+  const updateDevice = (index: number, field: 'name' | 'details' | 'icon', value: string) => {
+    const newDevices = [...formData.devices];
+    newDevices[index] = { ...newDevices[index], [field]: value };
+    setFormData({ ...formData, devices: newDevices });
+  };
+
+  const addDevice = () => {
+    setFormData({
+      ...formData,
+      devices: [...formData.devices, { name: "", details: "", icon: "" }],
+    });
+  };
+
+  const removeDevice = (index: number) => {
+    const newDevices = formData.devices.filter((_, i) => i !== index);
+    setFormData({ ...formData, devices: newDevices });
+  };
+
+  const iconOptions = ["Crosshair", "Shield", "Wrench", "Target", "Users", "Eye", "Heart", "Zap"];
+
+  return (
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-card border border-border rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-card z-10">
+          <h3 className="font-heading text-xl text-foreground">
+            {isCreating ? "Create" : "Edit"} Feature
+          </h3>
+          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Title</label>
+            <Input
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Feature title"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Description</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Feature description"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
+            <Input
+              value={formData.image}
+              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Icon</label>
+            <select
+              value={formData.icon}
+              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
+            >
+              {iconOptions.map((icon) => (
+                <option key={icon} value={icon}>
+                  {icon}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Devices Section Title</label>
+            <Input
+              value={formData.devicesSectionTitle || ""}
+              onChange={(e) => setFormData({ ...formData, devicesSectionTitle: e.target.value })}
+              placeholder="Devices & Features (leave empty for default)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Custom title for the devices section (e.g., "Abilities", "Components", "Tools", etc.)
+            </p>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <label className="text-sm text-muted-foreground">
+                {formData.devicesSectionTitle || "Devices & Features"}
+              </label>
+              <Button variant="outline" size="sm" onClick={addDevice}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Device
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {formData.devices.map((device, index) => (
+                <div key={index} className="bg-surface-dark border border-border rounded p-4 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-primary font-heading">Device {index + 1}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeDevice(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={device.name}
+                    onChange={(e) => updateDevice(index, 'name', e.target.value)}
+                    placeholder="Device name"
+                    className="mb-2"
+                  />
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Device Icon (optional)</label>
+                    <select
+                      value={device.icon || ""}
+                      onChange={(e) => updateDevice(index, 'icon', e.target.value)}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
+                    >
+                      <option value="">No Icon</option>
+                      {iconOptions.map((icon) => (
+                        <option key={icon} value={icon}>
+                          {icon}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Textarea
+                    value={device.details}
+                    onChange={(e) => updateDevice(index, 'details', e.target.value)}
+                    placeholder="Device details"
+                    rows={2}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 flex gap-4 justify-end border-t border-border sticky bottom-0 bg-card">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSave(formData)}>
+            <Save className="w-4 h-4 mr-2" />
+            {isCreating ? "Create" : "Save"}
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 }
