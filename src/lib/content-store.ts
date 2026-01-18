@@ -34,6 +34,8 @@ export interface MediaItem {
   title: string;
   src: string;
   category: string;
+  description?: string;
+  thumbnail?: string; // For videos: optional thumbnail image
 }
 
 export interface FAQItem {
@@ -219,14 +221,14 @@ const defaultClasses: ClassItem[] = [
 
 // Default media data
 const defaultMedia: MediaItem[] = [
-  { id: "1", type: "gif", title: "Shelter Environment", src: "https://www.shadowsofsoldiers.com/assets/shelter.gif", category: "Gameplay" },
-  { id: "2", type: "gif", title: "Cover System", src: "https://www.shadowsofsoldiers.com/assets/cover.gif", category: "Gameplay" },
-  { id: "3", type: "gif", title: "Weapon Customization", src: "https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif", category: "Features" },
-  { id: "4", type: "image", title: "Juggernaut Class", src: "https://www.shadowsofsoldiers.com/assets/webp/juggernaut.webp", category: "Classes" },
-  { id: "5", type: "image", title: "Shadow Class", src: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp", category: "Classes" },
-  { id: "6", type: "image", title: "Commander Class", src: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp", category: "Classes" },
-  { id: "7", type: "image", title: "Unreal Engine 5", src: "https://www.shadowsofsoldiers.com/assets/webp/new-ue5-image.webp", category: "Development" },
-  { id: "8", type: "image", title: "Abilities System", src: "https://www.shadowsofsoldiers.com/assets/webp/abilities.webp", category: "Features" },
+  { id: "1", type: "gif", title: "Shelter Environment", src: "https://www.shadowsofsoldiers.com/assets/shelter.gif", category: "Gameplay", description: "Explore the immersive shelter environments in Shadows of Soldiers." },
+  { id: "2", type: "gif", title: "Cover System", src: "https://www.shadowsofsoldiers.com/assets/cover.gif", category: "Gameplay", description: "Our advanced cover system rewards tactical positioning." },
+  { id: "3", type: "gif", title: "Weapon Customization", src: "https://www.shadowsofsoldiers.com/assets/weaponcustomise.gif", category: "Features", description: "Deep weapon customization with realistic attachments." },
+  { id: "4", type: "image", title: "Juggernaut Class", src: "https://www.shadowsofsoldiers.com/assets/webp/juggernaut.webp", category: "Classes", description: "Heavy armor and suppressive firepower." },
+  { id: "5", type: "image", title: "Shadow Class", src: "https://www.shadowsofsoldiers.com/assets/webp/shadow.webp", category: "Classes", description: "Speed and stealth for flanking enemies." },
+  { id: "6", type: "image", title: "Commander Class", src: "https://www.shadowsofsoldiers.com/assets/webp/commander.webp", category: "Classes", description: "Tactical leadership and team support." },
+  { id: "7", type: "image", title: "Unreal Engine 5", src: "https://www.shadowsofsoldiers.com/assets/webp/new-ue5-image.webp", category: "Development", description: "Built on Unreal Engine 5 for stunning visuals." },
+  { id: "8", type: "image", title: "Abilities System", src: "https://www.shadowsofsoldiers.com/assets/webp/abilities.webp", category: "Features", description: "Unique abilities for each class." },
 ];
 
 // Default FAQ data

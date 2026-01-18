@@ -1048,11 +1048,42 @@ function MediaEditModal({
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Source URL</label>
+            <label className="text-sm text-muted-foreground mb-1 block">
+              {formData.type === "video" ? "Video URL (YouTube, Vimeo, or direct MP4)" : "Source URL"}
+            </label>
             <Input
               value={formData.src}
               onChange={(e) => setFormData({ ...formData, src: e.target.value })}
-              placeholder="https://..."
+              placeholder={formData.type === "video" ? "https://youtube.com/watch?v=... or https://.../video.mp4" : "https://..."}
+            />
+            {formData.type === "video" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Supports YouTube, Vimeo embed URLs, or direct video file URLs (.mp4, .webm)
+              </p>
+            )}
+          </div>
+
+          {formData.type === "video" && (
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Thumbnail URL (optional)</label>
+              <Input
+                value={formData.thumbnail || ""}
+                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                placeholder="https://... (thumbnail image for video)"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Optional: Display image before video plays
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">Description</label>
+            <Textarea
+              value={formData.description || ""}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe this media item..."
+              rows={3}
             />
           </div>
         </div>
