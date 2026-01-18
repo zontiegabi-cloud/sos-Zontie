@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { name: "Home", path: "/" },
+  { name: "Game Content", path: "/game-content" },
   { name: "Media", path: "/media" },
   { name: "News", path: "/news" },
   { name: "FAQ", path: "/faq" },
-  { name: "Privacy Policy", path: "/privacy" },
-  { name: "Terms", path: "/terms" },
 ];
 
 export function Navbar() {

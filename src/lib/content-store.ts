@@ -12,7 +12,7 @@ export interface NewsItem {
 
 export interface ClassDevice {
   name: string;
-  icon: string; // Icon name like "Crosshair", "Shield", etc.
+  icon: string;
 }
 
 export interface ClassItem {
@@ -24,8 +24,8 @@ export interface ClassItem {
   image: string;
   icon: string;
   color: string;
-  devices?: ClassDevice[]; // Optional devices/equipment used by this class
-  devicesUsedTitle?: string; // Custom title for devices section (e.g., "Equipment", "Abilities", "Components", etc.)
+  devices?: ClassDevice[];
+  devicesUsedTitle?: string;
 }
 
 export interface MediaItem {
@@ -35,7 +35,7 @@ export interface MediaItem {
   src: string;
   category: string;
   description?: string;
-  thumbnail?: string; // For videos: optional thumbnail image
+  thumbnail?: string;
 }
 
 export interface FAQItem {
@@ -56,7 +56,7 @@ export interface PageContent {
 export interface Device {
   name: string;
   details: string;
-  icon?: string; // Optional icon name for the device
+  icon?: string;
 }
 
 export interface FeatureItem {
@@ -64,9 +64,76 @@ export interface FeatureItem {
   title: string;
   description: string;
   image: string;
-  icon: string; // Icon name like "Crosshair", "Shield", etc.
+  icon: string;
   devices: Device[];
-  devicesSectionTitle?: string; // Custom title for devices section (e.g., "Devices & Features", "Abilities", "Components", etc.)
+  devicesSectionTitle?: string;
+}
+
+// ========== Game Content Interfaces ==========
+
+export interface WeaponAttachment {
+  id: string;
+  name: string;
+  type: "optic" | "barrel" | "grip" | "magazine" | "stock" | "accessory";
+  description: string;
+  image?: string;
+}
+
+export interface WeaponStats {
+  damage: number; // 0-100
+  accuracy: number; // 0-100
+  range: number; // 0-100
+  fireRate: number; // 0-100
+  mobility: number; // 0-100
+  control: number; // 0-100
+}
+
+export interface WeaponItem {
+  id: string;
+  name: string;
+  category: "assault" | "smg" | "lmg" | "sniper" | "shotgun" | "pistol" | "melee";
+  description: string;
+  image: string;
+  stats: WeaponStats;
+  attachments: WeaponAttachment[];
+}
+
+export interface MapMediaItem {
+  type: "image" | "video";
+  url: string;
+  title?: string;
+}
+
+export interface MapItem {
+  id: string;
+  name: string;
+  description: string;
+  size: "small" | "medium" | "large";
+  environment: string; // e.g., "Urban", "Desert", "Forest"
+  image: string;
+  media: MapMediaItem[];
+}
+
+export interface GameDeviceItem {
+  id: string;
+  name: string;
+  description: string;
+  details: string;
+  image: string;
+  media: MapMediaItem[];
+  classRestriction?: string; // Which class can use it, if any
+}
+
+export interface GameModeItem {
+  id: string;
+  name: string;
+  shortName: string;
+  description: string;
+  rules: string[];
+  image: string;
+  media: MapMediaItem[];
+  playerCount?: string;
+  roundTime?: string;
 }
 
 export interface SiteContent {
@@ -77,6 +144,11 @@ export interface SiteContent {
   features: FeatureItem[];
   privacy: PageContent;
   terms: PageContent;
+  // Game content
+  weapons: WeaponItem[];
+  maps: MapItem[];
+  gameDevices: GameDeviceItem[];
+  gameModes: GameModeItem[];
 }
 
 const STORAGE_KEY = 'sos-content';
@@ -252,22 +324,10 @@ const defaultFeatures: FeatureItem[] = [
     image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/shelter.gif",
     icon: "Crosshair",
     devices: [
-      {
-        name: "Tactical Shield",
-        details: "Deployable cover that provides protection and allows team movement"
-      },
-      {
-        name: "Combat Stim",
-        details: "Temporary boost to speed and reaction time for critical moments"
-      },
-      {
-        name: "Recon Drone",
-        details: "Scout ahead and mark enemies for your team"
-      },
-      {
-        name: "Med Kit",
-        details: "Advanced healing system that restores health over time"
-      }
+      { name: "Tactical Shield", details: "Deployable cover that provides protection and allows team movement" },
+      { name: "Combat Stim", details: "Temporary boost to speed and reaction time for critical moments" },
+      { name: "Recon Drone", details: "Scout ahead and mark enemies for your team" },
+      { name: "Med Kit", details: "Advanced healing system that restores health over time" }
     ],
   },
   {
@@ -277,22 +337,10 @@ const defaultFeatures: FeatureItem[] = [
     image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/cover-1-1.gif",
     icon: "Shield",
     devices: [
-      {
-        name: "Dynamic Cover",
-        details: "Interactive cover that can be destroyed or repositioned"
-      },
-      {
-        name: "Peek System",
-        details: "Lean and peek around corners with realistic body positioning"
-      },
-      {
-        name: "Cover Indicators",
-        details: "Visual feedback showing effective cover positions"
-      },
-      {
-        name: "Vault Mechanics",
-        details: "Smooth vaulting over obstacles and through windows"
-      }
+      { name: "Dynamic Cover", details: "Interactive cover that can be destroyed or repositioned" },
+      { name: "Peek System", details: "Lean and peek around corners with realistic body positioning" },
+      { name: "Cover Indicators", details: "Visual feedback showing effective cover positions" },
+      { name: "Vault Mechanics", details: "Smooth vaulting over obstacles and through windows" }
     ],
   },
   {
@@ -302,26 +350,11 @@ const defaultFeatures: FeatureItem[] = [
     image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
     icon: "Wrench",
     devices: [
-      {
-        name: "Optics & Scopes",
-        details: "Multiple sight options from red dots to long-range scopes"
-      },
-      {
-        name: "Barrel Attachments",
-        details: "Suppressors, compensators, and extended barrels"
-      },
-      {
-        name: "Grip Systems",
-        details: "Foregrips and stocks that affect recoil and handling"
-      },
-      {
-        name: "Magazine Mods",
-        details: "Extended magazines and specialized ammunition types"
-      },
-      {
-        name: "Rail Accessories",
-        details: "Flashlights, lasers, and tactical equipment"
-      }
+      { name: "Optics & Scopes", details: "Multiple sight options from red dots to long-range scopes" },
+      { name: "Barrel Attachments", details: "Suppressors, compensators, and extended barrels" },
+      { name: "Grip Systems", details: "Foregrips and stocks that affect recoil and handling" },
+      { name: "Magazine Mods", details: "Extended magazines and specialized ammunition types" },
+      { name: "Rail Accessories", details: "Flashlights, lasers, and tactical equipment" }
     ],
   },
   {
@@ -331,22 +364,10 @@ const defaultFeatures: FeatureItem[] = [
     image: "https://www.shadowsofsoldiers.com/wp-content/uploads/2025/06/weapon_custimization.gif",
     icon: "Target",
     devices: [
-      {
-        name: "Realistic Ballistics",
-        details: "Bullet drop, wind resistance, and material penetration"
-      },
-      {
-        name: "Stamina System",
-        details: "Manage your energy for sprinting, aiming, and combat"
-      },
-      {
-        name: "Sound Design",
-        details: "3D positional audio for tactical awareness"
-      },
-      {
-        name: "Team Coordination",
-        details: "Advanced communication tools and team markers"
-      }
+      { name: "Realistic Ballistics", details: "Bullet drop, wind resistance, and material penetration" },
+      { name: "Stamina System", details: "Manage your energy for sprinting, aiming, and combat" },
+      { name: "Sound Design", details: "3D positional audio for tactical awareness" },
+      { name: "Team Coordination", details: "Advanced communication tools and team markers" }
     ],
   },
 ];
@@ -356,12 +377,12 @@ const defaultPrivacy: PageContent = {
   title: "Privacy Policy",
   lastUpdated: "August 2024",
   sections: [
-    { heading: "1. Introduction", content: "Welcome to Shadows of Soldiers. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data when you visit our website and tell you about your privacy rights." },
-    { heading: "2. Information We Collect", content: "We may collect, use, store and transfer different kinds of personal data about you:\n- Identity Data: first name, last name, username\n- Contact Data: email address\n- Technical Data: IP address, browser type, operating system\n- Usage Data: information about how you use our website and services" },
-    { heading: "3. How We Use Your Information", content: "We use your personal data for:\n- To provide and maintain our services\n- To notify you about changes to our services\n- To allow you to participate in playtests and community events\n- To provide customer support\n- To send newsletters and marketing communications (with your consent)" },
-    { heading: "4. Data Security", content: "We have implemented appropriate security measures to prevent your personal data from being accidentally lost, used, or accessed in an unauthorized way." },
-    { heading: "5. Your Rights", content: "Under certain circumstances, you have rights including:\n- The right to access your personal data\n- The right to correct inaccurate personal data\n- The right to request deletion of your personal data\n- The right to withdraw consent" },
-    { heading: "6. Contact Us", content: "If you have any questions about this privacy policy or our privacy practices, please contact us through our social media channels or Discord community." },
+    { heading: "1. Introduction", content: "Welcome to Shadows of Soldiers. We respect your privacy and are committed to protecting your personal data." },
+    { heading: "2. Information We Collect", content: "We may collect identity data, contact data, technical data, and usage data." },
+    { heading: "3. How We Use Your Information", content: "We use your personal data to provide services, notify you of changes, and allow participation in playtests." },
+    { heading: "4. Data Security", content: "We have implemented appropriate security measures to prevent unauthorized access." },
+    { heading: "5. Your Rights", content: "You have rights to access, correct, and request deletion of your personal data." },
+    { heading: "6. Contact Us", content: "Contact us through our social media channels or Discord community." },
   ],
 };
 
@@ -370,30 +391,198 @@ const defaultTerms: PageContent = {
   title: "Terms & Conditions",
   lastUpdated: "August 2024",
   sections: [
-    { heading: "1. Agreement to Terms", content: "By accessing or using the Shadows of Soldiers website and services, you agree to be bound by these Terms and Conditions." },
-    { heading: "2. Intellectual Property", content: "The Shadows of Soldiers name, logo, game content, website design, and all related materials are protected by copyright, trademark, and other intellectual property laws." },
-    { heading: "3. User Conduct", content: "When using our services, you agree not to:\n- Violate any applicable laws or regulations\n- Harass, abuse, or harm other users\n- Distribute malware or engage in hacking activities\n- Attempt to gain unauthorized access to our systems" },
-    { heading: "4. Playtest Participation", content: "Participation in playtests is subject to additional terms. Playtest content is confidential and may not be shared, streamed, or recorded without explicit permission." },
-    { heading: "5. Disclaimer of Warranties", content: "Our services are provided 'as is' without warranties of any kind, either express or implied." },
-    { heading: "6. Limitation of Liability", content: "In no event shall Shadows of Soldiers be liable for any indirect, incidental, special, or consequential damages." },
-    { heading: "7. Changes to Terms", content: "We reserve the right to modify these terms at any time. Changes will be effective immediately upon posting." },
-    { heading: "8. Contact", content: "For any questions regarding these Terms and Conditions, please reach out through our official social media channels or Discord community." },
+    { heading: "1. Agreement to Terms", content: "By accessing our services, you agree to be bound by these Terms and Conditions." },
+    { heading: "2. Intellectual Property", content: "All game content and materials are protected by copyright and trademark laws." },
+    { heading: "3. User Conduct", content: "You agree not to violate laws, harass others, or engage in hacking activities." },
+    { heading: "4. Playtest Participation", content: "Playtest content is confidential and may not be shared without permission." },
+    { heading: "5. Disclaimer of Warranties", content: "Our services are provided 'as is' without warranties." },
+    { heading: "6. Contact", content: "Contact us through our official social media channels or Discord." },
   ],
 };
 
+// Default weapons data
+const defaultWeapons: WeaponItem[] = [
+  {
+    id: "1",
+    name: "AR-15 Tactical",
+    category: "assault",
+    description: "A versatile assault rifle with balanced stats, perfect for medium-range engagements.",
+    image: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=800",
+    stats: { damage: 65, accuracy: 70, range: 75, fireRate: 70, mobility: 60, control: 65 },
+    attachments: [
+      { id: "1a", name: "Red Dot Sight", type: "optic", description: "Fast target acquisition for close-medium range" },
+      { id: "1b", name: "Suppressor", type: "barrel", description: "Reduces sound and muzzle flash" },
+      { id: "1c", name: "Vertical Grip", type: "grip", description: "Improves vertical recoil control" },
+      { id: "1d", name: "Extended Magazine", type: "magazine", description: "Increases ammo capacity to 40 rounds" },
+    ],
+  },
+  {
+    id: "2",
+    name: "SMG-X9",
+    category: "smg",
+    description: "High fire rate submachine gun ideal for close-quarters combat.",
+    image: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=800",
+    stats: { damage: 45, accuracy: 55, range: 40, fireRate: 90, mobility: 85, control: 50 },
+    attachments: [
+      { id: "2a", name: "Holographic Sight", type: "optic", description: "Clear sight picture for fast shooting" },
+      { id: "2b", name: "Compensator", type: "barrel", description: "Reduces horizontal recoil" },
+    ],
+  },
+  {
+    id: "3",
+    name: "Tactical Sniper",
+    category: "sniper",
+    description: "Precision bolt-action rifle for long-range eliminations.",
+    image: "https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=800",
+    stats: { damage: 95, accuracy: 90, range: 100, fireRate: 20, mobility: 35, control: 75 },
+    attachments: [
+      { id: "3a", name: "8x Scope", type: "optic", description: "High magnification for long-range shots" },
+      { id: "3b", name: "Bipod", type: "accessory", description: "Increased stability when prone" },
+    ],
+  },
+];
+
+// Default maps data
+const defaultMaps: MapItem[] = [
+  {
+    id: "1",
+    name: "Industrial Complex",
+    description: "A sprawling abandoned factory with multiple entry points and vertical gameplay opportunities.",
+    size: "large",
+    environment: "Urban Industrial",
+    image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800",
+    media: [
+      { type: "image", url: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800", title: "Overview" },
+    ],
+  },
+  {
+    id: "2",
+    name: "Desert Outpost",
+    description: "A remote military base in the desert with long sightlines and strategic positions.",
+    size: "medium",
+    environment: "Desert",
+    image: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
+    media: [],
+  },
+];
+
+// Default game devices data (6 devices)
+const defaultGameDevices: GameDeviceItem[] = [
+  {
+    id: "1",
+    name: "Tactical Shield",
+    description: "Deployable ballistic shield providing mobile cover.",
+    details: "The Tactical Shield can be deployed in 2 seconds and provides full frontal protection. It has 500 HP and can be picked up and redeployed.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+    classRestriction: "Juggernaut",
+  },
+  {
+    id: "2",
+    name: "Recon Drone",
+    description: "Remote-controlled drone for scouting enemy positions.",
+    details: "Can be deployed to scout ahead and mark enemies. Has a 60-second battery life and can be destroyed by enemy fire.",
+    image: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=800",
+    media: [],
+    classRestriction: "Shadow",
+  },
+  {
+    id: "3",
+    name: "Med Kit",
+    description: "Advanced medical supplies for healing teammates.",
+    details: "Heals 50 HP over 5 seconds. Can be used on self or teammates within 3 meters.",
+    image: "https://images.unsplash.com/photo-1603398938378-e54eab446dde?w=800",
+    media: [],
+    classRestriction: "Commander",
+  },
+  {
+    id: "4",
+    name: "Flash Grenade",
+    description: "Non-lethal grenade that blinds and deafens enemies.",
+    details: "2-second fuse time. Affects enemies within 10 meters. Full effect lasts 3 seconds.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+  },
+  {
+    id: "5",
+    name: "Smoke Grenade",
+    description: "Creates a smoke screen for tactical concealment.",
+    details: "Smoke lasts 15 seconds and covers a 10-meter radius. Blocks thermal imaging.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+  },
+  {
+    id: "6",
+    name: "C4 Explosive",
+    description: "Remote detonation explosive for strategic destruction.",
+    details: "Can be placed on surfaces and detonated remotely. 200 damage within 5 meters.",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+  },
+];
+
+// Default game modes data
+const defaultGameModes: GameModeItem[] = [
+  {
+    id: "1",
+    name: "Team Deathmatch",
+    shortName: "TDM",
+    description: "Classic team-based combat where the first team to reach the score limit wins.",
+    rules: [
+      "Two teams of 5 players compete",
+      "First team to 50 kills wins",
+      "Respawn time: 5 seconds",
+      "Match time limit: 10 minutes"
+    ],
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+    playerCount: "5v5",
+    roundTime: "10 minutes",
+  },
+  {
+    id: "2",
+    name: "Quick Capture",
+    shortName: "QC",
+    description: "Objective-based mode where teams compete to capture and hold strategic points.",
+    rules: [
+      "Three capture points on the map",
+      "Earn points while holding positions",
+      "First team to 200 points wins",
+      "Capturing takes 10 seconds"
+    ],
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    media: [],
+    playerCount: "5v5",
+    roundTime: "12 minutes",
+  },
+];
+
 export function getContent(): SiteContent {
+  const defaultContent = {
+    news: defaultNews,
+    classes: defaultClasses,
+    media: defaultMedia,
+    faq: defaultFAQ,
+    features: defaultFeatures,
+    privacy: defaultPrivacy,
+    terms: defaultTerms,
+    weapons: defaultWeapons,
+    maps: defaultMaps,
+    gameDevices: defaultGameDevices,
+    gameModes: defaultGameModes,
+  };
+
   if (typeof window === 'undefined') {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
+    return defaultContent;
   }
   
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
+    return defaultContent;
   }
   
   try {
     const parsed = JSON.parse(stored);
-    // Merge with defaults for backward compatibility
     return {
       news: parsed.news || defaultNews,
       classes: parsed.classes || defaultClasses,
@@ -402,9 +591,13 @@ export function getContent(): SiteContent {
       features: parsed.features || defaultFeatures,
       privacy: parsed.privacy || defaultPrivacy,
       terms: parsed.terms || defaultTerms,
+      weapons: parsed.weapons || defaultWeapons,
+      maps: parsed.maps || defaultMaps,
+      gameDevices: parsed.gameDevices || defaultGameDevices,
+      gameModes: parsed.gameModes || defaultGameModes,
     };
   } catch {
-    return { news: defaultNews, classes: defaultClasses, media: defaultMedia, faq: defaultFAQ, features: defaultFeatures, privacy: defaultPrivacy, terms: defaultTerms };
+    return defaultContent;
   }
 }
 
