@@ -1,13 +1,45 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
-import { Image as ImageIcon, Film } from "lucide-react";
+import { Image as ImageIcon, Film, Play, X } from "lucide-react";
 import { useContent } from "@/hooks/use-content";
+import { MediaItem } from "@/lib/content-store";
+
+// Helper to convert YouTube/Vimeo URLs to embed format
+function getEmbedUrl(url: string): string | null {
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+  }
+  
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  }
+  
+  return null;
+}
+
+// Check if URL is a direct video file
+function isDirectVideo(url: string): boolean {
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+}
+
+// Get YouTube thumbnail
+function getYouTubeThumbnail(url: string): string | null {
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) {
+    return `https://img.youtube.com/vi/${ytMatch[1]}/maxresdefault.jpg`;
+  }
+  return null;
+}
 
 export default function Media() {
   const { media } = useContent();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedMedia, setSelectedMedia] = useState<typeof media[0] | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   const categories = useMemo(() => {
     const cats = new Set(media.map(item => item.category));
@@ -17,6 +49,16 @@ export default function Media() {
   const filteredMedia = activeCategory === "All" 
     ? media 
     : media.filter(item => item.category === activeCategory);
+
+  // Get display thumbnail for media item
+  const getDisplayThumbnail = (item: MediaItem): string => {
+    if (item.thumbnail) return item.thumbnail;
+    if (item.type === "video") {
+      const ytThumb = getYouTubeThumbnail(item.src);
+      if (ytThumb) return ytThumb;
+    }
+    return item.src;
+  };
 
   return (
     <Layout>
@@ -65,17 +107,24 @@ export default function Media() {
                 className="group relative bg-card border border-border rounded overflow-hidden cursor-pointer hover:border-primary/50 transition-all"
                 onClick={() => setSelectedMedia(item)}
               >
-                <div className="aspect-video overflow-hidden">
+                <div className="aspect-video overflow-hidden relative">
                   <img
-                    src={item.src}
+                    src={getDisplayThumbnail(item)}
                     alt={item.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
+                  {item.type === "video" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Play className="w-8 h-8 text-primary-foreground ml-1" />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
                   <div className="flex items-center gap-2 text-primary mb-1">
-                    {item.type === "gif" || item.type === "video" ? <Film className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
+                    {item.type === "video" ? <Film className="w-4 h-4" /> : item.type === "gif" ? <Film className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                     <span className="text-xs uppercase">{item.type}</span>
                   </div>
                   <h3 className="font-heading text-lg text-foreground">{item.title}</h3>
@@ -95,20 +144,56 @@ export default function Media() {
           className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setSelectedMedia(null)}
         >
+          <button 
+            className="absolute top-6 right-6 text-muted-foreground hover:text-foreground z-10"
+            onClick={() => setSelectedMedia(null)}
+          >
+            <X className="w-8 h-8" />
+          </button>
+          
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             className="max-w-5xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={selectedMedia.src}
-              alt={selectedMedia.title}
-              className="w-full h-auto rounded border border-border"
-            />
+            {selectedMedia.type === "video" ? (
+              <>
+                {getEmbedUrl(selectedMedia.src) ? (
+                  <div className="aspect-video w-full">
+                    <iframe
+                      src={getEmbedUrl(selectedMedia.src)!}
+                      className="w-full h-full rounded border border-border"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : isDirectVideo(selectedMedia.src) ? (
+                  <video
+                    src={selectedMedia.src}
+                    controls
+                    autoPlay
+                    className="w-full h-auto rounded border border-border max-h-[70vh]"
+                  />
+                ) : (
+                  <div className="aspect-video w-full bg-card rounded border border-border flex items-center justify-center">
+                    <p className="text-muted-foreground">Unable to play video. Invalid URL format.</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <img
+                src={selectedMedia.src}
+                alt={selectedMedia.title}
+                className="w-full h-auto rounded border border-border max-h-[70vh] object-contain"
+              />
+            )}
             <div className="mt-4 text-center">
               <h3 className="font-heading text-2xl text-foreground">{selectedMedia.title}</h3>
-              <p className="text-muted-foreground">{selectedMedia.category}</p>
+              <p className="text-primary text-sm mb-2">{selectedMedia.category}</p>
+              {selectedMedia.description && (
+                <p className="text-muted-foreground max-w-2xl mx-auto">{selectedMedia.description}</p>
+              )}
             </div>
           </motion.div>
         </motion.div>
