@@ -13,7 +13,9 @@ import {
   Image,
   HelpCircle,
   Shield,
-  FileText
+  FileText,
+  LogOut,
+  Key
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useContent } from "@/hooks/use-content";
 import { NewsItem, ClassItem, MediaItem, FAQItem, FeatureItem, PageContent } from "@/lib/content-store";
 import { toast } from "sonner";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
+import { AdminLogin } from "@/components/admin/AdminLogin";
 
 type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms";
 
@@ -33,6 +37,19 @@ export default function Admin() {
   const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
   const [editingFeature, setEditingFeature] = useState<FeatureItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+
+  const {
+    isAuthenticated,
+    isPasswordSet,
+    isLoading,
+    setPassword,
+    login,
+    logout,
+    changePassword,
+  } = useAdminAuth();
 
   const {
     news,
@@ -241,6 +258,42 @@ export default function Admin() {
     { id: "terms" as Tab, label: "Terms", icon: FileText },
   ];
 
+  const handleChangePassword = () => {
+    if (changePassword(currentPasswordInput, newPasswordInput)) {
+      toast.success("Password changed successfully!");
+      setShowChangePassword(false);
+      setCurrentPasswordInput("");
+      setNewPasswordInput("");
+    } else {
+      toast.error("Failed to change password. Check your current password.");
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully!");
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show login/setup screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AdminLogin
+        isPasswordSet={isPasswordSet}
+        onLogin={login}
+        onSetPassword={setPassword}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -254,11 +307,46 @@ export default function Admin() {
               ADMIN <span className="text-primary">PANEL</span>
             </h1>
           </div>
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset to Defaults
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowChangePassword(!showChangePassword)}>
+              <Key className="w-4 h-4 mr-2" />
+              Change Password
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset Content
+            </Button>
+            <Button variant="destructive" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
+
+        {/* Change Password Form */}
+        {showChangePassword && (
+          <div className="border-t border-border bg-muted/50">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center gap-4 max-w-md">
+                <Input
+                  type="password"
+                  placeholder="Current password"
+                  value={currentPasswordInput}
+                  onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="New password"
+                  value={newPasswordInput}
+                  onChange={(e) => setNewPasswordInput(e.target.value)}
+                />
+                <Button size="sm" onClick={handleChangePassword}>
+                  Update
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="container mx-auto px-4 py-8">
