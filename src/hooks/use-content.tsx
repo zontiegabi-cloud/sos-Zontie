@@ -7,6 +7,10 @@ import {
   FAQItem,
   FeatureItem,
   PageContent,
+  WeaponItem,
+  MapItem,
+  GameDeviceItem,
+  GameModeItem,
   getContent, 
   saveContent, 
   resetToDefaults 
@@ -126,6 +130,86 @@ export function useContent() {
     updateContent({ ...content, features: newFeatures });
   }, [content, updateContent]);
 
+  // Weapons
+  const addWeaponItem = useCallback((item: Omit<WeaponItem, 'id'>) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    const newContent = { ...content, weapons: [...content.weapons, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updateWeaponItem = useCallback((id: string, updates: Partial<WeaponItem>) => {
+    const newWeapons = content.weapons.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, weapons: newWeapons });
+  }, [content, updateContent]);
+
+  const deleteWeaponItem = useCallback((id: string) => {
+    const newWeapons = content.weapons.filter(item => item.id !== id);
+    updateContent({ ...content, weapons: newWeapons });
+  }, [content, updateContent]);
+
+  // Maps
+  const addMapItem = useCallback((item: Omit<MapItem, 'id'>) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    const newContent = { ...content, maps: [...content.maps, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updateMapItem = useCallback((id: string, updates: Partial<MapItem>) => {
+    const newMaps = content.maps.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, maps: newMaps });
+  }, [content, updateContent]);
+
+  const deleteMapItem = useCallback((id: string) => {
+    const newMaps = content.maps.filter(item => item.id !== id);
+    updateContent({ ...content, maps: newMaps });
+  }, [content, updateContent]);
+
+  // Game Devices
+  const addGameDeviceItem = useCallback((item: Omit<GameDeviceItem, 'id'>) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    const newContent = { ...content, gameDevices: [...content.gameDevices, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updateGameDeviceItem = useCallback((id: string, updates: Partial<GameDeviceItem>) => {
+    const newGameDevices = content.gameDevices.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, gameDevices: newGameDevices });
+  }, [content, updateContent]);
+
+  const deleteGameDeviceItem = useCallback((id: string) => {
+    const newGameDevices = content.gameDevices.filter(item => item.id !== id);
+    updateContent({ ...content, gameDevices: newGameDevices });
+  }, [content, updateContent]);
+
+  // Game Modes
+  const addGameModeItem = useCallback((item: Omit<GameModeItem, 'id'>) => {
+    const newItem = { ...item, id: Date.now().toString() };
+    const newContent = { ...content, gameModes: [...content.gameModes, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updateGameModeItem = useCallback((id: string, updates: Partial<GameModeItem>) => {
+    const newGameModes = content.gameModes.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, gameModes: newGameModes });
+  }, [content, updateContent]);
+
+  const deleteGameModeItem = useCallback((id: string) => {
+    const newGameModes = content.gameModes.filter(item => item.id !== id);
+    updateContent({ ...content, gameModes: newGameModes });
+  }, [content, updateContent]);
+
   // Privacy & Terms
   const updatePrivacy = useCallback((privacy: PageContent) => {
     updateContent({ ...content, privacy });
@@ -150,6 +234,10 @@ export function useContent() {
     features: content.features,
     privacy: content.privacy,
     terms: content.terms,
+    weapons: content.weapons,
+    maps: content.maps,
+    gameDevices: content.gameDevices,
+    gameModes: content.gameModes,
     addNewsItem,
     updateNewsItem,
     deleteNewsItem,
@@ -165,6 +253,18 @@ export function useContent() {
     addFeatureItem,
     updateFeatureItem,
     deleteFeatureItem,
+    addWeaponItem,
+    updateWeaponItem,
+    deleteWeaponItem,
+    addMapItem,
+    updateMapItem,
+    deleteMapItem,
+    addGameDeviceItem,
+    updateGameDeviceItem,
+    deleteGameDeviceItem,
+    addGameModeItem,
+    updateGameModeItem,
+    deleteGameModeItem,
     updatePrivacy,
     updateTerms,
     reset,
