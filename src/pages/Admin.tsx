@@ -15,19 +15,24 @@ import {
   Shield,
   FileText,
   LogOut,
-  Key
+  Key,
+  Crosshair,
+  Map,
+  Cpu,
+  Gamepad2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useContent } from "@/hooks/use-content";
-import { NewsItem, ClassItem, MediaItem, FAQItem, FeatureItem, PageContent } from "@/lib/content-store";
+import { NewsItem, ClassItem, MediaItem, FAQItem, FeatureItem, PageContent, WeaponItem, MapItem, GameDeviceItem, GameModeItem } from "@/lib/content-store";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminLogin } from "@/components/admin/AdminLogin";
+import { WeaponEditModal, MapEditModal, DeviceEditModal, GameModeEditModal } from "@/components/admin/GameContentModals";
 
-type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms";
+type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<Tab>("news");
@@ -36,6 +41,10 @@ export default function Admin() {
   const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
   const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
   const [editingFeature, setEditingFeature] = useState<FeatureItem | null>(null);
+  const [editingWeapon, setEditingWeapon] = useState<WeaponItem | null>(null);
+  const [editingMap, setEditingMap] = useState<MapItem | null>(null);
+  const [editingDevice, setEditingDevice] = useState<GameDeviceItem | null>(null);
+  const [editingGameMode, setEditingGameMode] = useState<GameModeItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
@@ -59,6 +68,10 @@ export default function Admin() {
     features,
     privacy,
     terms,
+    weapons,
+    maps,
+    gameDevices,
+    gameModes,
     addNewsItem,
     updateNewsItem,
     deleteNewsItem,
@@ -74,6 +87,18 @@ export default function Admin() {
     addFeatureItem,
     updateFeatureItem,
     deleteFeatureItem,
+    addWeaponItem,
+    updateWeaponItem,
+    deleteWeaponItem,
+    addMapItem,
+    updateMapItem,
+    deleteMapItem,
+    addGameDeviceItem,
+    updateGameDeviceItem,
+    deleteGameDeviceItem,
+    addGameModeItem,
+    updateGameModeItem,
+    deleteGameModeItem,
     updatePrivacy,
     updateTerms,
     reset,
@@ -179,6 +204,86 @@ export default function Admin() {
     }
   };
 
+  // Weapon handlers
+  const handleSaveWeapon = (item: WeaponItem) => {
+    if (isCreating) {
+      addWeaponItem(item);
+      toast.success("Weapon created!");
+    } else {
+      updateWeaponItem(item.id, item);
+      toast.success("Weapon updated!");
+    }
+    setEditingWeapon(null);
+    setIsCreating(false);
+  };
+
+  const handleDeleteWeapon = (id: string) => {
+    if (confirm("Are you sure you want to delete this weapon?")) {
+      deleteWeaponItem(id);
+      toast.success("Weapon deleted!");
+    }
+  };
+
+  // Map handlers
+  const handleSaveMap = (item: MapItem) => {
+    if (isCreating) {
+      addMapItem(item);
+      toast.success("Map created!");
+    } else {
+      updateMapItem(item.id, item);
+      toast.success("Map updated!");
+    }
+    setEditingMap(null);
+    setIsCreating(false);
+  };
+
+  const handleDeleteMap = (id: string) => {
+    if (confirm("Are you sure you want to delete this map?")) {
+      deleteMapItem(id);
+      toast.success("Map deleted!");
+    }
+  };
+
+  // Device handlers
+  const handleSaveDevice = (item: GameDeviceItem) => {
+    if (isCreating) {
+      addGameDeviceItem(item);
+      toast.success("Device created!");
+    } else {
+      updateGameDeviceItem(item.id, item);
+      toast.success("Device updated!");
+    }
+    setEditingDevice(null);
+    setIsCreating(false);
+  };
+
+  const handleDeleteDevice = (id: string) => {
+    if (confirm("Are you sure you want to delete this device?")) {
+      deleteGameDeviceItem(id);
+      toast.success("Device deleted!");
+    }
+  };
+
+  // Game mode handlers
+  const handleSaveGameMode = (item: GameModeItem) => {
+    if (isCreating) {
+      addGameModeItem(item);
+      toast.success("Game mode created!");
+    } else {
+      updateGameModeItem(item.id, item);
+      toast.success("Game mode updated!");
+    }
+    setEditingGameMode(null);
+    setIsCreating(false);
+  };
+
+  const handleDeleteGameMode = (id: string) => {
+    if (confirm("Are you sure you want to delete this game mode?")) {
+      deleteGameModeItem(id);
+      toast.success("Game mode deleted!");
+    }
+  };
+
   const handleReset = () => {
     if (confirm("Reset all content to defaults? This cannot be undone.")) {
       reset();
@@ -248,12 +353,70 @@ export default function Admin() {
     setIsCreating(true);
   };
 
+  const createNewWeapon = () => {
+    setEditingWeapon({
+      id: "",
+      name: "",
+      category: "assault",
+      description: "",
+      image: "",
+      stats: { damage: 50, accuracy: 50, range: 50, fireRate: 50, mobility: 50, control: 50 },
+      attachments: [],
+    });
+    setIsCreating(true);
+  };
+
+  const createNewMap = () => {
+    setEditingMap({
+      id: "",
+      name: "",
+      description: "",
+      size: "medium",
+      environment: "",
+      image: "",
+      media: [],
+    });
+    setIsCreating(true);
+  };
+
+  const createNewDevice = () => {
+    setEditingDevice({
+      id: "",
+      name: "",
+      description: "",
+      details: "",
+      image: "",
+      media: [],
+      classRestriction: "",
+    });
+    setIsCreating(true);
+  };
+
+  const createNewGameMode = () => {
+    setEditingGameMode({
+      id: "",
+      name: "",
+      shortName: "",
+      description: "",
+      rules: [],
+      image: "",
+      media: [],
+      playerCount: "",
+      roundTime: "",
+    });
+    setIsCreating(true);
+  };
+
   const tabs = [
     { id: "news" as Tab, label: "News", icon: Newspaper },
     { id: "classes" as Tab, label: "Classes", icon: Users },
     { id: "media" as Tab, label: "Media", icon: Image },
     { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
     { id: "features" as Tab, label: "Features", icon: Shield },
+    { id: "weapons" as Tab, label: "Weapons", icon: Crosshair },
+    { id: "maps" as Tab, label: "Maps", icon: Map },
+    { id: "devices" as Tab, label: "Devices", icon: Cpu },
+    { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2 },
     { id: "privacy" as Tab, label: "Privacy", icon: Shield },
     { id: "terms" as Tab, label: "Terms", icon: FileText },
   ];
@@ -718,6 +881,308 @@ export default function Admin() {
                     onSave={handleSaveFeature}
                     onCancel={() => {
                       setEditingFeature(null);
+                      setIsCreating(false);
+                    }}
+                    isCreating={isCreating}
+                  />
+                )}
+              </motion.div>
+            )}
+
+            {/* Weapons Tab */}
+            {activeTab === "weapons" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-heading text-xl text-foreground uppercase">
+                    Manage Weapons
+                  </h2>
+                  <Button onClick={createNewWeapon}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Weapon
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {weapons.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-card border border-border rounded overflow-hidden"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full aspect-video object-cover"
+                      />
+                      <div className="p-4">
+                        <span className="text-xs text-primary uppercase font-heading">{item.category}</span>
+                        <h3 className="font-heading text-foreground">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
+                        <p className="text-xs text-muted-foreground mb-3">{item.attachments.length} attachments</p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setEditingWeapon(item);
+                              setIsCreating(false);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteWeapon(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingWeapon && (
+                  <WeaponEditModal
+                    item={editingWeapon}
+                    onSave={handleSaveWeapon}
+                    onCancel={() => {
+                      setEditingWeapon(null);
+                      setIsCreating(false);
+                    }}
+                    isCreating={isCreating}
+                  />
+                )}
+              </motion.div>
+            )}
+
+            {/* Maps Tab */}
+            {activeTab === "maps" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-heading text-xl text-foreground uppercase">
+                    Manage Maps
+                  </h2>
+                  <Button onClick={createNewMap}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Map
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {maps.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-card border border-border rounded overflow-hidden"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full aspect-video object-cover"
+                      />
+                      <div className="p-4">
+                        <div className="flex gap-2 mb-2">
+                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded uppercase">{item.size}</span>
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{item.environment}</span>
+                        </div>
+                        <h3 className="font-heading text-foreground">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description}</p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setEditingMap(item);
+                              setIsCreating(false);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteMap(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingMap && (
+                  <MapEditModal
+                    item={editingMap}
+                    onSave={handleSaveMap}
+                    onCancel={() => {
+                      setEditingMap(null);
+                      setIsCreating(false);
+                    }}
+                    isCreating={isCreating}
+                  />
+                )}
+              </motion.div>
+            )}
+
+            {/* Devices Tab */}
+            {activeTab === "devices" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-heading text-xl text-foreground uppercase">
+                    Manage Devices
+                  </h2>
+                  <Button onClick={createNewDevice}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Device
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {gameDevices.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-card border border-border rounded overflow-hidden"
+                    >
+                      <div className="relative">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full aspect-video object-cover"
+                        />
+                        {item.classRestriction && (
+                          <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground px-2 py-0.5 rounded text-xs font-heading">
+                            {item.classRestriction}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-heading text-foreground">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description}</p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setEditingDevice(item);
+                              setIsCreating(false);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteDevice(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingDevice && (
+                  <DeviceEditModal
+                    item={editingDevice}
+                    onSave={handleSaveDevice}
+                    onCancel={() => {
+                      setEditingDevice(null);
+                      setIsCreating(false);
+                    }}
+                    isCreating={isCreating}
+                  />
+                )}
+              </motion.div>
+            )}
+
+            {/* Game Modes Tab */}
+            {activeTab === "gamemodes" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <h2 className="font-heading text-xl text-foreground uppercase">
+                    Manage Game Modes
+                  </h2>
+                  <Button onClick={createNewGameMode}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Game Mode
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {gameModes.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-card border border-border rounded overflow-hidden"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full aspect-video object-cover"
+                      />
+                      <div className="p-4">
+                        <span className="text-primary font-heading text-sm">{item.shortName}</span>
+                        <h3 className="font-heading text-foreground">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
+                        <div className="flex gap-2 text-xs text-muted-foreground mb-3">
+                          {item.playerCount && <span>{item.playerCount}</span>}
+                          {item.roundTime && <span>• {item.roundTime}</span>}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setEditingGameMode(item);
+                              setIsCreating(false);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteGameMode(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingGameMode && (
+                  <GameModeEditModal
+                    item={editingGameMode}
+                    onSave={handleSaveGameMode}
+                    onCancel={() => {
+                      setEditingGameMode(null);
                       setIsCreating(false);
                     }}
                     isCreating={isCreating}
