@@ -136,6 +136,69 @@ export interface GameModeItem {
   roundTime?: string;
 }
 
+// ========== Site Settings Interfaces ==========
+
+export interface BackgroundSettings {
+  type: 'color' | 'gradient' | 'image';
+  color?: string; // HSL values like "220 15% 6%"
+  gradientFrom?: string;
+  gradientTo?: string;
+  gradientDirection?: 'to-t' | 'to-b' | 'to-l' | 'to-r' | 'to-tl' | 'to-tr' | 'to-bl' | 'to-br';
+  imageUrl?: string;
+  imageOverlayOpacity?: number; // 0-100
+  textureEnabled?: boolean;
+  textureOpacity?: number; // 0-100
+}
+
+export interface SectionBackground {
+  hero: BackgroundSettings;
+  news: BackgroundSettings;
+  features: BackgroundSettings;
+  classes: BackgroundSettings;
+  cta: BackgroundSettings;
+  footer: BackgroundSettings;
+}
+
+export interface BrandingSettings {
+  siteName: string;
+  siteTagline: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  copyrightText: string;
+  poweredByText?: string;
+}
+
+export interface SocialLink {
+  id: string;
+  platform: 'discord' | 'twitter' | 'facebook' | 'youtube' | 'twitch' | 'instagram' | 'steam' | 'reddit' | 'tiktok' | 'other';
+  url: string;
+  label: string;
+  enabled: boolean;
+}
+
+export interface SEOSettings {
+  defaultTitle: string;
+  defaultDescription: string;
+  defaultKeywords: string[];
+  ogImage?: string;
+  twitterHandle?: string;
+}
+
+export interface HomepageSection {
+  id: string;
+  name: string;
+  enabled: boolean;
+  order: number;
+}
+
+export interface SiteSettings {
+  branding: BrandingSettings;
+  backgrounds: SectionBackground;
+  socialLinks: SocialLink[];
+  seo: SEOSettings;
+  homepageSections: HomepageSection[];
+}
+
 export interface SiteContent {
   news: NewsItem[];
   classes: ClassItem[];
@@ -149,6 +212,8 @@ export interface SiteContent {
   maps: MapItem[];
   gameDevices: GameDeviceItem[];
   gameModes: GameModeItem[];
+  // Site settings
+  settings: SiteSettings;
 }
 
 const STORAGE_KEY = 'sos-content';
@@ -557,8 +622,87 @@ const defaultGameModes: GameModeItem[] = [
   },
 ];
 
+// Default site settings
+const defaultSettings: SiteSettings = {
+  branding: {
+    siteName: "Shadows of Soldiers",
+    siteTagline: "Pick Your Role. Shape the Battlefield.",
+    logoUrl: "",
+    faviconUrl: "",
+    copyrightText: "© 2024 Shadows of Soldiers. All rights reserved.",
+    poweredByText: "Powered by Unreal Engine 5",
+  },
+  backgrounds: {
+    hero: {
+      type: "image",
+      imageUrl: "https://www.shadowsofsoldiers.com/wp-content/uploads/2020/08/ZA1JOmc-scaled.jpg",
+      imageOverlayOpacity: 60,
+      textureEnabled: false,
+      textureOpacity: 3,
+    },
+    news: {
+      type: "color",
+      color: "220 15% 6%",
+      textureEnabled: true,
+      textureOpacity: 3,
+    },
+    features: {
+      type: "gradient",
+      gradientFrom: "220 15% 8%",
+      gradientTo: "220 15% 4%",
+      gradientDirection: "to-b",
+      textureEnabled: true,
+      textureOpacity: 3,
+    },
+    classes: {
+      type: "color",
+      color: "220 15% 6%",
+      textureEnabled: true,
+      textureOpacity: 3,
+    },
+    cta: {
+      type: "gradient",
+      gradientFrom: "220 15% 8%",
+      gradientTo: "220 15% 4%",
+      gradientDirection: "to-b",
+      textureEnabled: false,
+      textureOpacity: 3,
+    },
+    footer: {
+      type: "color",
+      color: "220 15% 4%",
+      textureEnabled: false,
+      textureOpacity: 3,
+    },
+  },
+  socialLinks: [
+    { id: "1", platform: "discord", url: "https://discord.gg/shadowsofsoldiers", label: "Discord", enabled: true },
+    { id: "2", platform: "steam", url: "https://store.steampowered.com/app/2713480/Shadows_of_Soldiers/", label: "Steam", enabled: true },
+    { id: "3", platform: "facebook", url: "https://www.facebook.com/shadowsofsoldiers", label: "Facebook", enabled: true },
+    { id: "4", platform: "youtube", url: "https://www.youtube.com/@shadowsofsoldiers", label: "YouTube", enabled: true },
+    { id: "5", platform: "twitter", url: "", label: "Twitter/X", enabled: false },
+    { id: "6", platform: "instagram", url: "", label: "Instagram", enabled: false },
+    { id: "7", platform: "twitch", url: "", label: "Twitch", enabled: false },
+    { id: "8", platform: "reddit", url: "", label: "Reddit", enabled: false },
+  ],
+  seo: {
+    defaultTitle: "Shadows of Soldiers - Tactical 5v5 Shooter",
+    defaultDescription: "A tactical 5v5 shooter built on Unreal Engine 5 where every move matters, every shot counts, and every victory is earned.",
+    defaultKeywords: ["tactical shooter", "5v5", "unreal engine 5", "fps", "multiplayer", "shadows of soldiers"],
+    ogImage: "",
+    twitterHandle: "",
+  },
+  homepageSections: [
+    { id: "hero", name: "Hero Section", enabled: true, order: 0 },
+    { id: "news", name: "News Section", enabled: true, order: 1 },
+    { id: "features", name: "Features Section", enabled: true, order: 2 },
+    { id: "classes", name: "Classes Section", enabled: true, order: 3 },
+    { id: "cta", name: "CTA Section", enabled: true, order: 4 },
+  ],
+};
+
 export function getContent(): SiteContent {
-  const defaultContent = {
+  const defaultContent: SiteContent = {
     news: defaultNews,
     classes: defaultClasses,
     media: defaultMedia,
@@ -570,6 +714,7 @@ export function getContent(): SiteContent {
     maps: defaultMaps,
     gameDevices: defaultGameDevices,
     gameModes: defaultGameModes,
+    settings: defaultSettings,
   };
 
   if (typeof window === 'undefined') {
@@ -595,6 +740,7 @@ export function getContent(): SiteContent {
       maps: parsed.maps || defaultMaps,
       gameDevices: parsed.gameDevices || defaultGameDevices,
       gameModes: parsed.gameModes || defaultGameModes,
+      settings: parsed.settings || defaultSettings,
     };
   } catch {
     return defaultContent;
@@ -612,4 +758,8 @@ export function getNewsById(id: string): NewsItem | undefined {
 
 export function resetToDefaults(): void {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+export function getDefaultSettings(): SiteSettings {
+  return defaultSettings;
 }

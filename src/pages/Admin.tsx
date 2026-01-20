@@ -19,7 +19,8 @@ import {
   Crosshair,
   Map,
   Cpu,
-  Gamepad2
+  Gamepad2,
+  Settings
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,9 @@ import { toast } from "sonner";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { WeaponEditModal, MapEditModal, DeviceEditModal, GameModeEditModal } from "@/components/admin/GameContentModals";
+import { SettingsPanel } from "@/components/admin/SettingsPanel";
 
-type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes";
+type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<Tab>("news");
@@ -409,6 +411,7 @@ export default function Admin() {
 
   const tabs = [
     { id: "news" as Tab, label: "News", icon: Newspaper },
+    { id: "news" as Tab, label: "News", icon: Newspaper },
     { id: "classes" as Tab, label: "Classes", icon: Users },
     { id: "media" as Tab, label: "Media", icon: Image },
     { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
@@ -419,6 +422,7 @@ export default function Admin() {
     { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2 },
     { id: "privacy" as Tab, label: "Privacy", icon: Shield },
     { id: "terms" as Tab, label: "Terms", icon: FileText },
+    { id: "settings" as Tab, label: "Settings", icon: Settings },
   ];
 
   const handleChangePassword = () => {
@@ -1228,6 +1232,16 @@ export default function Admin() {
                     toast.success("Terms updated!");
                   }}
                 />
+              </motion.div>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === "settings" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <SettingsPanel />
               </motion.div>
             )}
           </main>
