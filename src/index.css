@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Audiowide&family=Bebas+Neue&family=Black+Ops+One&family=Bungee&family=Exo+2:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Lato:wght@400;700&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Orbitron:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&family=PT+Sans:wght@400;700&family=Quantico:wght@400;700&family=Rajdhani:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Russo+One&family=Saira:wght@400;500;600;700&family=Source+Sans+3:wght@400;600;700&family=Teko:wght@400;500;600;700&family=Titillium+Web:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -77,19 +77,19 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body, 'Inter'), sans-serif;
   }
 
   /* Grunge/Military display headings */
   h1, h2, h3 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display, 'Bebas Neue'), sans-serif;
     letter-spacing: 0.05em;
     text-transform: uppercase;
   }
 
   /* Secondary headings */
   h4, h5, h6 {
-    font-family: 'Oswald', sans-serif;
+    font-family: var(--font-heading, 'Oswald'), sans-serif;
     font-weight: 500;
   }
 }
