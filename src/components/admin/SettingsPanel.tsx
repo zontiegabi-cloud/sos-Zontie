@@ -12,7 +12,9 @@ import {
   EyeOff,
   Plus,
   Trash2,
-  RotateCcw
+  RotateCcw,
+  Type,
+  Paintbrush
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { SiteSettings, BackgroundSettings, SocialLink } from "@/lib/content-store";
+import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings } from "@/lib/content-store";
 import { toast } from "sonner";
 
 const socialPlatforms = [
@@ -48,6 +50,33 @@ const gradientDirections = [
   { value: "to-tr", label: "To Top Right" },
   { value: "to-bl", label: "To Bottom Left" },
   { value: "to-br", label: "To Bottom Right" },
+];
+
+const fontOptions = [
+  // Display/Impact fonts
+  { value: "Bebas Neue", label: "Bebas Neue", category: "display" },
+  { value: "Anton", label: "Anton", category: "display" },
+  { value: "Bungee", label: "Bungee", category: "display" },
+  { value: "Russo One", label: "Russo One", category: "display" },
+  { value: "Black Ops One", label: "Black Ops One", category: "display" },
+  { value: "Teko", label: "Teko", category: "display" },
+  { value: "Orbitron", label: "Orbitron", category: "display" },
+  // Heading fonts
+  { value: "Oswald", label: "Oswald", category: "heading" },
+  { value: "Rajdhani", label: "Rajdhani", category: "heading" },
+  { value: "Audiowide", label: "Audiowide", category: "heading" },
+  { value: "Exo 2", label: "Exo 2", category: "heading" },
+  { value: "Quantico", label: "Quantico", category: "heading" },
+  { value: "Saira", label: "Saira", category: "heading" },
+  { value: "Titillium Web", label: "Titillium Web", category: "heading" },
+  // Body fonts
+  { value: "Inter", label: "Inter", category: "body" },
+  { value: "Roboto", label: "Roboto", category: "body" },
+  { value: "Open Sans", label: "Open Sans", category: "body" },
+  { value: "Lato", label: "Lato", category: "body" },
+  { value: "Source Sans 3", label: "Source Sans 3", category: "body" },
+  { value: "PT Sans", label: "PT Sans", category: "body" },
+  { value: "Nunito", label: "Nunito", category: "body" },
 ];
 
 interface BackgroundEditorProps {
@@ -204,6 +233,36 @@ function BackgroundEditor({ section, label, background, onChange }: BackgroundEd
   );
 }
 
+interface ColorInputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  description?: string;
+}
+
+function ColorInput({ label, value, onChange, description }: ColorInputProps) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <div
+          className="w-10 h-10 rounded border border-border shrink-0"
+          style={{ background: `hsl(${value})` }}
+        />
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="220 15% 6%"
+          className="flex-1"
+        />
+      </div>
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+    </div>
+  );
+}
+
 export function SettingsPanel() {
   const {
     settings,
@@ -212,6 +271,8 @@ export function SettingsPanel() {
     updateSocialLinks,
     updateSEO,
     updateHomepageSections,
+    updateThemeFonts,
+    updateThemeColors,
     resetSettings,
   } = useSiteSettings();
 
@@ -280,10 +341,14 @@ export function SettingsPanel() {
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-        <TabsList className="grid grid-cols-5 mb-6">
+        <TabsList className="grid grid-cols-6 mb-6">
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Image className="w-4 h-4" />
             <span className="hidden sm:inline">Branding</span>
+          </TabsTrigger>
+          <TabsTrigger value="theme" className="flex items-center gap-2">
+            <Paintbrush className="w-4 h-4" />
+            <span className="hidden sm:inline">Theme</span>
           </TabsTrigger>
           <TabsTrigger value="backgrounds" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
@@ -363,6 +428,201 @@ export function SettingsPanel() {
               />
             </div>
           )}
+        </TabsContent>
+
+        {/* Theme Tab */}
+        <TabsContent value="theme" className="space-y-6">
+          {/* Fonts Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Type className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Typography</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose fonts for different text elements. Changes apply in real-time.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Display Font (H1, H2, H3)</Label>
+                <Select
+                  value={settings.theme.fonts.display}
+                  onValueChange={(v) => updateThemeFonts({ display: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.filter(f => f.category === 'display' || f.category === 'heading').map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div 
+                  className="p-3 bg-muted rounded text-2xl uppercase tracking-wide"
+                  style={{ fontFamily: settings.theme.fonts.display }}
+                >
+                  DISPLAY TEXT
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Heading Font (H4, H5, H6)</Label>
+                <Select
+                  value={settings.theme.fonts.heading}
+                  onValueChange={(v) => updateThemeFonts({ heading: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.filter(f => f.category === 'heading' || f.category === 'display').map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div 
+                  className="p-3 bg-muted rounded text-lg font-medium"
+                  style={{ fontFamily: settings.theme.fonts.heading }}
+                >
+                  Heading Text
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Body Font</Label>
+                <Select
+                  value={settings.theme.fonts.body}
+                  onValueChange={(v) => updateThemeFonts({ body: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.filter(f => f.category === 'body').map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div 
+                  className="p-3 bg-muted rounded text-sm"
+                  style={{ fontFamily: settings.theme.fonts.body }}
+                >
+                  This is body text that appears throughout the site.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Colors Section */}
+          <div className="space-y-4 pt-6 border-t border-border">
+            <div className="flex items-center gap-2 mb-2">
+              <Palette className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Colors</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Customize the color palette. Use HSL format (e.g., "220 15% 6%"). Changes apply in real-time.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <ColorInput
+                label="Primary Color"
+                value={settings.theme.colors.primary}
+                onChange={(v) => updateThemeColors({ primary: v })}
+                description="Main brand color for buttons and accents"
+              />
+              <ColorInput
+                label="Primary Foreground"
+                value={settings.theme.colors.primaryForeground}
+                onChange={(v) => updateThemeColors({ primaryForeground: v })}
+                description="Text color on primary backgrounds"
+              />
+              <ColorInput
+                label="Accent Color"
+                value={settings.theme.colors.accent}
+                onChange={(v) => updateThemeColors({ accent: v })}
+                description="Secondary accent color (CTAs, highlights)"
+              />
+              <ColorInput
+                label="Accent Foreground"
+                value={settings.theme.colors.accentForeground}
+                onChange={(v) => updateThemeColors({ accentForeground: v })}
+                description="Text color on accent backgrounds"
+              />
+              <ColorInput
+                label="Background"
+                value={settings.theme.colors.background}
+                onChange={(v) => updateThemeColors({ background: v })}
+                description="Main page background color"
+              />
+              <ColorInput
+                label="Foreground"
+                value={settings.theme.colors.foreground}
+                onChange={(v) => updateThemeColors({ foreground: v })}
+                description="Main text color"
+              />
+              <ColorInput
+                label="Muted"
+                value={settings.theme.colors.muted}
+                onChange={(v) => updateThemeColors({ muted: v })}
+                description="Muted background color (cards, panels)"
+              />
+              <ColorInput
+                label="Muted Foreground"
+                value={settings.theme.colors.mutedForeground}
+                onChange={(v) => updateThemeColors({ mutedForeground: v })}
+                description="Secondary text color"
+              />
+              <ColorInput
+                label="Border"
+                value={settings.theme.colors.border}
+                onChange={(v) => updateThemeColors({ border: v })}
+                description="Border and divider color"
+              />
+            </div>
+
+            {/* Color Preview */}
+            <div className="mt-6 p-4 rounded-lg border border-border" style={{ background: `hsl(${settings.theme.colors.background})` }}>
+              <h4 className="text-lg font-heading mb-2" style={{ color: `hsl(${settings.theme.colors.foreground})` }}>Color Preview</h4>
+              <p className="text-sm mb-4" style={{ color: `hsl(${settings.theme.colors.mutedForeground})` }}>This is how your colors will look together.</p>
+              <div className="flex flex-wrap gap-2">
+                <button 
+                  className="px-4 py-2 rounded font-medium"
+                  style={{ 
+                    background: `hsl(${settings.theme.colors.primary})`,
+                    color: `hsl(${settings.theme.colors.primaryForeground})`
+                  }}
+                >
+                  Primary Button
+                </button>
+                <button 
+                  className="px-4 py-2 rounded font-medium"
+                  style={{ 
+                    background: `hsl(${settings.theme.colors.accent})`,
+                    color: `hsl(${settings.theme.colors.accentForeground})`
+                  }}
+                >
+                  Accent Button
+                </button>
+                <div 
+                  className="px-4 py-2 rounded"
+                  style={{ 
+                    background: `hsl(${settings.theme.colors.muted})`,
+                    color: `hsl(${settings.theme.colors.foreground})`,
+                    border: `1px solid hsl(${settings.theme.colors.border})`
+                  }}
+                >
+                  Muted Panel
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Backgrounds Tab */}

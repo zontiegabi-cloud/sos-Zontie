@@ -191,12 +191,32 @@ export interface HomepageSection {
   order: number;
 }
 
+export interface ThemeSettings {
+  fonts: {
+    display: string; // For h1, h2, h3
+    heading: string; // For h4, h5, h6
+    body: string;    // For body text
+  };
+  colors: {
+    primary: string;        // HSL values
+    primaryForeground: string;
+    accent: string;
+    accentForeground: string;
+    background: string;
+    foreground: string;
+    muted: string;
+    mutedForeground: string;
+    border: string;
+  };
+}
+
 export interface SiteSettings {
   branding: BrandingSettings;
   backgrounds: SectionBackground;
   socialLinks: SocialLink[];
   seo: SEOSettings;
   homepageSections: HomepageSection[];
+  theme: ThemeSettings;
 }
 
 export interface SiteContent {
@@ -699,6 +719,24 @@ const defaultSettings: SiteSettings = {
     { id: "classes", name: "Classes Section", enabled: true, order: 3 },
     { id: "cta", name: "CTA Section", enabled: true, order: 4 },
   ],
+  theme: {
+    fonts: {
+      display: "Bebas Neue",
+      heading: "Oswald",
+      body: "Inter",
+    },
+    colors: {
+      primary: "191 76% 32%",
+      primaryForeground: "220 15% 6%",
+      accent: "8 85% 55%",
+      accentForeground: "0 0% 100%",
+      background: "220 15% 6%",
+      foreground: "40 10% 90%",
+      muted: "220 10% 15%",
+      mutedForeground: "220 10% 60%",
+      border: "220 10% 20%",
+    },
+  },
 };
 
 export function getContent(): SiteContent {

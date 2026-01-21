@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { SiteSettings, getContent, saveContent, getDefaultSettings } from "@/lib/content-store";
+import { SiteSettings, getContent, saveContent, getDefaultSettings, ThemeSettings } from "@/lib/content-store";
 
 interface SiteSettingsContextValue {
   settings: SiteSettings;
@@ -9,6 +9,9 @@ interface SiteSettingsContextValue {
   updateSocialLinks: (links: SiteSettings['socialLinks']) => void;
   updateSEO: (seo: Partial<SiteSettings['seo']>) => void;
   updateHomepageSections: (sections: SiteSettings['homepageSections']) => void;
+  updateTheme: (theme: Partial<ThemeSettings>) => void;
+  updateThemeFonts: (fonts: Partial<ThemeSettings['fonts']>) => void;
+  updateThemeColors: (colors: Partial<ThemeSettings['colors']>) => void;
   resetSettings: () => void;
   isLoading: boolean;
 }
@@ -76,9 +79,66 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     saveSettings(newSettings);
   }, [settings, saveSettings]);
 
+  const updateTheme = useCallback((theme: Partial<ThemeSettings>) => {
+    const newSettings = {
+      ...settings,
+      theme: { ...settings.theme, ...theme },
+    };
+    saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const updateThemeFonts = useCallback((fonts: Partial<ThemeSettings['fonts']>) => {
+    const newSettings = {
+      ...settings,
+      theme: {
+        ...settings.theme,
+        fonts: { ...settings.theme.fonts, ...fonts },
+      },
+    };
+    saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const updateThemeColors = useCallback((colors: Partial<ThemeSettings['colors']>) => {
+    const newSettings = {
+      ...settings,
+      theme: {
+        ...settings.theme,
+        colors: { ...settings.theme.colors, ...colors },
+      },
+    };
+    saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
   const resetSettings = useCallback(() => {
     saveSettings(getDefaultSettings());
   }, [saveSettings]);
+
+  // Apply theme CSS variables dynamically
+  useEffect(() => {
+    const root = document.documentElement;
+    const { colors, fonts } = settings.theme;
+
+    // Apply colors
+    root.style.setProperty('--primary', colors.primary);
+    root.style.setProperty('--primary-foreground', colors.primaryForeground);
+    root.style.setProperty('--accent', colors.accent);
+    root.style.setProperty('--accent-foreground', colors.accentForeground);
+    root.style.setProperty('--background', colors.background);
+    root.style.setProperty('--foreground', colors.foreground);
+    root.style.setProperty('--muted', colors.muted);
+    root.style.setProperty('--muted-foreground', colors.mutedForeground);
+    root.style.setProperty('--border', colors.border);
+    root.style.setProperty('--glow-primary', colors.primary);
+    root.style.setProperty('--glow-accent', colors.accent);
+
+    // Apply fonts
+    root.style.setProperty('--font-display', fonts.display);
+    root.style.setProperty('--font-heading', fonts.heading);
+    root.style.setProperty('--font-body', fonts.body);
+
+    // Update font-family in body
+    document.body.style.fontFamily = `'${fonts.body}', sans-serif`;
+  }, [settings.theme]);
 
   return (
     <SiteSettingsContext.Provider
@@ -90,6 +150,9 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         updateSocialLinks,
         updateSEO,
         updateHomepageSections,
+        updateTheme,
+        updateThemeFonts,
+        updateThemeColors,
         resetSettings,
         isLoading,
       }}
