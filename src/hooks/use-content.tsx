@@ -267,6 +267,7 @@ export function useContent() {
     deleteGameModeItem,
     updatePrivacy,
     updateTerms,
+    updateContent,
     reset,
   };
 }

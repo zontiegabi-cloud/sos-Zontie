@@ -1,15 +1,8 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Newspaper, 
   Users, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Save,
-  X,
-  RotateCcw,
-  Home,
   Image,
   HelpCircle,
   Shield,
@@ -20,34 +13,36 @@ import {
   Map,
   Cpu,
   Gamepad2,
-  Settings
+  Settings,
+  LayoutDashboard,
+  Home
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useContent } from "@/hooks/use-content";
-import { NewsItem, ClassItem, MediaItem, FAQItem, FeatureItem, PageContent, WeaponItem, MapItem, GameDeviceItem, GameModeItem } from "@/lib/content-store";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { AdminLogin } from "@/components/admin/AdminLogin";
-import { WeaponEditModal, MapEditModal, DeviceEditModal, GameModeEditModal } from "@/components/admin/GameContentModals";
 import { SettingsPanel } from "@/components/admin/SettingsPanel";
 
-type Tab = "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings";
+// Import modular tabs
+import { DashboardTab } from "@/components/admin/tabs/DashboardTab";
+import { NewsTab } from "@/components/admin/tabs/NewsTab";
+import { ClassesTab } from "@/components/admin/tabs/ClassesTab";
+import { WeaponsTab } from "@/components/admin/tabs/WeaponsTab";
+import { MapsTab } from "@/components/admin/tabs/MapsTab";
+import { DevicesTab } from "@/components/admin/tabs/DevicesTab";
+import { GameModesTab } from "@/components/admin/tabs/GameModesTab";
+import { MediaTab } from "@/components/admin/tabs/MediaTab";
+import { FeaturesTab } from "@/components/admin/tabs/FeaturesTab";
+import { FAQTab } from "@/components/admin/tabs/FAQTab";
+import { PrivacyTab } from "@/components/admin/tabs/PrivacyTab";
+import { TermsTab } from "@/components/admin/tabs/TermsTab";
+
+type Tab = "dashboard" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings";
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<Tab>("news");
-  const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
-  const [editingClass, setEditingClass] = useState<ClassItem | null>(null);
-  const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
-  const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
-  const [editingFeature, setEditingFeature] = useState<FeatureItem | null>(null);
-  const [editingWeapon, setEditingWeapon] = useState<WeaponItem | null>(null);
-  const [editingMap, setEditingMap] = useState<MapItem | null>(null);
-  const [editingDevice, setEditingDevice] = useState<GameDeviceItem | null>(null);
-  const [editingGameMode, setEditingGameMode] = useState<GameModeItem | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
@@ -62,1943 +57,200 @@ export default function Admin() {
     changePassword,
   } = useAdminAuth();
 
-  const {
-    news,
-    classes,
-    media,
-    faq,
-    features,
-    privacy,
-    terms,
-    weapons,
-    maps,
-    gameDevices,
-    gameModes,
-    addNewsItem,
-    updateNewsItem,
-    deleteNewsItem,
-    addClassItem,
-    updateClassItem,
-    deleteClassItem,
-    addMediaItem,
-    updateMediaItem,
-    deleteMediaItem,
-    addFAQItem,
-    updateFAQItem,
-    deleteFAQItem,
-    addFeatureItem,
-    updateFeatureItem,
-    deleteFeatureItem,
-    addWeaponItem,
-    updateWeaponItem,
-    deleteWeaponItem,
-    addMapItem,
-    updateMapItem,
-    deleteMapItem,
-    addGameDeviceItem,
-    updateGameDeviceItem,
-    deleteGameDeviceItem,
-    addGameModeItem,
-    updateGameModeItem,
-    deleteGameModeItem,
-    updatePrivacy,
-    updateTerms,
-    reset,
-  } = useContent();
-
-  // News handlers
-  const handleSaveNews = (item: NewsItem) => {
-    if (isCreating) {
-      addNewsItem(item);
-      toast.success("News article created!");
-    } else {
-      updateNewsItem(item.id, item);
-      toast.success("News article updated!");
-    }
-    setEditingNews(null);
-    setIsCreating(false);
+  const handleSetPassword = (password: string) => {
+    setPassword(password);
   };
 
-  const handleDeleteNews = (id: string) => {
-    if (confirm("Are you sure you want to delete this news article?")) {
-      deleteNewsItem(id);
-      toast.success("News article deleted!");
-    }
+  const handleLogin = (password: string) => {
+    login(password);
   };
-
-  // Class handlers
-  const handleSaveClass = (item: ClassItem) => {
-    if (isCreating) {
-      addClassItem(item);
-      toast.success("Class created!");
-    } else {
-      updateClassItem(item.id, item);
-      toast.success("Class updated!");
-    }
-    setEditingClass(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteClass = (id: string) => {
-    if (confirm("Are you sure you want to delete this class?")) {
-      deleteClassItem(id);
-      toast.success("Class deleted!");
-    }
-  };
-
-  // Media handlers
-  const handleSaveMedia = (item: MediaItem) => {
-    if (isCreating) {
-      addMediaItem(item);
-      toast.success("Media item created!");
-    } else {
-      updateMediaItem(item.id, item);
-      toast.success("Media item updated!");
-    }
-    setEditingMedia(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteMedia = (id: string) => {
-    if (confirm("Are you sure you want to delete this media item?")) {
-      deleteMediaItem(id);
-      toast.success("Media item deleted!");
-    }
-  };
-
-  // FAQ handlers
-  const handleSaveFAQ = (item: FAQItem) => {
-    if (isCreating) {
-      addFAQItem(item);
-      toast.success("FAQ item created!");
-    } else {
-      updateFAQItem(item.id, item);
-      toast.success("FAQ item updated!");
-    }
-    setEditingFAQ(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteFAQ = (id: string) => {
-    if (confirm("Are you sure you want to delete this FAQ?")) {
-      deleteFAQItem(id);
-      toast.success("FAQ deleted!");
-    }
-  };
-
-  // Feature handlers
-  const handleSaveFeature = (item: FeatureItem) => {
-    if (isCreating) {
-      addFeatureItem(item);
-      toast.success("Feature created!");
-    } else {
-      updateFeatureItem(item.id, item);
-      toast.success("Feature updated!");
-    }
-    setEditingFeature(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteFeature = (id: string) => {
-    if (confirm("Are you sure you want to delete this feature?")) {
-      deleteFeatureItem(id);
-      toast.success("Feature deleted!");
-    }
-  };
-
-  // Weapon handlers
-  const handleSaveWeapon = (item: WeaponItem) => {
-    if (isCreating) {
-      addWeaponItem(item);
-      toast.success("Weapon created!");
-    } else {
-      updateWeaponItem(item.id, item);
-      toast.success("Weapon updated!");
-    }
-    setEditingWeapon(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteWeapon = (id: string) => {
-    if (confirm("Are you sure you want to delete this weapon?")) {
-      deleteWeaponItem(id);
-      toast.success("Weapon deleted!");
-    }
-  };
-
-  // Map handlers
-  const handleSaveMap = (item: MapItem) => {
-    if (isCreating) {
-      addMapItem(item);
-      toast.success("Map created!");
-    } else {
-      updateMapItem(item.id, item);
-      toast.success("Map updated!");
-    }
-    setEditingMap(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteMap = (id: string) => {
-    if (confirm("Are you sure you want to delete this map?")) {
-      deleteMapItem(id);
-      toast.success("Map deleted!");
-    }
-  };
-
-  // Device handlers
-  const handleSaveDevice = (item: GameDeviceItem) => {
-    if (isCreating) {
-      addGameDeviceItem(item);
-      toast.success("Device created!");
-    } else {
-      updateGameDeviceItem(item.id, item);
-      toast.success("Device updated!");
-    }
-    setEditingDevice(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteDevice = (id: string) => {
-    if (confirm("Are you sure you want to delete this device?")) {
-      deleteGameDeviceItem(id);
-      toast.success("Device deleted!");
-    }
-  };
-
-  // Game mode handlers
-  const handleSaveGameMode = (item: GameModeItem) => {
-    if (isCreating) {
-      addGameModeItem(item);
-      toast.success("Game mode created!");
-    } else {
-      updateGameModeItem(item.id, item);
-      toast.success("Game mode updated!");
-    }
-    setEditingGameMode(null);
-    setIsCreating(false);
-  };
-
-  const handleDeleteGameMode = (id: string) => {
-    if (confirm("Are you sure you want to delete this game mode?")) {
-      deleteGameModeItem(id);
-      toast.success("Game mode deleted!");
-    }
-  };
-
-  const handleReset = () => {
-    if (confirm("Reset all content to defaults? This cannot be undone.")) {
-      reset();
-      toast.success("Content reset to defaults!");
-    }
-  };
-
-  const createNewNews = () => {
-    setEditingNews({
-      id: "",
-      title: "",
-      date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      description: "",
-      content: "",
-      image: "",
-      tag: "News",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewClass = () => {
-    setEditingClass({
-      id: "",
-      name: "",
-      role: "",
-      description: "",
-      details: ["", "", "", ""],
-      image: "",
-      icon: "Crosshair",
-      color: "from-red-500/20 to-transparent",
-      devices: [],
-      devicesUsedTitle: "",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewMedia = () => {
-    setEditingMedia({
-      id: "",
-      type: "image",
-      title: "",
-      src: "",
-      category: "Gameplay",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewFAQ = () => {
-    setEditingFAQ({
-      id: "",
-      question: "",
-      answer: "",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewFeature = () => {
-    setEditingFeature({
-      id: "",
-      title: "",
-      description: "",
-      image: "",
-      icon: "Crosshair",
-      devices: [{ name: "", details: "", icon: "" }],
-      devicesSectionTitle: "",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewWeapon = () => {
-    setEditingWeapon({
-      id: "",
-      name: "",
-      category: "assault",
-      description: "",
-      image: "",
-      stats: { damage: 50, accuracy: 50, range: 50, fireRate: 50, mobility: 50, control: 50 },
-      attachments: [],
-    });
-    setIsCreating(true);
-  };
-
-  const createNewMap = () => {
-    setEditingMap({
-      id: "",
-      name: "",
-      description: "",
-      size: "medium",
-      environment: "",
-      image: "",
-      media: [],
-    });
-    setIsCreating(true);
-  };
-
-  const createNewDevice = () => {
-    setEditingDevice({
-      id: "",
-      name: "",
-      description: "",
-      details: "",
-      image: "",
-      media: [],
-      classRestriction: "",
-    });
-    setIsCreating(true);
-  };
-
-  const createNewGameMode = () => {
-    setEditingGameMode({
-      id: "",
-      name: "",
-      shortName: "",
-      description: "",
-      rules: [],
-      image: "",
-      media: [],
-      playerCount: "",
-      roundTime: "",
-    });
-    setIsCreating(true);
-  };
-
-  const tabs = [
-    { id: "news" as Tab, label: "News", icon: Newspaper },
-    { id: "news" as Tab, label: "News", icon: Newspaper },
-    { id: "classes" as Tab, label: "Classes", icon: Users },
-    { id: "media" as Tab, label: "Media", icon: Image },
-    { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
-    { id: "features" as Tab, label: "Features", icon: Shield },
-    { id: "weapons" as Tab, label: "Weapons", icon: Crosshair },
-    { id: "maps" as Tab, label: "Maps", icon: Map },
-    { id: "devices" as Tab, label: "Devices", icon: Cpu },
-    { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2 },
-    { id: "privacy" as Tab, label: "Privacy", icon: Shield },
-    { id: "terms" as Tab, label: "Terms", icon: FileText },
-    { id: "settings" as Tab, label: "Settings", icon: Settings },
-  ];
 
   const handleChangePassword = () => {
     if (changePassword(currentPasswordInput, newPasswordInput)) {
-      toast.success("Password changed successfully!");
       setShowChangePassword(false);
       setCurrentPasswordInput("");
       setNewPasswordInput("");
-    } else {
-      toast.error("Failed to change password. Check your current password.");
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    toast.success("Logged out successfully!");
-  };
-
-  // Show loading state
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Loading...</div>;
   }
 
-  // Show login/setup screen if not authenticated
   if (!isAuthenticated) {
     return (
-      <AdminLogin
+      <AdminLogin 
         isPasswordSet={isPasswordSet}
-        onLogin={login}
-        onSetPassword={setPassword}
+        onLogin={handleLogin}
+        onSetPassword={handleSetPassword}
       />
     );
   }
 
+  const navItems = [
+    { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
+    { id: "news" as Tab, label: "News", icon: Newspaper },
+    { id: "classes" as Tab, label: "Classes", icon: Users },
+    { id: "weapons" as Tab, label: "Weapons", icon: Crosshair },
+    { id: "maps" as Tab, label: "Maps", icon: Map },
+    { id: "devices" as Tab, label: "Devices", icon: Cpu },
+    { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2 },
+    { id: "media" as Tab, label: "Media", icon: Image },
+    { id: "features" as Tab, label: "Features", icon: Shield },
+    { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
+    { id: "settings" as Tab, label: "Settings", icon: Settings },
+  ];
+
+  const legalItems = [
+    { id: "privacy" as Tab, label: "Privacy Policy", icon: FileText },
+    { id: "terms" as Tab, label: "Terms of Service", icon: FileText },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-              <Home className="w-5 h-5" />
-            </Link>
-            <h1 className="font-display text-2xl text-foreground">
-              ADMIN <span className="text-primary">PANEL</span>
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowChangePassword(!showChangePassword)}>
+    <div className="min-h-screen bg-background text-foreground flex">
+      {/* Sidebar */}
+      <motion.div 
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="w-64 bg-card border-r border-border flex flex-col fixed h-full z-10"
+      >
+        <div className="p-6 border-b border-border">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+            <span className="font-heading text-xl text-primary">Admin Panel</span>
+          </Link>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+          <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">Content</div>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </button>
+          ))}
+
+          <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mt-6 mb-2">Legal</div>
+          {legalItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4 border-t border-border bg-card">
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => setShowChangePassword(!showChangePassword)}
+            >
               <Key className="w-4 h-4 mr-2" />
               Change Password
             </Button>
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset Content
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleLogout}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={logout}
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
         </div>
-
-        {/* Change Password Form */}
-        {showChangePassword && (
-          <div className="border-t border-border bg-muted/50">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex items-center gap-4 max-w-md">
-                <Input
-                  type="password"
-                  placeholder="Current password"
-                  value={currentPasswordInput}
-                  onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                />
-                <Input
-                  type="password"
-                  placeholder="New password"
-                  value={newPasswordInput}
-                  onChange={(e) => setNewPasswordInput(e.target.value)}
-                />
-                <Button size="sm" onClick={handleChangePassword}>
-                  Update
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <aside className="w-64 flex-shrink-0">
-            <nav className="space-y-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeTab === tab.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-card hover:text-foreground"
-                  }`}
-                >
-                  <tab.icon className="w-5 h-5" />
-                  <span className="font-heading uppercase">{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1">
-            {/* News Tab */}
-            {activeTab === "news" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage News Articles
-                  </h2>
-                  <Button onClick={createNewNews}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Article
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {news.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded p-4 flex items-center gap-4"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-24 h-16 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-heading text-foreground">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">{item.date} • {item.tag}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            setEditingNews(item);
-                            setIsCreating(false);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => handleDeleteNews(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingNews && (
-                  <NewsEditModal
-                    item={editingNews}
-                    onSave={handleSaveNews}
-                    onCancel={() => {
-                      setEditingNews(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Classes Tab */}
-            {activeTab === "classes" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Classes
-                  </h2>
-                  <Button onClick={createNewClass}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Class
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {classes.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded p-4"
-                    >
-                      <div className="flex items-center gap-4 mb-4">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-heading text-foreground">{item.name}</h3>
-                          <p className="text-sm text-primary">{item.role}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setEditingClass(item);
-                            setIsCreating(false);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteClass(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingClass && (
-                  <ClassEditModal
-                    item={editingClass}
-                    onSave={handleSaveClass}
-                    onCancel={() => {
-                      setEditingClass(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Media Tab */}
-            {activeTab === "media" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Media
-                  </h2>
-                  <Button onClick={createNewMedia}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Media
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {media.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded overflow-hidden"
-                    >
-                      <img
-                        src={item.src}
-                        alt={item.title}
-                        className="w-full aspect-video object-cover"
-                      />
-                      <div className="p-4">
-                        <h3 className="font-heading text-foreground">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">{item.type} • {item.category}</p>
-                        <div className="flex gap-2 mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setEditingMedia(item);
-                              setIsCreating(false);
-                            }}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteMedia(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingMedia && (
-                  <MediaEditModal
-                    item={editingMedia}
-                    onSave={handleSaveMedia}
-                    onCancel={() => {
-                      setEditingMedia(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* FAQ Tab */}
-            {activeTab === "faq" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage FAQ
-                  </h2>
-                  <Button onClick={createNewFAQ}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add FAQ
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {faq.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded p-4"
-                    >
-                      <h3 className="font-heading text-foreground mb-2">{item.question}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{item.answer}</p>
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingFAQ(item);
-                            setIsCreating(false);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteFAQ(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingFAQ && (
-                  <FAQEditModal
-                    item={editingFAQ}
-                    onSave={handleSaveFAQ}
-                    onCancel={() => {
-                      setEditingFAQ(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Features Tab */}
-            {activeTab === "features" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Features
-                  </h2>
-                  <Button onClick={createNewFeature}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Feature
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {features.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded p-4"
-                    >
-                      <div className="flex items-start gap-4">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-20 h-20 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-heading text-foreground mb-1">{item.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                            {item.description}
-                          </p>
-                          <p className="text-xs text-primary mb-3">
-                            {item.devices.length} devices
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingFeature(item);
-                                setIsCreating(false);
-                              }}
-                            >
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteFeature(item.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingFeature && (
-                  <FeatureEditModal
-                    item={editingFeature}
-                    onSave={handleSaveFeature}
-                    onCancel={() => {
-                      setEditingFeature(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Weapons Tab */}
-            {activeTab === "weapons" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Weapons
-                  </h2>
-                  <Button onClick={createNewWeapon}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Weapon
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {weapons.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded overflow-hidden"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full aspect-video object-cover"
-                      />
-                      <div className="p-4">
-                        <span className="text-xs text-primary uppercase font-heading">{item.category}</span>
-                        <h3 className="font-heading text-foreground">{item.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
-                        <p className="text-xs text-muted-foreground mb-3">{item.attachments.length} attachments</p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setEditingWeapon(item);
-                              setIsCreating(false);
-                            }}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteWeapon(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingWeapon && (
-                  <WeaponEditModal
-                    item={editingWeapon}
-                    onSave={handleSaveWeapon}
-                    onCancel={() => {
-                      setEditingWeapon(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Maps Tab */}
-            {activeTab === "maps" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Maps
-                  </h2>
-                  <Button onClick={createNewMap}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Map
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {maps.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded overflow-hidden"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full aspect-video object-cover"
-                      />
-                      <div className="p-4">
-                        <div className="flex gap-2 mb-2">
-                          <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded uppercase">{item.size}</span>
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{item.environment}</span>
-                        </div>
-                        <h3 className="font-heading text-foreground">{item.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description}</p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setEditingMap(item);
-                              setIsCreating(false);
-                            }}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteMap(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingMap && (
-                  <MapEditModal
-                    item={editingMap}
-                    onSave={handleSaveMap}
-                    onCancel={() => {
-                      setEditingMap(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Devices Tab */}
-            {activeTab === "devices" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Devices
-                  </h2>
-                  <Button onClick={createNewDevice}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Device
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {gameDevices.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded overflow-hidden"
-                    >
-                      <div className="relative">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full aspect-video object-cover"
-                        />
-                        {item.classRestriction && (
-                          <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground px-2 py-0.5 rounded text-xs font-heading">
-                            {item.classRestriction}
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-heading text-foreground">{item.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description}</p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setEditingDevice(item);
-                              setIsCreating(false);
-                            }}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteDevice(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingDevice && (
-                  <DeviceEditModal
-                    item={editingDevice}
-                    onSave={handleSaveDevice}
-                    onCancel={() => {
-                      setEditingDevice(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Game Modes Tab */}
-            {activeTab === "gamemodes" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-xl text-foreground uppercase">
-                    Manage Game Modes
-                  </h2>
-                  <Button onClick={createNewGameMode}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Game Mode
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {gameModes.map((item) => (
-                    <div
-                      key={item.id}
-                      className="bg-card border border-border rounded overflow-hidden"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full aspect-video object-cover"
-                      />
-                      <div className="p-4">
-                        <span className="text-primary font-heading text-sm">{item.shortName}</span>
-                        <h3 className="font-heading text-foreground">{item.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
-                        <div className="flex gap-2 text-xs text-muted-foreground mb-3">
-                          {item.playerCount && <span>{item.playerCount}</span>}
-                          {item.roundTime && <span>• {item.roundTime}</span>}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setEditingGameMode(item);
-                              setIsCreating(false);
-                            }}
-                          >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteGameMode(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {editingGameMode && (
-                  <GameModeEditModal
-                    item={editingGameMode}
-                    onSave={handleSaveGameMode}
-                    onCancel={() => {
-                      setEditingGameMode(null);
-                      setIsCreating(false);
-                    }}
-                    isCreating={isCreating}
-                  />
-                )}
-              </motion.div>
-            )}
-
-            {/* Privacy Tab */}
-            {activeTab === "privacy" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h2 className="font-heading text-xl text-foreground uppercase">
-                  Edit Privacy Policy
-                </h2>
-                <PageContentEditor
-                  content={privacy}
-                  onSave={(content) => {
-                    updatePrivacy(content);
-                    toast.success("Privacy policy updated!");
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {/* Terms Tab */}
-            {activeTab === "terms" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h2 className="font-heading text-xl text-foreground uppercase">
-                  Edit Terms & Conditions
-                </h2>
-                <PageContentEditor
-                  content={terms}
-                  onSave={(content) => {
-                    updateTerms(content);
-                    toast.success("Terms updated!");
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {/* Settings Tab */}
-            {activeTab === "settings" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <SettingsPanel />
-              </motion.div>
-            )}
-          </main>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// News Edit Modal
-function NewsEditModal({
-  item,
-  onSave,
-  onCancel,
-  isCreating,
-}: {
-  item: NewsItem;
-  onSave: (item: NewsItem) => void;
-  onCancel: () => void;
-  isCreating: boolean;
-}) {
-  const [formData, setFormData] = useState(item);
-
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-heading text-xl text-foreground">
-            {isCreating ? "Create" : "Edit"} News Article
-          </h3>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Article title"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Date</label>
-              <Input
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                placeholder="August 2024"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Tag</label>
-              <Input
-                value={formData.tag}
-                onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-                placeholder="Development"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Short Description</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Brief description for cards..."
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Full Content</label>
-            <Textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Full article content..."
-              rows={10}
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-border flex justify-end gap-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
-        </div>
       </motion.div>
-    </div>
-  );
-}
 
-// Class Edit Modal
-function ClassEditModal({
-  item,
-  onSave,
-  onCancel,
-  isCreating,
-}: {
-  item: ClassItem;
-  onSave: (item: ClassItem) => void;
-  onCancel: () => void;
-  isCreating: boolean;
-}) {
-  const [formData, setFormData] = useState(item);
-
-  const updateDetail = (index: number, value: string) => {
-    const newDetails = [...formData.details];
-    newDetails[index] = value;
-    setFormData({ ...formData, details: newDetails });
-  };
-
-  const updateDevice = (index: number, field: 'name' | 'icon', value: string) => {
-    const newDevices = [...(formData.devices || [])];
-    newDevices[index] = { ...newDevices[index], [field]: value };
-    setFormData({ ...formData, devices: newDevices });
-  };
-
-  const addDevice = () => {
-    setFormData({
-      ...formData,
-      devices: [...(formData.devices || []), { name: "", icon: "Shield" }],
-    });
-  };
-
-  const removeDevice = (index: number) => {
-    const newDevices = (formData.devices || []).filter((_, i) => i !== index);
-    setFormData({ ...formData, devices: newDevices });
-  };
-
-  const iconOptions = ["Crosshair", "Shield", "Eye", "Target", "Users", "Heart", "Zap", "Wrench"];
-
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-heading text-xl text-foreground">
-            {isCreating ? "Create" : "Edit"} Class
-          </h3>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+      {/* Main Content */}
+      <div className="flex-1 ml-64 p-8 overflow-y-auto min-h-screen">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Name</label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Assault"
-              />
+              <h1 className="text-3xl font-heading text-foreground capitalize">
+                {activeTab === 'gamemodes' ? 'Game Modes' : activeTab}
+              </h1>
+              <p className="text-muted-foreground">
+                Manage your {activeTab === 'gamemodes' ? 'game modes' : activeTab} content and settings
+              </p>
             </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Role</label>
-              <Input
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                placeholder="Frontline Fighter"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Icon</label>
-            <select
-              value={formData.icon}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
-            >
-              {["Crosshair", "Shield", "Eye", "Target", "Users", "Heart"].map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Description</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Class description..."
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Details (4 bullet points)</label>
-            <div className="space-y-2">
-              {[0, 1, 2, 3].map((index) => (
-                <Input
-                  key={index}
-                  value={formData.details[index] || ""}
-                  onChange={(e) => updateDetail(index, e.target.value)}
-                  placeholder={`Detail ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <label className="text-sm text-muted-foreground">Class Equipment/Devices</label>
-              <Button variant="outline" size="sm" onClick={addDevice}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Device
+            <Link to="/">
+              <Button variant="outline">
+                <Home className="w-4 h-4 mr-2" />
+                View Site
               </Button>
-            </div>
-            <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Devices Used Title</label>
-            <Input
-              value={formData.devicesUsedTitle || ""}
-              onChange={(e) => setFormData({ ...formData, devicesUsedTitle: e.target.value })}
-              placeholder="Devices & Features (leave empty for default)"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Custom title for the devices Used Class (e.g., "Abilities", "Components", "Tools", etc.)
-            </p>
+            </Link>
           </div>
 
-            <div className="space-y-3">
-              {(formData.devices || []).map((device, index) => (
-                <div key={index} className="bg-surface-dark border border-border rounded p-4 space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-primary font-heading">Device {index + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDevice(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
+          <AnimatePresence mode="wait">
+            {showChangePassword && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-8 bg-card border border-border rounded-lg p-6 overflow-hidden"
+              >
+                <h3 className="text-lg font-heading mb-4">Change Admin Password</h3>
+                <div className="flex gap-4 items-end">
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">Current Password</label>
                     <Input
-                      value={device.name}
-                      onChange={(e) => updateDevice(index, 'name', e.target.value)}
-                      placeholder="Device name"
+                      type="password"
+                      value={currentPasswordInput}
+                      onChange={(e) => setCurrentPasswordInput(e.target.value)}
                     />
-                    <select
-                      value={device.icon}
-                      onChange={(e) => updateDevice(index, 'icon', e.target.value)}
-                      className="px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
-                    >
-                      {iconOptions.map((icon) => (
-                        <option key={icon} value={icon}>
-                          {icon}
-                        </option>
-                      ))}
-                    </select>
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-muted-foreground">New Password</label>
+                    <Input
+                      type="password"
+                      value={newPasswordInput}
+                      onChange={(e) => setNewPasswordInput(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleChangePassword}>Update Password</Button>
+                  <Button variant="ghost" onClick={() => setShowChangePassword(false)}>Cancel</Button>
                 </div>
-              ))}
-              {(!formData.devices || formData.devices.length === 0) && (
-                <p className="text-xs text-muted-foreground italic text-center py-4">
-                  No devices added. Click "Add Device" to add equipment for this class.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-border flex justify-end gap-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// Media Edit Modal
-function MediaEditModal({
-  item,
-  onSave,
-  onCancel,
-  isCreating,
-}: {
-  item: MediaItem;
-  onSave: (item: MediaItem) => void;
-  onCancel: () => void;
-  isCreating: boolean;
-}) {
-  const [formData, setFormData] = useState(item);
-
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-heading text-xl text-foreground">
-            {isCreating ? "Add" : "Edit"} Media
-          </h3>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Media title"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Type</label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as MediaItem['type'] })}
-                className="w-full h-10 px-3 bg-background border border-border rounded text-foreground"
-              >
-                <option value="image">Image</option>
-                <option value="gif">GIF</option>
-                <option value="video">Video</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Category</label>
-              <Input
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="Gameplay"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">
-              {formData.type === "video" ? "Video URL (YouTube, Vimeo, or direct MP4)" : "Source URL"}
-            </label>
-            <Input
-              value={formData.src}
-              onChange={(e) => setFormData({ ...formData, src: e.target.value })}
-              placeholder={formData.type === "video" ? "https://youtube.com/watch?v=... or https://.../video.mp4" : "https://..."}
-            />
-            {formData.type === "video" && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Supports YouTube, Vimeo embed URLs, or direct video file URLs (.mp4, .webm)
-              </p>
+              </motion.div>
             )}
+          </AnimatePresence>
+
+          {/* Content Area */}
+          <div className="bg-background rounded-xl min-h-[500px]">
+            {activeTab === "dashboard" && <DashboardTab onNavigate={setActiveTab} />}
+            {activeTab === "news" && <NewsTab />}
+            {activeTab === "classes" && <ClassesTab />}
+            {activeTab === "weapons" && <WeaponsTab />}
+            {activeTab === "maps" && <MapsTab />}
+            {activeTab === "devices" && <DevicesTab />}
+            {activeTab === "gamemodes" && <GameModesTab />}
+            {activeTab === "media" && <MediaTab />}
+            {activeTab === "features" && <FeaturesTab />}
+            {activeTab === "faq" && <FAQTab />}
+            {activeTab === "settings" && <SettingsPanel />}
+            {activeTab === "privacy" && <PrivacyTab />}
+            {activeTab === "terms" && <TermsTab />}
           </div>
-
-          {formData.type === "video" && (
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Thumbnail URL (optional)</label>
-              <Input
-                value={formData.thumbnail || ""}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                placeholder="https://... (thumbnail image for video)"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Optional: Display image before video plays
-              </p>
-            </div>
-          )}
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Description</label>
-            <Textarea
-              value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe this media item..."
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-border flex justify-end gap-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// FAQ Edit Modal
-function FAQEditModal({
-  item,
-  onSave,
-  onCancel,
-  isCreating,
-}: {
-  item: FAQItem;
-  onSave: (item: FAQItem) => void;
-  onCancel: () => void;
-  isCreating: boolean;
-}) {
-  const [formData, setFormData] = useState(item);
-
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-heading text-xl text-foreground">
-            {isCreating ? "Add" : "Edit"} FAQ
-          </h3>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Question</label>
-            <Input
-              value={formData.question}
-              onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-              placeholder="What is...?"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Answer</label>
-            <Textarea
-              value={formData.answer}
-              onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-              placeholder="The answer is..."
-              rows={5}
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-border flex justify-end gap-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// Page Content Editor (for Privacy & Terms)
-function PageContentEditor({
-  content,
-  onSave,
-}: {
-  content: PageContent;
-  onSave: (content: PageContent) => void;
-}) {
-  const [formData, setFormData] = useState(content);
-
-  const updateSection = (index: number, field: 'heading' | 'content', value: string) => {
-    const newSections = [...formData.sections];
-    newSections[index] = { ...newSections[index], [field]: value };
-    setFormData({ ...formData, sections: newSections });
-  };
-
-  const addSection = () => {
-    setFormData({
-      ...formData,
-      sections: [...formData.sections, { heading: "", content: "" }],
-    });
-  };
-
-  const removeSection = (index: number) => {
-    const newSections = formData.sections.filter((_, i) => i !== index);
-    setFormData({ ...formData, sections: newSections });
-  };
-
-  return (
-    <div className="bg-card border border-border rounded-lg p-6 space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Title</label>
-          <Input
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Page title"
-          />
-        </div>
-        <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Last Updated</label>
-          <Input
-            value={formData.lastUpdated}
-            onChange={(e) => setFormData({ ...formData, lastUpdated: e.target.value })}
-            placeholder="August 2024"
-          />
         </div>
       </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <label className="text-sm text-muted-foreground">Sections</label>
-          <Button variant="outline" size="sm" onClick={addSection}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Section
-          </Button>
-        </div>
-
-        {formData.sections.map((section, index) => (
-          <div key={index} className="border border-border rounded p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Section {index + 1}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeSection(index)}
-              >
-                <Trash2 className="w-4 h-4 text-destructive" />
-              </Button>
-            </div>
-            <Input
-              value={section.heading}
-              onChange={(e) => updateSection(index, 'heading', e.target.value)}
-              placeholder="Section heading"
-            />
-            <Textarea
-              value={section.content}
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Section content..."
-              rows={4}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="flex justify-end">
-        <Button onClick={() => onSave(formData)}>
-          <Save className="w-4 h-4 mr-2" />
-          Save Changes
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// Feature Edit Modal
-function FeatureEditModal({
-  item,
-  onSave,
-  onCancel,
-  isCreating,
-}: {
-  item: FeatureItem;
-  onSave: (item: FeatureItem) => void;
-  onCancel: () => void;
-  isCreating: boolean;
-}) {
-  const [formData, setFormData] = useState(item);
-
-  const updateDevice = (index: number, field: 'name' | 'details' | 'icon', value: string) => {
-    const newDevices = [...formData.devices];
-    newDevices[index] = { ...newDevices[index], [field]: value };
-    setFormData({ ...formData, devices: newDevices });
-  };
-
-  const addDevice = () => {
-    setFormData({
-      ...formData,
-      devices: [...formData.devices, { name: "", details: "", icon: "" }],
-    });
-  };
-
-  const removeDevice = (index: number) => {
-    const newDevices = formData.devices.filter((_, i) => i !== index);
-    setFormData({ ...formData, devices: newDevices });
-  };
-
-  const iconOptions = ["Crosshair", "Shield", "Wrench", "Target", "Users", "Eye", "Heart", "Zap"];
-
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-card border border-border rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-card z-10">
-          <h3 className="font-heading text-xl text-foreground">
-            {isCreating ? "Create" : "Edit"} Feature
-          </h3>
-          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Feature title"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Description</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Feature description"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Icon</label>
-            <select
-              value={formData.icon}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
-            >
-              {iconOptions.map((icon) => (
-                <option key={icon} value={icon}>
-                  {icon}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Devices Section Title</label>
-            <Input
-              value={formData.devicesSectionTitle || ""}
-              onChange={(e) => setFormData({ ...formData, devicesSectionTitle: e.target.value })}
-              placeholder="Devices & Features (leave empty for default)"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Custom title for the devices section (e.g., "Abilities", "Components", "Tools", etc.)
-            </p>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <label className="text-sm text-muted-foreground">
-                {formData.devicesSectionTitle || "Devices & Features"}
-              </label>
-              <Button variant="outline" size="sm" onClick={addDevice}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Device
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {formData.devices.map((device, index) => (
-                <div key={index} className="bg-surface-dark border border-border rounded p-4 space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-primary font-heading">Device {index + 1}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDevice(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <Input
-                    value={device.name}
-                    onChange={(e) => updateDevice(index, 'name', e.target.value)}
-                    placeholder="Device name"
-                    className="mb-2"
-                  />
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Device Icon (optional)</label>
-                    <select
-                      value={device.icon || ""}
-                      onChange={(e) => updateDevice(index, 'icon', e.target.value)}
-                      className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground text-sm"
-                    >
-                      <option value="">No Icon</option>
-                      {iconOptions.map((icon) => (
-                        <option key={icon} value={icon}>
-                          {icon}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Textarea
-                    value={device.details}
-                    onChange={(e) => updateDevice(index, 'details', e.target.value)}
-                    placeholder="Device details"
-                    rows={2}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 flex gap-4 justify-end border-t border-border sticky bottom-0 bg-card">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button onClick={() => onSave(formData)}>
-            <Save className="w-4 h-4 mr-2" />
-            {isCreating ? "Create" : "Save"}
-          </Button>
-        </div>
-      </motion.div>
     </div>
   );
 }
