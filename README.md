@@ -3,7 +3,7 @@
 ## Project info
 This project is a website made for a game. only for testing porposes so this means tha it bill be bugy or not finished!!
 
-##TO START THE PROJECT 
+##TO START THE PROJECT! 
 
 First you need MariaDB instaled!!
 Secound you need to clone the project in to you IDE
