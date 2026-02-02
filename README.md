@@ -1,18 +1,19 @@
-# Welcome to your Lovable project
+# Welcome to First Website Made with AI 
 
 ## Project info
+This project is a website made for a game. only for testing porposes so this means tha it bill be bugy or not finished!!
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+##TO START THE PROJECT 
+
+First you need MariaDB instaled!!
+Secound you need to clone the project in to you IDE
+Third Use this comand to start the serverDB : npm run server   and for the wepsite :npm run dev
+
+## How to link/conect your database with this project !
+If you run it on your localmachine . 
+1 : go in .env and change your auth informations and that it.
 
 ## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
@@ -60,14 +61,3 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
