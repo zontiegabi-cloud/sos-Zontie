@@ -115,6 +115,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
 
   // Apply theme CSS variables dynamically
   useEffect(() => {
+    if (!settings.theme) return;
     const root = document.documentElement;
     const { colors, fonts } = settings.theme;
 

@@ -779,7 +779,7 @@ export function getContent(): SiteContent {
       maps: parsed.maps || defaultMaps,
       gameDevices: parsed.gameDevices || defaultGameDevices,
       gameModes: parsed.gameModes || defaultGameModes,
-      settings: parsed.settings || defaultSettings,
+      settings: parsed.settings && parsed.settings.theme ? parsed.settings : defaultSettings,
     };
   } catch {
     return defaultContent;
