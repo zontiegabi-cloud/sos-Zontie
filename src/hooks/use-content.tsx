@@ -12,7 +12,8 @@ import {
   GameDeviceItem,
   GameModeItem,
   getContent, 
-  saveContent, 
+  getData,
+  saveData, 
   resetToDefaults 
 } from '@/lib/content-store';
 
@@ -21,13 +22,20 @@ export function useContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setContent(getContent());
-    setIsLoading(false);
+    async function init() {
+      const data = await getData();
+      setContent(data);
+      setIsLoading(false);
+    }
+    init();
   }, []);
 
-  const updateContent = useCallback((newContent: SiteContent) => {
+  const updateContent = useCallback(async (newContent: SiteContent) => {
     setContent(newContent);
-    saveContent(newContent);
+    const serverContent = await saveData(newContent);
+    if (serverContent) {
+      setContent(serverContent);
+    }
   }, []);
 
   // News

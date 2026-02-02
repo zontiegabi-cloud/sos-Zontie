@@ -1,47 +1,38 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Lock, Eye, EyeOff, Shield, KeyRound } from "lucide-react";
+import { Lock, Eye, EyeOff, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
 interface AdminLoginProps {
-  isPasswordSet: boolean;
-  onLogin: (password: string) => boolean;
-  onSetPassword: (password: string) => boolean;
+  isPasswordSet: boolean; // Kept for interface compatibility but ignored
+  onLogin: (username: string, password: string) => Promise<boolean>;
+  onSetPassword: (password: string) => void; // Deprecated
 }
 
-export function AdminLogin({ isPasswordSet, onLogin, onSetPassword }: AdminLoginProps) {
+export function AdminLogin({ onLogin }: AdminLoginProps) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    if (!isPasswordSet) {
-      // Setting new password
-      if (password.length < 4) {
-        setError("Password must be at least 4 characters");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-      const success = onSetPassword(password);
+    try {
+      const success = await onLogin(username, password);
       if (!success) {
-        setError("Failed to set password");
-      }
-    } else {
-      // Logging in
-      const success = onLogin(password);
-      if (!success) {
-        setError("Incorrect password");
+        setError("Invalid username or password");
         setPassword("");
       }
+    } catch (err) {
+      setError("An error occurred during login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,23 +52,31 @@ export function AdminLogin({ isPasswordSet, onLogin, onSetPassword }: AdminLogin
               ADMIN <span className="text-primary">PANEL</span>
             </h1>
             <p className="text-muted-foreground mt-2">
-              {isPasswordSet 
-                ? "Enter your password to access the admin panel"
-                : "Set up a password to protect the admin panel"
-              }
+              Enter your credentials to access the admin panel
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-10"
+                autoFocus
+              />
+            </div>
+
+            <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type={showPassword ? "text" : "password"}
-                placeholder={isPasswordSet ? "Enter password" : "Create password"}
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 pr-10"
-                autoFocus
               />
               <button
                 type="button"
@@ -88,25 +87,12 @@ export function AdminLogin({ isPasswordSet, onLogin, onSetPassword }: AdminLogin
               </button>
             </div>
 
-            {!isPasswordSet && (
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            )}
-
             {error && (
               <p className="text-destructive text-sm text-center">{error}</p>
             )}
 
-            <Button type="submit" className="w-full">
-              {isPasswordSet ? "Login" : "Set Password & Continue"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
@@ -120,7 +106,7 @@ export function AdminLogin({ isPasswordSet, onLogin, onSetPassword }: AdminLogin
           </div>
 
           <p className="text-xs text-muted-foreground text-center mt-6">
-            Note: This is browser-based protection. Data is stored locally.
+            Protected by Secure Database Authentication
           </p>
         </div>
       </motion.div>

@@ -1,107 +1,120 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { API_BASE_URL } from "@/config";
 
-const ADMIN_PASSWORD_KEY = "sos_admin_password";
-const ADMIN_SESSION_KEY = "sos_admin_session";
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const ADMIN_TOKEN_KEY = "sos_admin_token";
+const ADMIN_USER_KEY = "sos_admin_user";
 
-// Simple hash function for basic obfuscation (not cryptographically secure)
-const hashPassword = (password: string): string => {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash.toString(36) + password.length.toString(36);
-};
+export interface AdminUser {
+  username: string;
+  role: 'admin' | 'moderator' | 'editor'; // Add other roles as needed
+}
 
 export function useAdminAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isPasswordSet, setIsPasswordSet] = useState(false);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isPasswordSet, setIsPasswordSet] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if password is set
-    const storedHash = localStorage.getItem(ADMIN_PASSWORD_KEY);
-    setIsPasswordSet(!!storedHash);
-
-    // Check if session is valid
-    const session = localStorage.getItem(ADMIN_SESSION_KEY);
-    if (session) {
-      const sessionData = JSON.parse(session);
-      if (sessionData.expires > Date.now()) {
-        setIsAuthenticated(true);
-      } else {
-        localStorage.removeItem(ADMIN_SESSION_KEY);
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    const savedUser = localStorage.getItem(ADMIN_USER_KEY);
+    
+    if (token) {
+      setIsAuthenticated(true);
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          console.error("Failed to parse user data", e);
+        }
       }
     }
     setIsLoading(false);
   }, []);
 
+  // Deprecated, kept for compatibility
   const setPassword = useCallback((password: string): boolean => {
-    if (password.length < 4) {
-      return false;
-    }
-    const hash = hashPassword(password);
-    localStorage.setItem(ADMIN_PASSWORD_KEY, hash);
-    setIsPasswordSet(true);
-    
-    // Auto-login after setting password
-    const session = {
-      expires: Date.now() + SESSION_DURATION,
-    };
-    localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-    setIsAuthenticated(true);
-    
     return true;
   }, []);
 
-  const login = useCallback((password: string): boolean => {
-    const storedHash = localStorage.getItem(ADMIN_PASSWORD_KEY);
-    const inputHash = hashPassword(password);
-    
-    if (storedHash === inputHash) {
-      const session = {
-        expires: Date.now() + SESSION_DURATION,
-      };
-      localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-      setIsAuthenticated(true);
-      return true;
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+        
+        const userData = { username: data.username, role: data.role };
+        localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(userData));
+        setUser(userData as AdminUser);
+        
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
     }
-    return false;
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem(ADMIN_USER_KEY);
     setIsAuthenticated(false);
+    setUser(null);
   }, []);
 
-  const changePassword = useCallback((currentPassword: string, newPassword: string): boolean => {
-    const storedHash = localStorage.getItem(ADMIN_PASSWORD_KEY);
-    const currentHash = hashPassword(currentPassword);
-    
-    if (storedHash !== currentHash) {
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    // If user is not present but authenticated, try to use stored username or prompt relogin
+    if (!user) {
+      toast.error("User session invalid. Please log out and log in again.");
       return false;
     }
     
-    if (newPassword.length < 4) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: user.username,
+          currentPassword, 
+          newPassword 
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Password changed successfully");
+        return true;
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to change password");
+        return false;
+      }
+    } catch (error) {
+      console.error('Change password failed:', error);
+      toast.error("An error occurred while changing password");
       return false;
     }
-    
-    const newHash = hashPassword(newPassword);
-    localStorage.setItem(ADMIN_PASSWORD_KEY, newHash);
-    return true;
-  }, []);
+  }, [user]);
 
   const resetPassword = useCallback(() => {
-    localStorage.removeItem(ADMIN_PASSWORD_KEY);
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    setIsPasswordSet(false);
-    setIsAuthenticated(false);
-  }, []);
+    logout();
+  }, [logout]);
 
   return {
     isAuthenticated,
+    user,
     isPasswordSet,
     isLoading,
     setPassword,

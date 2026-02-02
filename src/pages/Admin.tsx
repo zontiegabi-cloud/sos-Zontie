@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Newspaper, 
@@ -15,7 +15,10 @@ import {
   Gamepad2,
   Settings,
   LayoutDashboard,
-  Home
+  Home,
+  UserCog,
+  Menu,
+  X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -38,17 +41,21 @@ import { FeaturesTab } from "@/components/admin/tabs/FeaturesTab";
 import { FAQTab } from "@/components/admin/tabs/FAQTab";
 import { PrivacyTab } from "@/components/admin/tabs/PrivacyTab";
 import { TermsTab } from "@/components/admin/tabs/TermsTab";
+import { UsersTab } from "@/components/admin/tabs/UsersTab";
 
-type Tab = "dashboard" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings";
+type Tab = "dashboard" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const {
     isAuthenticated,
+    user,
     isPasswordSet,
     isLoading,
     setPassword,
@@ -57,16 +64,25 @@ export default function Admin() {
     changePassword,
   } = useAdminAuth();
 
+  // Close mobile menu when tab changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [activeTab]);
+
   const handleSetPassword = (password: string) => {
     setPassword(password);
   };
 
-  const handleLogin = (password: string) => {
-    login(password);
+  const handleLogin = async (username: string, password: string) => {
+    return await login(username, password);
   };
 
-  const handleChangePassword = () => {
-    if (changePassword(currentPasswordInput, newPasswordInput)) {
+  const handleChangePassword = async () => {
+    setIsChangingPassword(true);
+    const success = await changePassword(currentPasswordInput, newPasswordInput);
+    setIsChangingPassword(false);
+    
+    if (success) {
       setShowChangePassword(false);
       setCurrentPasswordInput("");
       setNewPasswordInput("");
@@ -87,155 +103,236 @@ export default function Admin() {
     );
   }
 
-  const navItems = [
-    { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
-    { id: "news" as Tab, label: "News", icon: Newspaper },
-    { id: "classes" as Tab, label: "Classes", icon: Users },
-    { id: "weapons" as Tab, label: "Weapons", icon: Crosshair },
-    { id: "maps" as Tab, label: "Maps", icon: Map },
-    { id: "devices" as Tab, label: "Devices", icon: Cpu },
-    { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2 },
-    { id: "media" as Tab, label: "Media", icon: Image },
-    { id: "features" as Tab, label: "Features", icon: Shield },
-    { id: "faq" as Tab, label: "FAQ", icon: HelpCircle },
-    { id: "settings" as Tab, label: "Settings", icon: Settings },
+  // Define all possible navigation items
+  const allNavItems = [
+    { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'moderator', 'editor'] },
+    { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
+    { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
+    { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
+    { id: "maps" as Tab, label: "Maps", icon: Map, roles: ['admin', 'moderator'] },
+    { id: "devices" as Tab, label: "Devices", icon: Cpu, roles: ['admin'] },
+    { id: "gamemodes" as Tab, label: "Game Modes", icon: Gamepad2, roles: ['admin'] },
+    { id: "media" as Tab, label: "Media", icon: Image, roles: ['admin', 'moderator'] },
+    { id: "features" as Tab, label: "Features", icon: Shield, roles: ['admin'] },
+    { id: "faq" as Tab, label: "FAQ", icon: HelpCircle, roles: ['admin'] },
+    { id: "users" as Tab, label: "Users", icon: UserCog, roles: ['admin'] },
+    { id: "settings" as Tab, label: "Settings", icon: Settings, roles: ['admin'] },
   ];
+
+  const navItems = allNavItems.filter(item => item.roles.includes(user?.role || ''));
 
   const legalItems = [
-    { id: "privacy" as Tab, label: "Privacy Policy", icon: FileText },
-    { id: "terms" as Tab, label: "Terms of Service", icon: FileText },
-  ];
+    { id: "privacy" as Tab, label: "Privacy Policy", icon: Shield, roles: ['admin'] },
+    { id: "terms" as Tab, label: "Terms of Service", icon: FileText, roles: ['admin'] },
+  ].filter(item => item.roles.includes(user?.role || ''));
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex">
-      {/* Sidebar */}
-      <motion.div 
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        className="w-64 bg-card border-r border-border flex flex-col fixed h-full z-10"
-      >
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8" />
-            <span className="font-heading text-xl text-primary">Admin Panel</span>
-          </Link>
+  const SidebarContent = () => (
+    <>
+      <div className="p-6 border-b border-border flex justify-between items-center">
+        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+          <span className="font-heading text-xl text-primary">Admin Panel</span>
+        </Link>
+        {/* Mobile Close Button */}
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(false)}>
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+      
+      {user && (
+        <div className="px-6 py-2 text-xs text-muted-foreground border-b border-border/50">
+          Logged in as: <span className="font-semibold text-primary">{user.username}</span> ({user.role})
         </div>
+      )}
 
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-          <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">Content</div>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === item.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
+        <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mb-2">Content</div>
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === item.id
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <item.icon className="w-4 h-4" />
+            {item.label}
+          </button>
+        ))}
+
+        {legalItems.length > 0 && (
+          <>
+            <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mt-6 mb-2">Legal</div>
+            {legalItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === item.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="p-4 border-t border-border bg-card">
+        <AnimatePresence>
+          {showChangePassword && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mb-4 space-y-2 bg-background/50 p-3 rounded-md border border-border"
             >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </button>
-          ))}
+              <Input
+                type="password"
+                placeholder="Current Password"
+                value={currentPasswordInput}
+                onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <Input
+                type="password"
+                placeholder="New Password"
+                value={newPasswordInput}
+                onChange={(e) => setNewPasswordInput(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  className="flex-1 h-7 text-xs" 
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? "..." : "Update"}
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-7 text-xs" 
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setCurrentPasswordInput("");
+                    setNewPasswordInput("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mt-6 mb-2">Legal</div>
-          {legalItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === item.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="p-4 border-t border-border bg-card">
-          <div className="space-y-2">
+        <div className="space-y-2">
+          {!showChangePassword && (
             <Button
               variant="outline"
               size="sm"
               className="w-full justify-start"
-              onClick={() => setShowChangePassword(!showChangePassword)}
+              onClick={() => setShowChangePassword(true)}
             >
               <Key className="w-4 h-4 mr-2" />
               Change Password
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={logout}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={logout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+      {/* Mobile Header */}
+      <div className="md:hidden p-4 border-b border-border flex justify-between items-center bg-card">
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+          <span className="font-heading text-xl text-primary">Admin Panel</span>
+        </Link>
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
+          <Menu className="h-6 w-6" />
+        </Button>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <motion.div 
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="hidden md:flex w-64 bg-card border-r border-border flex-col fixed h-full z-10"
+      >
+        <SidebarContent />
       </motion.div>
 
+      {/* Mobile Sidebar (Drawer) */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border z-50 flex flex-col md:hidden"
+            >
+              <SidebarContent />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
-      <div className="flex-1 ml-64 p-8 overflow-y-auto min-h-screen">
+      <div className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto min-h-[calc(100vh-65px)] md:min-h-screen">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-              <h1 className="text-3xl font-heading text-foreground capitalize">
+              <h1 className="text-2xl md:text-3xl font-heading text-foreground capitalize">
                 {activeTab === 'gamemodes' ? 'Game Modes' : activeTab}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground">
                 Manage your {activeTab === 'gamemodes' ? 'game modes' : activeTab} content and settings
               </p>
             </div>
             <Link to="/">
-              <Button variant="outline">
+              <Button variant="outline" size="sm" className="w-full md:w-auto">
                 <Home className="w-4 h-4 mr-2" />
                 View Site
               </Button>
             </Link>
           </div>
 
-          <AnimatePresence mode="wait">
-            {showChangePassword && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="mb-8 bg-card border border-border rounded-lg p-6 overflow-hidden"
-              >
-                <h3 className="text-lg font-heading mb-4">Change Admin Password</h3>
-                <div className="flex gap-4 items-end">
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">Current Password</label>
-                    <Input
-                      type="password"
-                      value={currentPasswordInput}
-                      onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm text-muted-foreground">New Password</label>
-                    <Input
-                      type="password"
-                      value={newPasswordInput}
-                      onChange={(e) => setNewPasswordInput(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={handleChangePassword}>Update Password</Button>
-                  <Button variant="ghost" onClick={() => setShowChangePassword(false)}>Cancel</Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Content Area */}
-          <div className="bg-background rounded-xl min-h-[500px]">
-            {activeTab === "dashboard" && <DashboardTab onNavigate={setActiveTab} />}
+          {/* Tab Content */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeTab === "dashboard" && <DashboardTab onNavigate={setActiveTab} userRole={user?.role} />}
             {activeTab === "news" && <NewsTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}
@@ -245,10 +342,11 @@ export default function Admin() {
             {activeTab === "media" && <MediaTab />}
             {activeTab === "features" && <FeaturesTab />}
             {activeTab === "faq" && <FAQTab />}
-            {activeTab === "settings" && <SettingsPanel />}
             {activeTab === "privacy" && <PrivacyTab />}
             {activeTab === "terms" && <TermsTab />}
-          </div>
+            {activeTab === "settings" && <SettingsPanel />}
+            {activeTab === "users" && <UsersTab />}
+          </motion.div>
         </div>
       </div>
     </div>

@@ -10,7 +10,26 @@ import { DeviceEditModal } from "../GameContentModals";
 import { toast } from "sonner";
 
 export function DevicesTab() {
-  const { gameDevices: devices, addDeviceItem, updateDeviceItem, deleteDeviceItem, content, updateContent } = useContent();
+  const { content, updateContent } = useContent();
+  const devices = content.gameDevices || [];
+  
+  const addDeviceItem = (item: GameDeviceItem) => {
+    updateContent({ ...content, gameDevices: [...devices, item] });
+  };
+  
+  const updateDeviceItem = (id: string, item: GameDeviceItem) => {
+    updateContent({ 
+      ...content, 
+      gameDevices: devices.map(d => d.id === id ? item : d) 
+    });
+  };
+  
+  const deleteDeviceItem = (id: string) => {
+    updateContent({ 
+      ...content, 
+      gameDevices: devices.filter(d => d.id !== id) 
+    });
+  };
   const [editingDevice, setEditingDevice] = useState<GameDeviceItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   

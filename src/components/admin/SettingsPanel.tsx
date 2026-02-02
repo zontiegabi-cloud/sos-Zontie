@@ -341,7 +341,7 @@ export function SettingsPanel() {
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-        <TabsList className="grid grid-cols-6 mb-6">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 mb-6 h-auto gap-2">
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Image className="w-4 h-4" />
             <span className="hidden sm:inline">Branding</span>

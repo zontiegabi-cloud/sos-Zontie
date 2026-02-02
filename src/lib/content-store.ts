@@ -1,4 +1,5 @@
 // Content store using localStorage for persistence
+import { API_BASE_URL } from "@/config";
 
 export interface NewsItem {
   id: string;
@@ -787,6 +788,53 @@ export function getContent(): SiteContent {
 
 export function saveContent(content: SiteContent): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+}
+
+// Async data fetching with fallback to localStorage
+export async function getData(): Promise<SiteContent> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/data`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
+    // Update local storage to keep it in sync
+    saveContent(data);
+    return data;
+  } catch (error) {
+    console.warn('Failed to fetch from API, falling back to localStorage', error);
+    return getContent();
+  }
+}
+
+// Async data saving
+export async function saveData(content: SiteContent): Promise<SiteContent | undefined> {
+  // Always save to local storage first for immediate feedback
+  saveContent(content);
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(content),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to save to server');
+    }
+
+    const result = await response.json();
+    if (result.success && result.data) {
+      // Update local storage with server response (contains clean IDs)
+      saveContent(result.data);
+      return result.data;
+    }
+  } catch (error) {
+    console.error('Failed to save to server:', error);
+  }
+  return undefined;
 }
 
 export function getNewsById(id: string): NewsItem | undefined {
