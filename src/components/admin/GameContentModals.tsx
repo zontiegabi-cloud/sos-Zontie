@@ -4,6 +4,7 @@ import { X, Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUpload } from "@/components/ui/file-upload";
 import { 
   WeaponItem, 
   WeaponAttachment, 
@@ -110,11 +111,27 @@ export function WeaponEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
+            <div className="space-y-4">
+              <FileUpload 
+                currentValue={formData.image}
+                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                accept="image/*"
+                label="Upload Weapon Image"
+              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                </div>
+              </div>
+              <Input
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
           </div>
 
           <div>
@@ -307,11 +324,27 @@ export function MapEditModal({
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Main Image URL</label>
-              <Input
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://..."
-              />
+              <div className="space-y-4">
+                <FileUpload 
+                  currentValue={formData.image}
+                  onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                  accept="image/*"
+                  label="Upload Main Image"
+                />
+                 <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                  </div>
+                </div>
+                <Input
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
             </div>
           </div>
 
@@ -349,20 +382,30 @@ export function MapEditModal({
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <select
-                      value={mediaItem.type}
-                      onChange={(e) => updateMedia(index, "type", e.target.value)}
-                      className="h-10 px-3 bg-background border border-border rounded text-foreground"
-                    >
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                    </select>
-                    <Input
-                      className="col-span-2"
-                      value={mediaItem.url}
-                      onChange={(e) => updateMedia(index, "url", e.target.value)}
-                      placeholder="URL..."
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <select
+                        value={mediaItem.type}
+                        onChange={(e) => updateMedia(index, "type", e.target.value)}
+                        className="h-10 px-3 bg-background border border-border rounded text-foreground"
+                      >
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                      </select>
+                      <div className="col-span-2">
+                        <Input
+                          value={mediaItem.url}
+                          onChange={(e) => updateMedia(index, "url", e.target.value)}
+                          placeholder="URL..."
+                        />
+                      </div>
+                    </div>
+                    <FileUpload 
+                      currentValue={mediaItem.url}
+                      onUploadComplete={(url) => updateMedia(index, "url", url)}
+                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                      className="w-full"
                     />
                   </div>
                   <Input
@@ -470,11 +513,27 @@ export function DeviceEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
+            <div className="space-y-4">
+              <FileUpload 
+                currentValue={formData.image}
+                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                accept="image/*"
+                label="Upload Device Image"
+              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                </div>
+              </div>
+              <Input
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
           </div>
 
           <div>
@@ -521,20 +580,30 @@ export function DeviceEditModal({
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <select
-                      value={mediaItem.type}
-                      onChange={(e) => updateMedia(index, "type", e.target.value)}
-                      className="h-10 px-3 bg-background border border-border rounded text-foreground"
-                    >
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                    </select>
-                    <Input
-                      className="col-span-2"
-                      value={mediaItem.url}
-                      onChange={(e) => updateMedia(index, "url", e.target.value)}
-                      placeholder="URL..."
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <select
+                        value={mediaItem.type}
+                        onChange={(e) => updateMedia(index, "type", e.target.value)}
+                        className="h-10 px-3 bg-background border border-border rounded text-foreground"
+                      >
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                      </select>
+                      <div className="col-span-2">
+                        <Input
+                          value={mediaItem.url}
+                          onChange={(e) => updateMedia(index, "url", e.target.value)}
+                          placeholder="URL..."
+                        />
+                      </div>
+                    </div>
+                    <FileUpload 
+                      currentValue={mediaItem.url}
+                      onUploadComplete={(url) => updateMedia(index, "url", url)}
+                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                      className="w-full"
                     />
                   </div>
                   <Input
@@ -681,11 +750,27 @@ export function GameModeEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
+            <div className="space-y-4">
+              <FileUpload 
+                currentValue={formData.image}
+                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                accept="image/*"
+                label="Upload Game Mode Image"
+              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                </div>
+              </div>
+              <Input
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
           </div>
 
           <div>
@@ -758,20 +843,30 @@ export function GameModeEditModal({
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <select
-                      value={mediaItem.type}
-                      onChange={(e) => updateMedia(index, "type", e.target.value)}
-                      className="h-10 px-3 bg-background border border-border rounded text-foreground"
-                    >
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                    </select>
-                    <Input
-                      className="col-span-2"
-                      value={mediaItem.url}
-                      onChange={(e) => updateMedia(index, "url", e.target.value)}
-                      placeholder="URL..."
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <select
+                        value={mediaItem.type}
+                        onChange={(e) => updateMedia(index, "type", e.target.value)}
+                        className="h-10 px-3 bg-background border border-border rounded text-foreground"
+                      >
+                        <option value="image">Image</option>
+                        <option value="video">Video</option>
+                      </select>
+                      <div className="col-span-2">
+                        <Input
+                          value={mediaItem.url}
+                          onChange={(e) => updateMedia(index, "url", e.target.value)}
+                          placeholder="URL..."
+                        />
+                      </div>
+                    </div>
+                    <FileUpload 
+                      currentValue={mediaItem.url}
+                      onUploadComplete={(url) => updateMedia(index, "url", url)}
+                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                      className="w-full"
                     />
                   </div>
                   <Input

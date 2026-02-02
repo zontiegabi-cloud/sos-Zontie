@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Palette, 
   Image, 
@@ -14,7 +14,10 @@ import {
   Trash2,
   RotateCcw,
   Type,
-  Paintbrush
+  Paintbrush,
+  Save,
+  X,
+  Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +27,11 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileUpload } from "@/components/ui/file-upload";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings } from "@/lib/content-store";
 import { toast } from "sonner";
+import { BackgroundEditor } from "./BackgroundEditor";
 
 const socialPlatforms = [
   { id: "discord", label: "Discord", icon: "🎮" },
@@ -39,17 +44,6 @@ const socialPlatforms = [
   { id: "reddit", label: "Reddit", icon: "🔴" },
   { id: "tiktok", label: "TikTok", icon: "🎵" },
   { id: "other", label: "Other", icon: "🔗" },
-];
-
-const gradientDirections = [
-  { value: "to-t", label: "To Top" },
-  { value: "to-b", label: "To Bottom" },
-  { value: "to-l", label: "To Left" },
-  { value: "to-r", label: "To Right" },
-  { value: "to-tl", label: "To Top Left" },
-  { value: "to-tr", label: "To Top Right" },
-  { value: "to-bl", label: "To Bottom Left" },
-  { value: "to-br", label: "To Bottom Right" },
 ];
 
 const fontOptions = [
@@ -78,160 +72,6 @@ const fontOptions = [
   { value: "PT Sans", label: "PT Sans", category: "body" },
   { value: "Nunito", label: "Nunito", category: "body" },
 ];
-
-interface BackgroundEditorProps {
-  section: keyof SiteSettings['backgrounds'];
-  label: string;
-  background: BackgroundSettings;
-  onChange: (bg: Partial<BackgroundSettings>) => void;
-}
-
-function BackgroundEditor({ section, label, background, onChange }: BackgroundEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded border border-border"
-            style={{
-              background: background.type === 'image' && background.imageUrl
-                ? `url(${background.imageUrl}) center/cover`
-                : background.type === 'gradient'
-                ? `linear-gradient(${background.gradientDirection?.replace('to-', 'to ') || 'to bottom'}, hsl(${background.gradientFrom || '220 15% 8%'}), hsl(${background.gradientTo || '220 15% 4%'}))`
-                : `hsl(${background.color || '220 15% 6%'})`,
-            }}
-          />
-          <span className="font-medium">{label}</span>
-        </div>
-        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
-
-      {isExpanded && (
-        <div className="p-4 space-y-4 bg-muted/30">
-          {/* Background Type */}
-          <div className="space-y-2">
-            <Label>Background Type</Label>
-            <Select value={background.type} onValueChange={(v) => onChange({ type: v as BackgroundSettings['type'] })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="color">Solid Color</SelectItem>
-                <SelectItem value="gradient">Gradient</SelectItem>
-                <SelectItem value="image">Image</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Color Settings */}
-          {background.type === 'color' && (
-            <div className="space-y-2">
-              <Label>Color (HSL)</Label>
-              <Input
-                value={background.color || '220 15% 6%'}
-                onChange={(e) => onChange({ color: e.target.value })}
-                placeholder="220 15% 6%"
-              />
-              <p className="text-xs text-muted-foreground">Format: H S% L% (e.g., 220 15% 6%)</p>
-            </div>
-          )}
-
-          {/* Gradient Settings */}
-          {background.type === 'gradient' && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>From Color (HSL)</Label>
-                  <Input
-                    value={background.gradientFrom || '220 15% 8%'}
-                    onChange={(e) => onChange({ gradientFrom: e.target.value })}
-                    placeholder="220 15% 8%"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>To Color (HSL)</Label>
-                  <Input
-                    value={background.gradientTo || '220 15% 4%'}
-                    onChange={(e) => onChange({ gradientTo: e.target.value })}
-                    placeholder="220 15% 4%"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Direction</Label>
-                <Select
-                  value={background.gradientDirection || 'to-b'}
-                  onValueChange={(v) => onChange({ gradientDirection: v as BackgroundSettings['gradientDirection'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {gradientDirections.map((dir) => (
-                      <SelectItem key={dir.value} value={dir.value}>{dir.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
-
-          {/* Image Settings */}
-          {background.type === 'image' && (
-            <>
-              <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input
-                  value={background.imageUrl || ''}
-                  onChange={(e) => onChange({ imageUrl: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Overlay Opacity: {background.imageOverlayOpacity || 60}%</Label>
-                <Slider
-                  value={[background.imageOverlayOpacity || 60]}
-                  onValueChange={([v]) => onChange({ imageOverlayOpacity: v })}
-                  min={0}
-                  max={100}
-                  step={5}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Texture Settings */}
-          <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
-              <Label>Grunge Texture Overlay</Label>
-              <Switch
-                checked={background.textureEnabled || false}
-                onCheckedChange={(v) => onChange({ textureEnabled: v })}
-              />
-            </div>
-            {background.textureEnabled && (
-              <div className="space-y-2">
-                <Label>Texture Opacity: {background.textureOpacity || 3}%</Label>
-                <Slider
-                  value={[background.textureOpacity || 3]}
-                  onValueChange={([v]) => onChange({ textureOpacity: v })}
-                  min={1}
-                  max={20}
-                  step={1}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 interface ColorInputProps {
   label: string;
@@ -266,50 +106,125 @@ function ColorInput({ label, value, onChange, description }: ColorInputProps) {
 export function SettingsPanel() {
   const {
     settings,
-    updateBranding,
-    updateBackground,
-    updateSocialLinks,
-    updateSEO,
-    updateHomepageSections,
-    updateThemeFonts,
-    updateThemeColors,
+    updateSettings,
     resetSettings,
   } = useSiteSettings();
 
-  const [activeSubTab, setActiveSubTab] = useState("branding");
+  const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
+  const [activeSubTab, setActiveSubTab] = useState("cta");
+  
+  // Keep local settings in sync if they are updated externally (e.g. reset)
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
-  const handleResetSettings = () => {
+  const hasChanges = JSON.stringify(localSettings) !== JSON.stringify(settings);
+
+  const handleSave = async () => {
+    await updateSettings(localSettings);
+    toast.success("Settings saved successfully!");
+  };
+
+  const handleCancel = () => {
+    setLocalSettings(settings);
+    toast.info("Changes discarded.");
+  };
+
+  const handleResetSettings = async () => {
     if (confirm("Reset all site settings to defaults? This cannot be undone.")) {
-      resetSettings();
+      await resetSettings();
       toast.success("Settings reset to defaults!");
     }
   };
 
+  // Local update helpers
+  const updateBranding = (branding: Partial<SiteSettings['branding']>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      branding: { ...prev.branding, ...branding }
+    }));
+  };
+
+  const updateCTA = (cta: Partial<SiteSettings['cta']>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      cta: { ...prev.cta, ...cta }
+    }));
+  };
+
+  const updateBackground = (
+    section: keyof SiteSettings['backgrounds'],
+    bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>
+  ) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      backgrounds: {
+        ...prev.backgrounds,
+        [section]: { ...prev.backgrounds[section], ...bg }
+      }
+    }));
+  };
+
+  const updateThemeFonts = (fonts: Partial<ThemeSettings['fonts']>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      theme: {
+        ...prev.theme,
+        fonts: { ...prev.theme.fonts, ...fonts }
+      }
+    }));
+  };
+
+  const updateThemeColors = (colors: Partial<ThemeSettings['colors']>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      theme: {
+        ...prev.theme,
+        colors: { ...prev.theme.colors, ...colors }
+      }
+    }));
+  };
+
+  const updateSEO = (seo: Partial<SiteSettings['seo']>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      seo: { ...prev.seo, ...seo }
+    }));
+  };
+
+  const updateHomepageSections = (sections: SiteSettings['homepageSections']) => {
+    setLocalSettings(prev => ({ ...prev, homepageSections: sections }));
+  };
+
+  const updateSocialLinks = (links: SiteSettings['socialLinks']) => {
+    setLocalSettings(prev => ({ ...prev, socialLinks: links }));
+  };
+
   const moveSectionUp = (index: number) => {
     if (index === 0) return;
-    const sections = [...settings.homepageSections];
+    const sections = [...localSettings.homepageSections];
     [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
     sections.forEach((s, i) => (s.order = i));
     updateHomepageSections(sections);
   };
 
   const moveSectionDown = (index: number) => {
-    if (index === settings.homepageSections.length - 1) return;
-    const sections = [...settings.homepageSections];
+    if (index === localSettings.homepageSections.length - 1) return;
+    const sections = [...localSettings.homepageSections];
     [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
     sections.forEach((s, i) => (s.order = i));
     updateHomepageSections(sections);
   };
 
   const toggleSection = (id: string) => {
-    const sections = settings.homepageSections.map((s) =>
+    const sections = localSettings.homepageSections.map((s) =>
       s.id === id ? { ...s, enabled: !s.enabled } : s
     );
     updateHomepageSections(sections);
   };
 
   const updateSocialLink = (id: string, updates: Partial<SocialLink>) => {
-    const links = settings.socialLinks.map((l) =>
+    const links = localSettings.socialLinks.map((l) =>
       l.id === id ? { ...l, ...updates } : l
     );
     updateSocialLinks(links);
@@ -323,28 +238,42 @@ export function SettingsPanel() {
       label: "New Link",
       enabled: true,
     };
-    updateSocialLinks([...settings.socialLinks, newLink]);
+    updateSocialLinks([...localSettings.socialLinks, newLink]);
   };
 
   const removeSocialLink = (id: string) => {
-    updateSocialLinks(settings.socialLinks.filter((l) => l.id !== id));
+    updateSocialLinks(localSettings.socialLinks.filter((l) => l.id !== id));
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-4 border-b border-border">
         <h2 className="text-xl font-heading uppercase">Site Settings</h2>
-        <Button variant="outline" size="sm" onClick={handleResetSettings}>
-          <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Settings
-        </Button>
+        <div className="flex gap-2">
+          {hasChanges && (
+            <>
+              <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700">
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleCancel}>
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={handleResetSettings}>
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset Defaults
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="grid grid-cols-3 sm:grid-cols-6 mb-6 h-auto gap-2">
-          <TabsTrigger value="branding" className="flex items-center gap-2">
-            <Image className="w-4 h-4" />
-            <span className="hidden sm:inline">Branding</span>
+          <TabsTrigger value="cta" className="flex items-center gap-2">
+            <Megaphone className="w-4 h-4" />
+            <span className="hidden sm:inline">CTA & Branding</span>
           </TabsTrigger>
           <TabsTrigger value="theme" className="flex items-center gap-2">
             <Paintbrush className="w-4 h-4" />
@@ -368,66 +297,197 @@ export function SettingsPanel() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Branding Tab */}
-        <TabsContent value="branding" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Site Name</Label>
-              <Input
-                value={settings.branding.siteName}
-                onChange={(e) => updateBranding({ siteName: e.target.value })}
-              />
+        {/* CTA & Branding Tab */}
+        <TabsContent value="cta" className="space-y-8">
+          {/* Branding Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Paintbrush className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Branding</h3>
             </div>
-            <div className="space-y-2">
-              <Label>Tagline</Label>
-              <Input
-                value={settings.branding.siteTagline}
-                onChange={(e) => updateBranding({ siteTagline: e.target.value })}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Site Name</Label>
+                <Input
+                  value={localSettings.branding.siteName}
+                  onChange={(e) => updateBranding({ siteName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tagline</Label>
+                <Input
+                  value={localSettings.branding.siteTagline}
+                  onChange={(e) => updateBranding({ siteTagline: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Logo URL (optional)</Label>
+                <div className="space-y-4">
+                  <FileUpload 
+                    currentValue={localSettings.branding.logoUrl}
+                    onUploadComplete={(url) => updateBranding({ logoUrl: url })}
+                    accept="image/*"
+                    label="Upload Logo"
+                  />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                    </div>
+                  </div>
+                  <Input
+                    value={localSettings.branding.logoUrl || ''}
+                    onChange={(e) => updateBranding({ logoUrl: e.target.value })}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Copyright Text</Label>
+                <Input
+                  value={localSettings.branding.copyrightText}
+                  onChange={(e) => updateBranding({ copyrightText: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Powered By Text (optional)</Label>
+                <Input
+                  value={localSettings.branding.poweredByText || ''}
+                  onChange={(e) => updateBranding({ poweredByText: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Logo URL (optional)</Label>
-              <Input
-                value={settings.branding.logoUrl || ''}
-                onChange={(e) => updateBranding({ logoUrl: e.target.value })}
-                placeholder="https://example.com/logo.png"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Favicon URL (optional)</Label>
-              <Input
-                value={settings.branding.faviconUrl || ''}
-                onChange={(e) => updateBranding({ faviconUrl: e.target.value })}
-                placeholder="https://example.com/favicon.ico"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Copyright Text</Label>
-              <Input
-                value={settings.branding.copyrightText}
-                onChange={(e) => updateBranding({ copyrightText: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Powered By Text (optional)</Label>
-              <Input
-                value={settings.branding.poweredByText || ''}
-                onChange={(e) => updateBranding({ poweredByText: e.target.value })}
-              />
-            </div>
+
+            {/* Preview */}
+            {localSettings.branding.logoUrl && (
+              <div className="p-4 bg-muted rounded-lg">
+                <Label className="mb-2 block">Logo Preview</Label>
+                <img
+                  src={localSettings.branding.logoUrl}
+                  alt="Logo preview"
+                  className="h-12 object-contain"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Preview */}
-          {settings.branding.logoUrl && (
-            <div className="p-4 bg-muted rounded-lg">
-              <Label className="mb-2 block">Logo Preview</Label>
-              <img
-                src={settings.branding.logoUrl}
-                alt="Logo preview"
-                className="h-12 object-contain"
-              />
+          {/* CTA Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Megaphone className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Call to Action (CTA)</h3>
             </div>
-          )}
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Title</Label>
+                <Input
+                  value={localSettings.cta?.title || ''}
+                  onChange={(e) => updateCTA({ title: e.target.value })}
+                  placeholder="Ready to Join?"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={localSettings.cta?.description || ''}
+                  onChange={(e) => updateCTA({ description: e.target.value })}
+                  placeholder="Join our community today..."
+                  rows={3}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Buttons</Label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const currentButtons = localSettings.cta?.buttons || [];
+                      updateCTA({
+                        buttons: [
+                          ...currentButtons,
+                          { text: "New Button", url: "#", variant: "primary" }
+                        ]
+                      });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Button
+                  </Button>
+                </div>
+                
+                <div className="space-y-3">
+                  {(localSettings.cta?.buttons || []).map((button, index) => (
+                    <div key={index} className="flex flex-col gap-3 p-4 bg-card border border-border rounded-lg">
+                      <div className="flex gap-2">
+                        <Input
+                          value={button.text}
+                          onChange={(e) => {
+                            const newButtons = [...(localSettings.cta?.buttons || [])];
+                            newButtons[index] = { ...button, text: e.target.value };
+                            updateCTA({ buttons: newButtons });
+                          }}
+                          placeholder="Button Text"
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newButtons = (localSettings.cta?.buttons || []).filter((_, i) => i !== index);
+                            updateCTA({ buttons: newButtons });
+                          }}
+                          className="text-destructive shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          value={button.url}
+                          onChange={(e) => {
+                            const newButtons = [...(localSettings.cta?.buttons || [])];
+                            newButtons[index] = { ...button, url: e.target.value };
+                            updateCTA({ buttons: newButtons });
+                          }}
+                          placeholder="Button URL (e.g., /register)"
+                        />
+                        <Select
+                          value={button.variant}
+                          onValueChange={(v: any) => {
+                            const newButtons = [...(localSettings.cta?.buttons || [])];
+                            newButtons[index] = { ...button, variant: v };
+                            updateCTA({ buttons: newButtons });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="primary">Primary</SelectItem>
+                            <SelectItem value="secondary">Secondary</SelectItem>
+                            <SelectItem value="outline">Outline</SelectItem>
+                            <SelectItem value="ghost">Ghost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ))}
+                  {(localSettings.cta?.buttons || []).length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                      No buttons added. Click "Add Button" to create one.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Theme Tab */}
@@ -439,14 +499,14 @@ export function SettingsPanel() {
               <h3 className="text-lg font-heading uppercase">Typography</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Choose fonts for different text elements. Changes apply in real-time.
+              Choose fonts for different text elements. Changes apply after saving.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Display Font (H1, H2, H3)</Label>
                 <Select
-                  value={settings.theme.fonts.display}
+                  value={localSettings.theme.fonts.display}
                   onValueChange={(v) => updateThemeFonts({ display: v })}
                 >
                   <SelectTrigger>
@@ -462,7 +522,7 @@ export function SettingsPanel() {
                 </Select>
                 <div 
                   className="p-3 bg-muted rounded text-2xl uppercase tracking-wide"
-                  style={{ fontFamily: settings.theme.fonts.display }}
+                  style={{ fontFamily: localSettings.theme.fonts.display }}
                 >
                   DISPLAY TEXT
                 </div>
@@ -471,7 +531,7 @@ export function SettingsPanel() {
               <div className="space-y-2">
                 <Label>Heading Font (H4, H5, H6)</Label>
                 <Select
-                  value={settings.theme.fonts.heading}
+                  value={localSettings.theme.fonts.heading}
                   onValueChange={(v) => updateThemeFonts({ heading: v })}
                 >
                   <SelectTrigger>
@@ -487,7 +547,7 @@ export function SettingsPanel() {
                 </Select>
                 <div 
                   className="p-3 bg-muted rounded text-lg font-medium"
-                  style={{ fontFamily: settings.theme.fonts.heading }}
+                  style={{ fontFamily: localSettings.theme.fonts.heading }}
                 >
                   Heading Text
                 </div>
@@ -496,7 +556,7 @@ export function SettingsPanel() {
               <div className="space-y-2">
                 <Label>Body Font</Label>
                 <Select
-                  value={settings.theme.fonts.body}
+                  value={localSettings.theme.fonts.body}
                   onValueChange={(v) => updateThemeFonts({ body: v })}
                 >
                   <SelectTrigger>
@@ -512,7 +572,7 @@ export function SettingsPanel() {
                 </Select>
                 <div 
                   className="p-3 bg-muted rounded text-sm"
-                  style={{ fontFamily: settings.theme.fonts.body }}
+                  style={{ fontFamily: localSettings.theme.fonts.body }}
                 >
                   This is body text that appears throughout the site.
                 </div>
@@ -527,76 +587,76 @@ export function SettingsPanel() {
               <h3 className="text-lg font-heading uppercase">Colors</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Customize the color palette. Use HSL format (e.g., "220 15% 6%"). Changes apply in real-time.
+              Customize the color palette. Use HSL format (e.g., "220 15% 6%"). Changes apply after saving.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <ColorInput
                 label="Primary Color"
-                value={settings.theme.colors.primary}
+                value={localSettings.theme.colors.primary}
                 onChange={(v) => updateThemeColors({ primary: v })}
                 description="Main brand color for buttons and accents"
               />
               <ColorInput
                 label="Primary Foreground"
-                value={settings.theme.colors.primaryForeground}
+                value={localSettings.theme.colors.primaryForeground}
                 onChange={(v) => updateThemeColors({ primaryForeground: v })}
                 description="Text color on primary backgrounds"
               />
               <ColorInput
                 label="Accent Color"
-                value={settings.theme.colors.accent}
+                value={localSettings.theme.colors.accent}
                 onChange={(v) => updateThemeColors({ accent: v })}
                 description="Secondary accent color (CTAs, highlights)"
               />
               <ColorInput
                 label="Accent Foreground"
-                value={settings.theme.colors.accentForeground}
+                value={localSettings.theme.colors.accentForeground}
                 onChange={(v) => updateThemeColors({ accentForeground: v })}
                 description="Text color on accent backgrounds"
               />
               <ColorInput
                 label="Background"
-                value={settings.theme.colors.background}
+                value={localSettings.theme.colors.background}
                 onChange={(v) => updateThemeColors({ background: v })}
                 description="Main page background color"
               />
               <ColorInput
                 label="Foreground"
-                value={settings.theme.colors.foreground}
+                value={localSettings.theme.colors.foreground}
                 onChange={(v) => updateThemeColors({ foreground: v })}
                 description="Main text color"
               />
               <ColorInput
                 label="Muted"
-                value={settings.theme.colors.muted}
+                value={localSettings.theme.colors.muted}
                 onChange={(v) => updateThemeColors({ muted: v })}
                 description="Muted background color (cards, panels)"
               />
               <ColorInput
                 label="Muted Foreground"
-                value={settings.theme.colors.mutedForeground}
+                value={localSettings.theme.colors.mutedForeground}
                 onChange={(v) => updateThemeColors({ mutedForeground: v })}
                 description="Secondary text color"
               />
               <ColorInput
                 label="Border"
-                value={settings.theme.colors.border}
+                value={localSettings.theme.colors.border}
                 onChange={(v) => updateThemeColors({ border: v })}
                 description="Border and divider color"
               />
             </div>
 
             {/* Color Preview */}
-            <div className="mt-6 p-4 rounded-lg border border-border" style={{ background: `hsl(${settings.theme.colors.background})` }}>
-              <h4 className="text-lg font-heading mb-2" style={{ color: `hsl(${settings.theme.colors.foreground})` }}>Color Preview</h4>
-              <p className="text-sm mb-4" style={{ color: `hsl(${settings.theme.colors.mutedForeground})` }}>This is how your colors will look together.</p>
+            <div className="mt-6 p-4 rounded-lg border border-border" style={{ background: `hsl(${localSettings.theme.colors.background})` }}>
+              <h4 className="text-lg font-heading mb-2" style={{ color: `hsl(${localSettings.theme.colors.foreground})` }}>Color Preview</h4>
+              <p className="text-sm mb-4" style={{ color: `hsl(${localSettings.theme.colors.mutedForeground})` }}>This is how your colors will look together.</p>
               <div className="flex flex-wrap gap-2">
                 <button 
                   className="px-4 py-2 rounded font-medium"
                   style={{ 
-                    background: `hsl(${settings.theme.colors.primary})`,
-                    color: `hsl(${settings.theme.colors.primaryForeground})`
+                    background: `hsl(${localSettings.theme.colors.primary})`,
+                    color: `hsl(${localSettings.theme.colors.primaryForeground})`
                   }}
                 >
                   Primary Button
@@ -604,8 +664,8 @@ export function SettingsPanel() {
                 <button 
                   className="px-4 py-2 rounded font-medium"
                   style={{ 
-                    background: `hsl(${settings.theme.colors.accent})`,
-                    color: `hsl(${settings.theme.colors.accentForeground})`
+                    background: `hsl(${localSettings.theme.colors.accent})`,
+                    color: `hsl(${localSettings.theme.colors.accentForeground})`
                   }}
                 >
                   Accent Button
@@ -613,9 +673,9 @@ export function SettingsPanel() {
                 <div 
                   className="px-4 py-2 rounded"
                   style={{ 
-                    background: `hsl(${settings.theme.colors.muted})`,
-                    color: `hsl(${settings.theme.colors.foreground})`,
-                    border: `1px solid hsl(${settings.theme.colors.border})`
+                    background: `hsl(${localSettings.theme.colors.muted})`,
+                    color: `hsl(${localSettings.theme.colors.foreground})`,
+                    border: `1px solid hsl(${localSettings.theme.colors.border})`
                   }}
                 >
                   Muted Panel
@@ -628,42 +688,37 @@ export function SettingsPanel() {
         {/* Backgrounds Tab */}
         <TabsContent value="backgrounds" className="space-y-4">
           <p className="text-sm text-muted-foreground mb-4">
-            Customize the background for each section. Changes apply in real-time.
+            Customize the background for each section. Changes apply after saving.
           </p>
-          <BackgroundEditor
-            section="hero"
-            label="Hero Section"
-            background={settings.backgrounds.hero}
-            onChange={(bg) => updateBackground('hero', bg)}
-          />
+          {/* Hero background is managed in the Hero Editor tab */}
           <BackgroundEditor
             section="news"
             label="News Section"
-            background={settings.backgrounds.news}
+            background={localSettings.backgrounds.news}
             onChange={(bg) => updateBackground('news', bg)}
           />
           <BackgroundEditor
             section="features"
             label="Features Section"
-            background={settings.backgrounds.features}
+            background={localSettings.backgrounds.features}
             onChange={(bg) => updateBackground('features', bg)}
           />
           <BackgroundEditor
             section="classes"
             label="Classes Section"
-            background={settings.backgrounds.classes}
+            background={localSettings.backgrounds.classes}
             onChange={(bg) => updateBackground('classes', bg)}
           />
           <BackgroundEditor
             section="cta"
             label="CTA Section"
-            background={settings.backgrounds.cta}
+            background={localSettings.backgrounds.cta}
             onChange={(bg) => updateBackground('cta', bg)}
           />
           <BackgroundEditor
             section="footer"
             label="Footer"
-            background={settings.backgrounds.footer}
+            background={localSettings.backgrounds.footer}
             onChange={(bg) => updateBackground('footer', bg)}
           />
         </TabsContent>
@@ -681,7 +736,7 @@ export function SettingsPanel() {
           </div>
 
           <div className="space-y-3">
-            {settings.socialLinks.map((link) => (
+            {localSettings.socialLinks.map((link) => (
               <div key={link.id} className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -735,7 +790,7 @@ export function SettingsPanel() {
             <div className="space-y-2">
               <Label>Default Page Title</Label>
               <Input
-                value={settings.seo.defaultTitle}
+                value={localSettings.seo.defaultTitle}
                 onChange={(e) => updateSEO({ defaultTitle: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">Keep under 60 characters for best results</p>
@@ -743,7 +798,7 @@ export function SettingsPanel() {
             <div className="space-y-2">
               <Label>Default Meta Description</Label>
               <Textarea
-                value={settings.seo.defaultDescription}
+                value={localSettings.seo.defaultDescription}
                 onChange={(e) => updateSEO({ defaultDescription: e.target.value })}
                 rows={3}
               />
@@ -752,23 +807,66 @@ export function SettingsPanel() {
             <div className="space-y-2">
               <Label>Keywords (comma-separated)</Label>
               <Input
-                value={settings.seo.defaultKeywords.join(', ')}
+                value={localSettings.seo.defaultKeywords.join(', ')}
                 onChange={(e) => updateSEO({ defaultKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>Favicon URL (optional)</Label>
+                <div className="space-y-4">
+                  <FileUpload 
+                    currentValue={localSettings.branding.faviconUrl}
+                    onUploadComplete={(url) => updateBranding({ faviconUrl: url })}
+                    accept="image/*" 
+                    label="Upload Favicon"
+                  />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                    </div>
+                  </div>
+                  <Input
+                    value={localSettings.branding.faviconUrl || ''}
+                    onChange={(e) => updateBranding({ faviconUrl: e.target.value })}
+                    placeholder="https://example.com/favicon.ico"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label>OG Image URL (optional)</Label>
-                <Input
-                  value={settings.seo.ogImage || ''}
-                  onChange={(e) => updateSEO({ ogImage: e.target.value })}
-                  placeholder="https://example.com/og-image.jpg"
-                />
+                <p className="text-xs text-muted-foreground mb-2">
+                  The Open Graph (OG) image is displayed when your site link is shared on social media (Facebook, Twitter/X, Discord, etc.). Recommended size: 1200x630px.
+                </p>
+                <div className="space-y-4">
+                  <FileUpload 
+                    currentValue={localSettings.seo.ogImage}
+                    onUploadComplete={(url) => updateSEO({ ogImage: url })}
+                    accept="image/*"
+                    label="Upload OG Image"
+                  />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                    </div>
+                  </div>
+                  <Input
+                    value={localSettings.seo.ogImage || ''}
+                    onChange={(e) => updateSEO({ ogImage: e.target.value })}
+                    placeholder="https://example.com/og-image.jpg"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Twitter Handle (optional)</Label>
                 <Input
-                  value={settings.seo.twitterHandle || ''}
+                  value={localSettings.seo.twitterHandle || ''}
                   onChange={(e) => updateSEO({ twitterHandle: e.target.value })}
                   placeholder="@yourgame"
                 />
@@ -780,11 +878,11 @@ export function SettingsPanel() {
         {/* Homepage Layout Tab */}
         <TabsContent value="layout" className="space-y-4">
           <p className="text-sm text-muted-foreground mb-4">
-            Reorder and toggle visibility of homepage sections. Changes apply in real-time.
+            Reorder and toggle visibility of homepage sections. Changes apply after saving.
           </p>
 
           <div className="space-y-2">
-            {settings.homepageSections
+            {localSettings.homepageSections
               .sort((a, b) => a.order - b.order)
               .map((section, index) => (
                 <div
@@ -806,7 +904,7 @@ export function SettingsPanel() {
                       variant="ghost"
                       size="icon"
                       onClick={() => moveSectionDown(index)}
-                      disabled={index === settings.homepageSections.length - 1}
+                      disabled={index === localSettings.homepageSections.length - 1}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </Button>

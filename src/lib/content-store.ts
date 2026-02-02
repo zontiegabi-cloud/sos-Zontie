@@ -144,7 +144,7 @@ export interface BackgroundSettings {
   color?: string; // HSL values like "220 15% 6%"
   gradientFrom?: string;
   gradientTo?: string;
-  gradientDirection?: 'to-t' | 'to-b' | 'to-l' | 'to-r' | 'to-tl' | 'to-tr' | 'to-bl' | 'to-br';
+  gradientDirection?: string;
   imageUrl?: string;
   imageOverlayOpacity?: number; // 0-100
   textureEnabled?: boolean;
@@ -211,8 +211,31 @@ export interface ThemeSettings {
   };
 }
 
+export interface HeroButton {
+  text: string;
+  url: string;
+  variant: 'primary' | 'secondary' | 'outline' | 'ghost';
+  icon?: string;
+}
+
+export interface HeroSettings {
+  title: string;
+  subtitle: string;
+  backgroundImage: string;
+  overlayOpacity: number;
+  buttons: HeroButton[];
+}
+
+export interface CTASettings {
+  title: string;
+  description: string;
+  buttons: HeroButton[];
+}
+
 export interface SiteSettings {
   branding: BrandingSettings;
+  hero: HeroSettings;
+  cta: CTASettings;
   backgrounds: SectionBackground;
   socialLinks: SocialLink[];
   seo: SEOSettings;
@@ -653,6 +676,24 @@ const defaultSettings: SiteSettings = {
     copyrightText: "© 2024 Shadows of Soldiers. All rights reserved.",
     poweredByText: "Powered by Unreal Engine 5",
   },
+  hero: {
+    title: "SHADOWS<br/>OF SOLDIERS",
+    subtitle: "Pick Your Role. Shape the Battlefield.",
+    backgroundImage: "https://www.shadowsofsoldiers.com/wp-content/uploads/2020/08/ZA1JOmc-scaled.jpg",
+    overlayOpacity: 60,
+    buttons: [
+      { text: "Wishlist on Steam", url: "https://store.steampowered.com/app/2713480/Shadows_of_Soldiers/", variant: "primary", icon: "ExternalLink" },
+      { text: "Join Discord", url: "https://discord.gg/shadowsofsoldiers", variant: "outline" }
+    ]
+  },
+  cta: {
+    title: "READY TO <span class=\"text-accent text-glow-accent\">JUMP INTO BATTLE?</span>",
+    description: "Join thousands of players waiting for the next generation of tactical shooters. Wishlist now and be the first to know when we launch.",
+    buttons: [
+      { text: "Wishlist on Steam", url: "https://store.steampowered.com/app/2713480/Shadows_of_Soldiers/", variant: "primary", icon: "ExternalLink" },
+      { text: "Join Our Discord", url: "https://discord.gg/shadowsofsoldiers", variant: "outline", icon: "MessageCircle" }
+    ]
+  },
   backgrounds: {
     hero: {
       type: "image",
@@ -779,7 +820,19 @@ export function getContent(): SiteContent {
       maps: parsed.maps || defaultMaps,
       gameDevices: parsed.gameDevices || defaultGameDevices,
       gameModes: parsed.gameModes || defaultGameModes,
-      settings: parsed.settings && parsed.settings.theme ? parsed.settings : defaultSettings,
+      settings: parsed.settings ? {
+        ...defaultSettings,
+        ...parsed.settings,
+        // Ensure critical sections exist by merging with defaults
+        branding: { ...defaultSettings.branding, ...(parsed.settings.branding || {}) },
+        hero: { ...defaultSettings.hero, ...(parsed.settings.hero || {}) },
+        cta: { ...defaultSettings.cta, ...(parsed.settings.cta || {}) },
+        backgrounds: { ...defaultSettings.backgrounds, ...(parsed.settings.backgrounds || {}) },
+        socialLinks: parsed.settings.socialLinks || defaultSettings.socialLinks,
+        seo: { ...defaultSettings.seo, ...(parsed.settings.seo || {}) },
+        theme: { ...defaultSettings.theme, ...(parsed.settings.theme || {}) },
+        homepageSections: parsed.settings.homepageSections || defaultSettings.homepageSections,
+      } : defaultSettings,
     };
   } catch {
     return defaultContent;

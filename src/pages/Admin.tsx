@@ -15,12 +15,13 @@ import {
   Gamepad2,
   Settings,
   LayoutDashboard,
+  Layout,
   Home,
   UserCog,
   Menu,
   X
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ import { SettingsPanel } from "@/components/admin/SettingsPanel";
 // Import modular tabs
 import { DashboardTab } from "@/components/admin/tabs/DashboardTab";
 import { NewsTab } from "@/components/admin/tabs/NewsTab";
+import { HeroTab } from "@/components/admin/tabs/HeroTab";
 import { ClassesTab } from "@/components/admin/tabs/ClassesTab";
 import { WeaponsTab } from "@/components/admin/tabs/WeaponsTab";
 import { MapsTab } from "@/components/admin/tabs/MapsTab";
@@ -43,15 +45,22 @@ import { PrivacyTab } from "@/components/admin/tabs/PrivacyTab";
 import { TermsTab } from "@/components/admin/tabs/TermsTab";
 import { UsersTab } from "@/components/admin/tabs/UsersTab";
 
-type Tab = "dashboard" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
+type Tab = "dashboard" | "hero" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>((searchParams.get("tab") as Tab) || "dashboard");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   const {
     isAuthenticated,
@@ -106,6 +115,7 @@ export default function Admin() {
   // Define all possible navigation items
   const allNavItems = [
     { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'moderator', 'editor'] },
+    { id: "hero" as Tab, label: "Hero Editor", icon: Layout, roles: ['admin'] },
     { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
     { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
     { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
@@ -129,10 +139,13 @@ export default function Admin() {
   const SidebarContent = () => (
     <>
       <div className="p-6 border-b border-border flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+        <button 
+          onClick={() => handleTabChange("dashboard")}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity text-left"
+        >
+          <Shield className="w-8 h-8 text-primary" />
           <span className="font-heading text-xl text-primary">Admin Panel</span>
-        </Link>
+        </button>
         {/* Mobile Close Button */}
         <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileMenuOpen(false)}>
           <X className="h-5 w-5" />
@@ -150,7 +163,7 @@ export default function Admin() {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => handleTabChange(item.id)}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === item.id
                 ? "bg-primary text-primary-foreground"
@@ -168,7 +181,7 @@ export default function Admin() {
             {legalItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleTabChange(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === item.id
                     ? "bg-primary text-primary-foreground"
@@ -262,10 +275,13 @@ export default function Admin() {
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
       {/* Mobile Header */}
       <div className="md:hidden p-4 border-b border-border flex justify-between items-center bg-card">
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+        <button 
+          onClick={() => handleTabChange("dashboard")} 
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity text-left"
+        >
+          <Shield className="w-8 h-8 text-primary" />
           <span className="font-heading text-xl text-primary">Admin Panel</span>
-        </Link>
+        </button>
         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)}>
           <Menu className="h-6 w-6" />
         </Button>
@@ -333,6 +349,7 @@ export default function Admin() {
             transition={{ duration: 0.3 }}
           >
             {activeTab === "dashboard" && <DashboardTab onNavigate={setActiveTab} userRole={user?.role} />}
+            {activeTab === "hero" && <HeroTab />}
             {activeTab === "news" && <NewsTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}

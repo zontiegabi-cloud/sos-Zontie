@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaItem } from "@/lib/content-store";
+import { FileUpload } from "@/components/ui/file-upload";
 
 export function MediaEditModal({
   item,
@@ -70,28 +71,62 @@ export function MediaEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">
-              {formData.type === "video" ? "Video URL (YouTube, Vimeo, or direct MP4)" : "Source URL"}
+              {formData.type === "video" ? "Video Source" : "Image Source"}
             </label>
-            <Input
-              value={formData.src}
-              onChange={(e) => setFormData({ ...formData, src: e.target.value })}
-              placeholder={formData.type === "video" ? "https://youtube.com/watch?v=... or https://.../video.mp4" : "https://..."}
-            />
-            {formData.type === "video" && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Supports YouTube, Vimeo embed URLs, or direct video file URLs (.mp4, .webm)
-              </p>
-            )}
+            <div className="space-y-4">
+              <FileUpload 
+                currentValue={formData.src}
+                onUploadComplete={(url) => setFormData({ ...formData, src: url })}
+                accept={formData.type === "video" ? "video/*" : "image/*"}
+                label={`Upload ${formData.type === "video" ? "Video" : "Image"}`}
+              />
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                </div>
+              </div>
+
+              <Input
+                value={formData.src}
+                onChange={(e) => setFormData({ ...formData, src: e.target.value })}
+                placeholder={formData.type === "video" ? "https://youtube.com/watch?v=... or https://.../video.mp4" : "https://..."}
+              />
+              {formData.type === "video" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supports YouTube, Vimeo embed URLs, or direct video file URLs (.mp4, .webm)
+                </p>
+              )}
+            </div>
           </div>
 
           {formData.type === "video" && (
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Thumbnail URL (optional)</label>
-              <Input
-                value={formData.thumbnail || ""}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                placeholder="https://... (thumbnail image for video)"
-              />
+              <div className="space-y-4">
+                <FileUpload 
+                  currentValue={formData.thumbnail || ""}
+                  onUploadComplete={(url) => setFormData({ ...formData, thumbnail: url })}
+                  accept="image/*"
+                  label="Upload Thumbnail"
+                />
+                 <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                  </div>
+                </div>
+                <Input
+                  value={formData.thumbnail || ""}
+                  onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                  placeholder="https://... (thumbnail image for video)"
+                />
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Optional: Display image before video plays
               </p>

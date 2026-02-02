@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { SiteSettings, getContent, saveContent, getDefaultSettings, ThemeSettings } from "@/lib/content-store";
+import { SiteSettings, getContent, saveContent, saveData, getDefaultSettings, ThemeSettings } from "@/lib/content-store";
 
 interface SiteSettingsContextValue {
   settings: SiteSettings;
-  updateSettings: (settings: Partial<SiteSettings>) => void;
-  updateBranding: (branding: Partial<SiteSettings['branding']>) => void;
-  updateBackground: (section: keyof SiteSettings['backgrounds'], bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>) => void;
-  updateSocialLinks: (links: SiteSettings['socialLinks']) => void;
-  updateSEO: (seo: Partial<SiteSettings['seo']>) => void;
-  updateHomepageSections: (sections: SiteSettings['homepageSections']) => void;
-  updateTheme: (theme: Partial<ThemeSettings>) => void;
-  updateThemeFonts: (fonts: Partial<ThemeSettings['fonts']>) => void;
-  updateThemeColors: (colors: Partial<ThemeSettings['colors']>) => void;
-  resetSettings: () => void;
+  updateSettings: (settings: Partial<SiteSettings>) => Promise<void>;
+  updateBranding: (branding: Partial<SiteSettings['branding']>) => Promise<void>;
+  updateBackground: (section: keyof SiteSettings['backgrounds'], bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>) => Promise<void>;
+  updateSocialLinks: (links: SiteSettings['socialLinks']) => Promise<void>;
+  updateSEO: (seo: Partial<SiteSettings['seo']>) => Promise<void>;
+  updateHomepageSections: (sections: SiteSettings['homepageSections']) => Promise<void>;
+  updateTheme: (theme: Partial<ThemeSettings>) => Promise<void>;
+  updateThemeFonts: (fonts: Partial<ThemeSettings['fonts']>) => Promise<void>;
+  updateThemeColors: (colors: Partial<ThemeSettings['colors']>) => Promise<void>;
+  resetSettings: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -28,26 +28,27 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     setIsLoading(false);
   }, []);
 
-  const saveSettings = useCallback((newSettings: SiteSettings) => {
+  const saveSettings = useCallback(async (newSettings: SiteSettings) => {
     setSettings(newSettings);
     const content = getContent();
-    saveContent({ ...content, settings: newSettings });
+    // Save to database (and local storage via saveData)
+    await saveData({ ...content, settings: newSettings });
   }, []);
 
-  const updateSettings = useCallback((partial: Partial<SiteSettings>) => {
+  const updateSettings = useCallback(async (partial: Partial<SiteSettings>) => {
     const newSettings = { ...settings, ...partial };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateBranding = useCallback((branding: Partial<SiteSettings['branding']>) => {
+  const updateBranding = useCallback(async (branding: Partial<SiteSettings['branding']>) => {
     const newSettings = {
       ...settings,
       branding: { ...settings.branding, ...branding },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateBackground = useCallback((
+  const updateBackground = useCallback(async (
     section: keyof SiteSettings['backgrounds'],
     bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>
   ) => {
@@ -58,36 +59,36 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         [section]: { ...settings.backgrounds[section], ...bg },
       },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateSocialLinks = useCallback((links: SiteSettings['socialLinks']) => {
+  const updateSocialLinks = useCallback(async (links: SiteSettings['socialLinks']) => {
     const newSettings = { ...settings, socialLinks: links };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateSEO = useCallback((seo: Partial<SiteSettings['seo']>) => {
+  const updateSEO = useCallback(async (seo: Partial<SiteSettings['seo']>) => {
     const newSettings = {
       ...settings,
       seo: { ...settings.seo, ...seo },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateHomepageSections = useCallback((sections: SiteSettings['homepageSections']) => {
+  const updateHomepageSections = useCallback(async (sections: SiteSettings['homepageSections']) => {
     const newSettings = { ...settings, homepageSections: sections };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateTheme = useCallback((theme: Partial<ThemeSettings>) => {
+  const updateTheme = useCallback(async (theme: Partial<ThemeSettings>) => {
     const newSettings = {
       ...settings,
       theme: { ...settings.theme, ...theme },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateThemeFonts = useCallback((fonts: Partial<ThemeSettings['fonts']>) => {
+  const updateThemeFonts = useCallback(async (fonts: Partial<ThemeSettings['fonts']>) => {
     const newSettings = {
       ...settings,
       theme: {
@@ -95,10 +96,10 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         fonts: { ...settings.theme.fonts, ...fonts },
       },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const updateThemeColors = useCallback((colors: Partial<ThemeSettings['colors']>) => {
+  const updateThemeColors = useCallback(async (colors: Partial<ThemeSettings['colors']>) => {
     const newSettings = {
       ...settings,
       theme: {
@@ -106,12 +107,56 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         colors: { ...settings.theme.colors, ...colors },
       },
     };
-    saveSettings(newSettings);
+    await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
-  const resetSettings = useCallback(() => {
-    saveSettings(getDefaultSettings());
+  const resetSettings = useCallback(async () => {
+    await saveSettings(getDefaultSettings());
   }, [saveSettings]);
+
+  // Apply SEO and Favicon settings
+  useEffect(() => {
+    // Update Title
+    if (settings.seo.defaultTitle) {
+      document.title = settings.seo.defaultTitle;
+    } else if (settings.branding.siteName) {
+      document.title = settings.branding.siteName;
+    }
+
+    // Update Favicon
+    if (settings.branding.faviconUrl) {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = settings.branding.faviconUrl;
+    }
+
+    // Update Meta Description
+    if (settings.seo.defaultDescription) {
+      let meta = document.querySelector("meta[name='description']") as HTMLMetaElement;
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'description';
+        document.head.appendChild(meta);
+      }
+      meta.content = settings.seo.defaultDescription;
+    }
+    
+    // Update OG Image
+    if (settings.seo.ogImage) {
+        let meta = document.querySelector("meta[property='og:image']") as HTMLMetaElement;
+        if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute('property', 'og:image');
+            document.head.appendChild(meta);
+        }
+        meta.content = settings.seo.ogImage;
+    }
+
+  }, [settings.branding, settings.seo]);
 
   // Apply theme CSS variables dynamically
   useEffect(() => {

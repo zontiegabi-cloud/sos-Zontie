@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NewsItem } from "@/lib/content-store";
+import { FileUpload } from "@/components/ui/file-upload";
 
 export function NewsEditModal({
   item,
@@ -66,11 +67,27 @@ export function NewsEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
-            />
+            <div className="space-y-4">
+              <FileUpload 
+                currentValue={formData.image}
+                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                accept="image/*"
+                label="Upload Featured Image"
+              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or enter URL</span>
+                </div>
+              </div>
+              <Input
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
           </div>
 
           <div>

@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import pool, { initDB } from './db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -11,8 +14,45 @@ const app = express();
 const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
 
+// Configure Multer for file uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Sanitize filename and append timestamp to avoid collisions
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Increased limit for large content
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadDir));
+
+// File Upload Route
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  
+  // Return the URL to access the file
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl, filename: req.file.filename, originalname: req.file.originalname });
+});
 
 // Login Route
 app.post('/api/login', async (req, res) => {
@@ -170,7 +210,7 @@ async function fetchAllData(conn: any) {
     maps,
     gameDevices,
     gameModes,
-    settings
+    settingsRows
   ] = await Promise.all([
     conn.query('SELECT * FROM news'),
     conn.query('SELECT * FROM classes'),
@@ -182,8 +222,46 @@ async function fetchAllData(conn: any) {
     conn.query('SELECT * FROM maps'),
     conn.query('SELECT * FROM game_devices'),
     conn.query('SELECT * FROM game_modes'),
-    conn.query('SELECT content FROM settings WHERE id = ?', ['main_settings'])
+    conn.query('SELECT * FROM settings WHERE id = ?', ['main_settings'])
   ]);
+
+  let settings;
+  if (settingsRows.length > 0) {
+    const row = settingsRows[0];
+    
+    // Parse JSON strings if they come back as strings (depends on MariaDB driver config, usually objects for JSON columns)
+    // But since we might have defined some as TEXT (seo_keywords), handle that.
+    
+    // Helper to safely parse JSON if it's a string, or return as is if object
+    const parse = (val: any) => {
+        if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch (e) { return val; }
+        }
+        return val;
+    };
+
+    settings = {
+      branding: {
+        siteName: row.site_name,
+        siteTagline: row.site_tagline,
+        logoUrl: row.logo_url,
+        faviconUrl: row.favicon_url,
+        copyrightText: row.copyright_text,
+        poweredByText: row.powered_by_text
+      },
+      seo: {
+        defaultTitle: row.seo_title,
+        defaultDescription: row.seo_description,
+        defaultKeywords: typeof row.seo_keywords === 'string' && row.seo_keywords.startsWith('[') ? parse(row.seo_keywords) : (row.seo_keywords ? row.seo_keywords.split(',').map((s:string) => s.trim()) : []),
+        ogImage: row.og_image,
+        twitterHandle: row.twitter_handle
+      },
+      socialLinks: parse(row.social_links) || [],
+      theme: parse(row.theme) || {},
+      backgrounds: parse(row.backgrounds) || {},
+      homepageSections: parse(row.homepage_sections) || []
+    };
+  }
 
   return {
     news: news.map((i: any) => ({...i, id: i.id.toString(), created_at: undefined})), // Convert ID to string for frontend compatibility
@@ -197,7 +275,7 @@ async function fetchAllData(conn: any) {
     maps: maps.map((i: any) => ({...i, id: i.id.toString(), media: i.media})),
     gameDevices: gameDevices.map((i: any) => ({...i, id: i.id.toString(), media: i.media})),
     gameModes: gameModes.map((i: any) => ({...i, id: i.id.toString(), rules: i.rules, media: i.media})),
-    settings: settings.length > 0 ? settings[0].content : undefined
+    settings: settings
   };
 }
 
@@ -208,10 +286,7 @@ app.get('/api/data', async (req, res) => {
     conn = await pool.getConnection();
     const content = await fetchAllData(conn);
     
-    if (!content.settings && content.news.length === 0) {
-       return res.status(404).json({ message: 'No data found' });
-    }
-
+    // Allow returning partial data, frontend handles missing settings
     res.json(content);
 
   } catch (error) {
@@ -318,10 +393,42 @@ app.post('/api/data', async (req, res) => {
       await conn.batch('INSERT INTO game_modes (name, shortName, description, rules, image, media, playerCount, roundTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
-    // 11. Settings
-    await conn.query('INSERT INTO settings (id, content) VALUES (?, ?) ON DUPLICATE KEY UPDATE content = ?', 
-      ['main_settings', JSON.stringify(content.settings), JSON.stringify(content.settings)]
-    );
+    // 11. Settings (Flattened)
+    if (content.settings) {
+      const s = content.settings;
+      const b = s.branding || {};
+      const seo = s.seo || {};
+      
+      await conn.query(`
+        INSERT INTO settings (
+          id, 
+          site_name, site_tagline, logo_url, favicon_url, copyright_text, powered_by_text,
+          seo_title, seo_description, seo_keywords, og_image, twitter_handle,
+          social_links, theme, backgrounds, homepage_sections
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          site_name = VALUES(site_name),
+          site_tagline = VALUES(site_tagline),
+          logo_url = VALUES(logo_url),
+          favicon_url = VALUES(favicon_url),
+          copyright_text = VALUES(copyright_text),
+          powered_by_text = VALUES(powered_by_text),
+          seo_title = VALUES(seo_title),
+          seo_description = VALUES(seo_description),
+          seo_keywords = VALUES(seo_keywords),
+          og_image = VALUES(og_image),
+          twitter_handle = VALUES(twitter_handle),
+          social_links = VALUES(social_links),
+          theme = VALUES(theme),
+          backgrounds = VALUES(backgrounds),
+          homepage_sections = VALUES(homepage_sections)
+      `, [
+        'main_settings',
+        b.siteName || null, b.siteTagline || null, b.logoUrl || null, b.faviconUrl || null, b.copyrightText || null, b.poweredByText || null,
+        seo.defaultTitle || null, seo.defaultDescription || null, JSON.stringify(seo.defaultKeywords || []), seo.ogImage || null, seo.twitterHandle || null,
+        JSON.stringify(s.socialLinks || {}), JSON.stringify(s.theme || {}), JSON.stringify(s.backgrounds || {}), JSON.stringify(s.homepageSections || {})
+      ]);
+    }
 
     await conn.commit();
     

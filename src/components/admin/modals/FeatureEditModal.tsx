@@ -4,6 +4,7 @@ import { X, Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUpload } from "../../ui/file-upload";
 import { FeatureItem } from "@/lib/content-store";
 
 export function FeatureEditModal({
@@ -76,11 +77,12 @@ export function FeatureEditModal({
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
-            <Input
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://..."
+            <label className="text-sm text-muted-foreground mb-1 block">Image</label>
+            <FileUpload
+              currentValue={formData.image}
+              onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+              accept="image/*"
+              label="Upload Feature Image"
             />
           </div>
 

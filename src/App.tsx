@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
+import { SEOManager } from "@/components/layout/SEOManager";
 import Index from "./pages/Index";
 import Media from "./pages/Media";
 import FAQ from "./pages/FAQ";
@@ -20,6 +21,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SiteSettingsProvider>
+      <SEOManager />
       <TooltipProvider>
         <Toaster />
         <Sonner />
