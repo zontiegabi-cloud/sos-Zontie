@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Search, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,13 +168,15 @@ export function NewsTab() {
               <TableHead>Title</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Tag</TableHead>
+              <TableHead>Likes</TableHead>
+              <TableHead>Dislikes</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredNews.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No news found.
                 </TableCell>
               </TableRow>
@@ -200,6 +202,18 @@ export function NewsTab() {
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                       {item.tag}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-primary font-medium">
+                      <ThumbsUp className="w-3 h-3" />
+                      <span>{item.likes || 0}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-muted-foreground font-medium">
+                      <ThumbsDown className="w-3 h-3" />
+                      <span>{item.dislikes || 0}</span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

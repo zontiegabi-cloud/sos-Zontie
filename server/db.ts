@@ -72,6 +72,8 @@ export async function initDB() {
         thumbnail LONGTEXT,
         bgImage LONGTEXT,
         tag VARCHAR(255),
+        likes INT DEFAULT 0,
+        dislikes INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -80,6 +82,8 @@ export async function initDB() {
     try {
       await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS thumbnail TEXT');
       await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS bgImage TEXT');
+      await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0');
+      await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS dislikes INT DEFAULT 0');
       await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
       
       await connection.query('ALTER TABLE classes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');

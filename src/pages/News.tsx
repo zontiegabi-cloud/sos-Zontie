@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Zap, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useContent } from "@/hooks/use-content";
+import { NewsDetailDialog } from "@/components/news/NewsDetailDialog";
+import { NewsItem } from "@/lib/content-store";
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '';
@@ -15,6 +17,7 @@ const formatDate = (dateString: string) => {
 
 export default function News() {
   const { news } = useContent();
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
 
   return (
     <Layout>
@@ -54,10 +57,10 @@ export default function News() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="group"
+                className="group cursor-pointer"
+                onClick={() => setSelectedNews(item)}
               >
-                <Link 
-                  to={`/news/${item.id}`}
+                <div 
                   className="block bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-300 h-full flex flex-col"
                 >
                   {/* Image */}
@@ -92,12 +95,18 @@ export default function News() {
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
-                </Link>
+                </div>
               </motion.article>
             ))}
           </div>
         </div>
       </section>
+
+      <NewsDetailDialog 
+        item={selectedNews} 
+        open={!!selectedNews} 
+        onOpenChange={(open) => !open && setSelectedNews(null)} 
+      />
     </Layout>
   );
 }

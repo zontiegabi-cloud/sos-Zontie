@@ -11,6 +11,8 @@ export interface NewsItem {
   thumbnail?: string;
   bgImage?: string;
   tag: string;
+  likes?: number;
+  dislikes?: number;
   createdAt?: string;
 }
 

@@ -10,6 +10,8 @@ import {
   Users, 
   Eye, 
   Heart, 
+  ThumbsUp,
+  ThumbsDown,
   Zap,
   ArrowRight,
   Play,
@@ -31,6 +33,7 @@ import {
 import { useContent } from '@/hooks/use-content';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from "@/lib/utils";
+import { NewsDetailDialog } from '@/components/news/NewsDetailDialog';
 
 // Define a union type for all content items
 type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem;
@@ -261,7 +264,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
   onView: (item: ContentItem) => void,
   cardStyle?: string
 }>(
-  ({ item, index, cardStyle = 'default' }, ref) => {
+  ({ item, index, onView, cardStyle = 'default' }, ref) => {
   
   // Minimal Style (Image + Title + Date)
   if (cardStyle === 'minimal') {
@@ -271,9 +274,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group relative bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full"
+        className="group relative bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
           <div className="aspect-[4/3] overflow-hidden relative">
             <img 
               src={item.thumbnail || item.image || '/placeholder.jpg'} 
@@ -301,7 +305,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               </span>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -314,9 +318,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group relative h-full min-h-[300px] rounded-xl overflow-hidden border border-border/50 hover:border-primary/50 transition-all"
+        className="group relative h-full min-h-[300px] rounded-xl overflow-hidden border border-border/50 hover:border-primary/50 transition-all cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="block w-full h-full relative">
+        <div className="block w-full h-full relative">
           <img 
             src={item.image || item.thumbnail || '/placeholder.jpg'} 
             alt={item.title}
@@ -344,7 +349,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -357,9 +362,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group h-full flex flex-col border-b border-border/50 pb-6 last:border-0"
+        className="group h-full flex flex-col border-b border-border/50 pb-6 last:border-0 cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="grid grid-cols-1 gap-4 h-full">
+        <div className="grid grid-cols-1 gap-4 h-full">
           <div className="aspect-video overflow-hidden rounded-md relative">
             <img 
               src={item.thumbnail || item.image || '/placeholder.jpg'} 
@@ -389,7 +395,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               </span>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -402,9 +408,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group bg-card/50 hover:bg-card border border-border/50 hover:border-primary/30 rounded-lg p-3 transition-all h-full"
+        className="group bg-card/50 hover:bg-card border border-border/50 hover:border-primary/30 rounded-lg p-3 transition-all h-full cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="flex gap-4 h-full">
+        <div className="flex gap-4 h-full">
           <div className="w-1/3 aspect-square max-w-[120px] rounded overflow-hidden flex-shrink-0">
             <img 
               src={item.thumbnail || item.image || '/placeholder.jpg'} 
@@ -430,7 +437,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               </span>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -443,10 +450,11 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group relative bg-black/40 border border-primary/20 hover:border-primary/60 transition-colors h-full flex flex-col"
+        className="group relative bg-black/40 border border-primary/20 hover:border-primary/60 transition-colors h-full flex flex-col cursor-pointer"
         style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%)' }}
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
            {/* Tech decorations */}
            <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-primary/50" />
            <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-primary/50" />
@@ -480,7 +488,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
                </span>
              </div>
            </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -493,9 +501,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: index * 0.1 }}
-        className="group bg-card border-l-4 border-l-primary/70 border-y border-r border-border hover:border-l-primary hover:shadow-md transition-all h-full"
+        className="group bg-card border-l-4 border-l-primary/70 border-y border-r border-border hover:border-l-primary hover:shadow-md transition-all h-full cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="flex flex-col h-full">
+        <div className="flex flex-col h-full">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-2">
               <span className="text-xs font-bold uppercase tracking-widest text-primary">
@@ -518,7 +527,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               Read Full Story <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -531,7 +540,8 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0, scale: 0.98 }}
         whileInView={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="group relative rounded-xl overflow-hidden h-full"
+        className="group relative rounded-xl overflow-hidden h-full cursor-pointer"
+        onClick={() => onView(item)}
       >
         <div className="absolute inset-0">
           <img 
@@ -542,7 +552,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
           <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-500" />
         </div>
 
-        <Link to={`/news/${item.id}`} className="relative h-full flex flex-col justify-end p-6">
+        <div className="relative h-full flex flex-col justify-end p-6">
           <div className="bg-background/10 backdrop-blur-md border border-white/10 rounded-xl p-5 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-background/20 hover:border-white/20">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2 py-0.5 rounded-full bg-primary/80 text-primary-foreground text-[10px] font-bold uppercase">
@@ -566,7 +576,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
                </span>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -579,9 +589,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.7 }}
-        className="group relative h-full min-h-[400px] rounded-2xl overflow-hidden shadow-2xl"
+        className="group relative h-full min-h-[400px] rounded-2xl overflow-hidden shadow-2xl cursor-pointer"
+        onClick={() => onView(item)}
       >
-        <Link to={`/news/${item.id}`} className="block w-full h-full">
+        <div className="block w-full h-full">
           <img 
             src={item.image || item.thumbnail || '/placeholder.jpg'} 
             alt={item.title}
@@ -613,7 +624,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
       </motion.div>
     );
   }
@@ -628,9 +639,10 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
       viewport={{ once: false }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col"
+      className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col cursor-pointer"
+      onClick={() => onView(item)}
     >
-      <Link to={`/news/${item.id}`} className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-full w-full">
         <div className="aspect-video overflow-hidden relative">
           <img 
             src={item.thumbnail || item.image || '/placeholder.jpg'} 
@@ -665,7 +677,7 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
             </span>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 });
@@ -1056,87 +1068,74 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         )
       )}
 
+      {/* News Dialog */}
+      {source.type === 'news' && (
+        <NewsDetailDialog 
+          item={selectedItem as NewsItem} 
+          open={!!selectedItem} 
+          onOpenChange={(open) => !open && setSelectedItem(null)} 
+        />
+      )}
+
       {/* Detail Dialog for Features/Classes */}
-      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-primary/20">
-          <DialogHeader>
-            <div className="flex items-center gap-4 mb-4">
-               {/* Icon logic for dialog header */}
-               {selectedItem && 'icon' in selectedItem && iconMap[(selectedItem as { icon: string }).icon] && (
-                 <div className="w-16 h-16 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
-                   {React.createElement(iconMap[(selectedItem as { icon: string }).icon], { className: "w-8 h-8 text-primary" })}
-                 </div>
-               )}
-              <div>
-                <DialogTitle className="font-display text-3xl lg:text-4xl uppercase text-foreground">
-                  {selectedItem && ('title' in selectedItem ? (selectedItem as { title: string }).title : 'name' in selectedItem ? (selectedItem as { name: string }).name : '')}
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground mt-2 text-base">
-                  {selectedItem && 'description' in selectedItem ? (selectedItem as { description: string }).description : ''}
-                </DialogDescription>
+      {source.type !== 'news' && (
+        <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+          <DialogContent className={cn(
+            "max-h-[90vh] overflow-y-auto border-primary/20",
+            "max-w-3xl bg-card"
+          )}>
+            <DialogHeader>
+              <div className="flex items-center gap-4 mb-4">
+                 {/* Icon logic for dialog header */}
+                 {selectedItem && 'icon' in selectedItem && iconMap[(selectedItem as { icon: string }).icon] && (
+                   <div className="w-16 h-16 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
+                     {React.createElement(iconMap[(selectedItem as { icon: string }).icon], { className: "w-8 h-8 text-primary" })}
+                   </div>
+                 )}
+                <div>
+                  <DialogTitle className="font-display text-3xl lg:text-4xl uppercase text-foreground">
+                    {selectedItem && ('title' in selectedItem ? (selectedItem as { title: string }).title : 'name' in selectedItem ? (selectedItem as { name: string }).name : '')}
+                  </DialogTitle>
+                  <DialogDescription className="text-muted-foreground mt-2 text-base">
+                    {selectedItem && 'description' in selectedItem ? (selectedItem as { description: string }).description : ''}
+                  </DialogDescription>
+                </div>
               </div>
-            </div>
-          </DialogHeader>
+            </DialogHeader>
 
-          {selectedItem && (
-             <div className="mt-6 space-y-6">
-                {/* News Specific: Full Content */}
-                {source.type === 'news' && (
-                  <div className="prose prose-invert max-w-none">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                      <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs uppercase font-bold tracking-wide">
-                        {(selectedItem as NewsItem).tag}
-                      </span>
-                      <span>•</span>
-                      <span>{formatDate((selectedItem as NewsItem).date)}</span>
-                    </div>
-                    
-                    {(selectedItem as NewsItem).image && (
-                      <div className="mb-6 rounded-lg overflow-hidden border border-border/50">
-                        <img 
-                          src={(selectedItem as NewsItem).image} 
-                          alt={(selectedItem as NewsItem).title}
-                          className="w-full h-auto"
-                        />
+            {selectedItem && (
+               <div className="mt-6 space-y-6">
+                  {/* Features Specific: Devices Grid in Dialog */}
+                  {source.type === 'features' && (selectedItem as FeatureItem).devices && (
+                    <div>
+                      <h3 className="font-heading text-xl uppercase text-foreground mb-4 flex items-center gap-2">
+                        <span className="text-primary">{(selectedItem as FeatureItem).devices.length}</span>
+                        <span>{(selectedItem as FeatureItem).devicesSectionTitle || "Devices & Features"}</span>
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(selectedItem as FeatureItem).devices.map((device: Device, index: number) => {
+                           const DeviceIcon = device.icon && iconMap[device.icon] ? iconMap[device.icon] : Shield;
+                           return (
+                              <div key={index} className="flex items-start gap-3 p-3 rounded bg-muted/50 border border-border">
+                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                                  <DeviceIcon className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                  <h4 className="font-heading text-sm uppercase text-foreground">{device.name}</h4>
+                                  <p className="text-xs text-muted-foreground mt-1">{device.details}</p>
+                                </div>
+                              </div>
+                           );
+                        })}
                       </div>
-                    )}
-                    
-                    <div className="whitespace-pre-line text-foreground/90 leading-relaxed">
-                      {(selectedItem as NewsItem).content}
                     </div>
-                  </div>
-                )}
-
-                {/* Features Specific: Devices Grid in Dialog */}
-                {source.type === 'features' && (selectedItem as FeatureItem).devices && (
-                  <div>
-                    <h3 className="font-heading text-xl uppercase text-foreground mb-4 flex items-center gap-2">
-                      <span className="text-primary">{(selectedItem as FeatureItem).devices.length}</span>
-                      <span>{(selectedItem as FeatureItem).devicesSectionTitle || "Devices & Features"}</span>
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {(selectedItem as FeatureItem).devices.map((device: Device, index: number) => {
-                         const DeviceIcon = device.icon && iconMap[device.icon] ? iconMap[device.icon] : Shield;
-                         return (
-                            <div key={index} className="flex items-start gap-3 p-3 rounded bg-muted/50 border border-border">
-                              <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                                <DeviceIcon className="w-4 h-4 text-primary" />
-                              </div>
-                              <div>
-                                <h4 className="font-heading text-sm uppercase text-foreground">{device.name}</h4>
-                                <p className="text-xs text-muted-foreground mt-1">{device.details}</p>
-                              </div>
-                            </div>
-                         );
-                      })}
-                    </div>
-                  </div>
-                )}
-             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                  )}
+               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

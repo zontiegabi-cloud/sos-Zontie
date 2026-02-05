@@ -362,9 +362,9 @@ app.post('/api/data', async (req, res) => {
     await conn.query('TRUNCATE TABLE news');
     if (content.news?.length) {
       const batch = content.news.map((item: NewsItem) => [
-        item.id, item.title, item.date, item.description, item.content, item.image, item.thumbnail || null, item.bgImage || null, item.tag, formatDateForDb(item.createdAt)
+        item.id, item.title, item.date, item.description, item.content, item.image, item.thumbnail || null, item.bgImage || null, item.tag, item.likes || 0, item.dislikes || 0, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO news (id, title, date, description, content, image, thumbnail, bgImage, tag, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO news (id, title, date, description, content, image, thumbnail, bgImage, tag, likes, dislikes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 2. Classes

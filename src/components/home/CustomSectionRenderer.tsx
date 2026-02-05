@@ -21,7 +21,11 @@ import {
   Shield,
   Trophy,
   Flame,
-  Gamepad2
+  Gamepad2,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause
 } from "lucide-react";
 
 interface CustomSectionRendererProps {
@@ -47,6 +51,106 @@ const decorationIcons: Record<string, any> = {
   'arrow-down': ArrowDown,
   'chevron-down': ChevronDown
 };
+
+interface VideoBackgroundProps {
+  settings: any;
+  isMuted: boolean;
+  isPlaying: boolean;
+  volume: number;
+  videoDims: { w: string; h: string } | null;
+}
+
+function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: VideoBackgroundProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const youtubeId = getYoutubeId(settings.background.videoUrl || '');
+
+  // Handle mute/unmute
+  useEffect(() => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      const command = isMuted ? 'mute' : 'unMute';
+      iframeRef.current.contentWindow.postMessage(JSON.stringify({
+        event: 'command',
+        func: command,
+        args: []
+      }), '*');
+    }
+  }, [isMuted]);
+
+  // Handle volume change
+  useEffect(() => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'setVolume',
+        args: [volume]
+      }), '*');
+    }
+  }, [volume]);
+
+  // Handle play/pause
+  useEffect(() => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      const command = isPlaying ? 'playVideo' : 'pauseVideo';
+      iframeRef.current.contentWindow.postMessage(JSON.stringify({
+        event: 'command',
+        func: command,
+        args: []
+      }), '*');
+    }
+  }, [isPlaying]);
+
+  if (!youtubeId) return null;
+
+  return (
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: videoDims?.w || '100%', height: videoDims?.h || '100%' }}>
+      <iframe
+        ref={iframeRef}
+        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${settings.background.autoplay !== false ? 1 : 0}&mute=${settings.background.muted !== false ? 1 : 0}&controls=0&loop=${settings.background.loop !== false ? 1 : 0}&playlist=${youtubeId}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`}
+        className="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        style={{ pointerEvents: 'none' }}
+      />
+    </div>
+  );
+}
+
+function NativeVideoBackground({ settings, isMuted, isPlaying, volume }: VideoBackgroundProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume / 100;
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(e => console.log('Autoplay prevented or play failed:', e));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={settings.background.videoUrl}
+      className="w-full h-full object-cover"
+      autoPlay={settings.background.autoplay !== false}
+      muted={isMuted} // Initial state
+      loop={settings.background.loop !== false}
+      playsInline
+    />
+  );
+}
 
 const getYoutubeId = (url: string) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -143,6 +247,17 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
   const animation = settings.animation || { type: 'none', duration: 0.5, delay: 0 };
   const isAnimated = animation.type && animation.type !== 'none';
   
+  // Video Mute State
+  const [isMuted, setIsMuted] = useState(settings.background.muted !== false);
+  // Video Play State
+  const [isPlaying, setIsPlaying] = useState(true);
+  // Video Volume State (0-100)
+  const [volume, setVolume] = useState(100);
+
+  useEffect(() => {
+    setIsMuted(settings.background.muted !== false);
+  }, [settings.background.muted]);
+
   // Video Cover Logic
   const containerRef = useRef<HTMLElement>(null);
   const [videoDims, setVideoDims] = useState<{w: string, h: string} | null>(null);
@@ -358,31 +473,11 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
       {/* Background Layer */}
       {settings.background.type === 'video' && settings.background.videoUrl ? (
         <div className="absolute inset-0 overflow-hidden">
-          {(() => {
-            const youtubeId = getYoutubeId(settings.background.videoUrl || '');
-            if (youtubeId) {
-              return (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: videoDims?.w || '100%', height: videoDims?.h || '100%' }}>
-                  <iframe
-                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${settings.background.autoplay !== false ? 1 : 0}&mute=${settings.background.muted !== false ? 1 : 0}&controls=0&loop=${settings.background.loop !== false ? 1 : 0}&playlist=${youtubeId}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0`}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    style={{ pointerEvents: 'none' }}
-                  />
-                </div>
-              );
-            }
-            return (
-              <video
-                src={settings.background.videoUrl}
-                className="w-full h-full object-cover"
-                autoPlay={settings.background.autoplay !== false}
-                muted={settings.background.muted !== false}
-                loop={settings.background.loop !== false}
-                playsInline
-              />
-            );
-          })()}
+          {getYoutubeId(settings.background.videoUrl) ? (
+            <YoutubeBackground settings={settings} isMuted={isMuted} isPlaying={isPlaying} volume={volume} videoDims={videoDims} />
+          ) : (
+            <NativeVideoBackground settings={settings} isMuted={isMuted} isPlaying={isPlaying} volume={volume} videoDims={videoDims} />
+          )}
         </div>
       ) : (
         <div className="absolute inset-0" style={backgroundStyle} />
@@ -416,6 +511,43 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
             style={{ opacity: overlayOpacity }} // Corrected logic: direct opacity usage
           />
         )
+      )}
+
+      {/* Mute & Play Toggle Buttons */}
+      {settings.background.type === 'video' && settings.background.videoUrl && (
+        <div className="absolute inset-0 z-30 pointer-events-none h-full w-full">
+          <div className="sticky top-[calc(100vh-6rem)] w-full flex justify-end px-8 gap-3">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="pointer-events-auto p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-sm border border-white/10"
+              aria-label={isPlaying ? "Pause video" : "Play video"}
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <div className="flex items-center gap-2 pointer-events-auto p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-sm border border-white/10 group">
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                aria-label={isMuted ? "Unmute video" : "Mute video"}
+              >
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => {
+                  const newVolume = parseInt(e.target.value);
+                  setVolume(newVolume);
+                  if (newVolume > 0 && isMuted) setIsMuted(false);
+                  if (newVolume === 0 && !isMuted) setIsMuted(true);
+                }}
+                className="w-0 overflow-hidden group-hover:w-20 transition-all duration-300 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                aria-label="Volume"
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Content Layer */}
