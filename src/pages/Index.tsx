@@ -1,10 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
-import { HeroSection } from "@/components/home/HeroSection";
-import { NewsSection } from "@/components/home/NewsSection";
-import { FeaturesSection } from "@/components/home/FeaturesSection";
-import { ClassesSection } from "@/components/home/ClassesSection";
-import { CTASection } from "@/components/home/CTASection";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
+import { useSiteSettings } from "@/hooks/use-site-settings";
+import { DEFAULT_SECTIONS } from "@/lib/default-sections";
 
 const Index = () => {
   const { settings } = useSiteSettings();
@@ -14,17 +11,18 @@ const Index = () => {
     .filter(s => s.enabled)
     .sort((a, b) => a.order - b.order);
 
-  const sectionComponents: Record<string, React.ReactNode> = {
-    hero: <HeroSection key="hero" />,
-    news: <NewsSection key="news" />,
-    features: <FeaturesSection key="features" />,
-    classes: <ClassesSection key="classes" />,
-    cta: <CTASection key="cta" />,
-  };
-
   return (
     <Layout>
-      {enabledSections.map(section => sectionComponents[section.id])}
+      {enabledSections.map(section => {
+        // Use custom section from settings, or fallback to default configuration
+        const sectionData = settings.customSections?.[section.id] || DEFAULT_SECTIONS[section.id];
+        
+        if (sectionData) {
+          return <CustomSectionRenderer key={section.id} section={sectionData} />;
+        }
+        
+        return null;
+      })}
     </Layout>
   );
 };

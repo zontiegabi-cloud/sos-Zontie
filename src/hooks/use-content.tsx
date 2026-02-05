@@ -16,19 +16,22 @@ import {
   saveData, 
   resetToDefaults 
 } from '@/lib/content-store';
+import { generateId } from '@/lib/utils';
 
 export function useContent() {
   const [content, setContent] = useState<SiteContent>(() => getContent());
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function init() {
-      const data = await getData();
-      setContent(data);
-      setIsLoading(false);
-    }
-    init();
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    const data = await getData();
+    setContent(data);
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const updateContent = useCallback(async (newContent: SiteContent) => {
     setContent(newContent);
@@ -40,7 +43,14 @@ export function useContent() {
 
   // News
   const addNewsItem = useCallback((item: Omit<NewsItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    // Check for duplicates
+    const exists = content.news.some(n => n.title.trim().toLowerCase() === item.title.trim().toLowerCase());
+    if (exists) {
+      console.warn(`News article with title "${item.title}" already exists.`);
+      return content.news.find(n => n.title.trim().toLowerCase() === item.title.trim().toLowerCase()) as NewsItem;
+    }
+
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, news: [newItem, ...content.news] };
     updateContent(newContent);
     return newItem;
@@ -58,9 +68,21 @@ export function useContent() {
     updateContent({ ...content, news: newNews });
   }, [content, updateContent]);
 
+  const deleteNewsItems = useCallback((ids: Set<string>) => {
+    const newNews = content.news.filter(item => !ids.has(item.id));
+    updateContent({ ...content, news: newNews });
+  }, [content, updateContent]);
+
   // Classes
   const addClassItem = useCallback((item: Omit<ClassItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    // Check for duplicates
+    const exists = content.classes.some(c => c.name.trim().toLowerCase() === item.name.trim().toLowerCase());
+    if (exists) {
+      console.warn(`Class with name "${item.name}" already exists.`);
+      return content.classes.find(c => c.name.trim().toLowerCase() === item.name.trim().toLowerCase()) as ClassItem;
+    }
+
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, classes: [...content.classes, newItem] };
     updateContent(newContent);
     return newItem;
@@ -80,8 +102,21 @@ export function useContent() {
 
   // Media
   const addMediaItem = useCallback((item: Omit<MediaItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
-    const newContent = { ...content, media: [...content.media, newItem] };
+    // Check for duplicates (by title and src)
+    const exists = content.media.some(m => 
+      m.title.trim().toLowerCase() === item.title.trim().toLowerCase() ||
+      m.src === item.src
+    );
+    if (exists) {
+      console.warn(`Media with title "${item.title}" or src already exists.`);
+      return content.media.find(m => 
+        m.title.trim().toLowerCase() === item.title.trim().toLowerCase() ||
+        m.src === item.src
+      ) as MediaItem;
+    }
+
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
+    const newContent = { ...content, media: [newItem, ...content.media] };
     updateContent(newContent);
     return newItem;
   }, [content, updateContent]);
@@ -98,9 +133,14 @@ export function useContent() {
     updateContent({ ...content, media: newMedia });
   }, [content, updateContent]);
 
+  const deleteMediaItems = useCallback((ids: Set<string>) => {
+    const newMedia = content.media.filter(item => !ids.has(item.id));
+    updateContent({ ...content, media: newMedia });
+  }, [content, updateContent]);
+
   // FAQ
   const addFAQItem = useCallback((item: Omit<FAQItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, faq: [...content.faq, newItem] };
     updateContent(newContent);
     return newItem;
@@ -120,7 +160,14 @@ export function useContent() {
 
   // Features
   const addFeatureItem = useCallback((item: Omit<FeatureItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    // Check for duplicates
+    const exists = content.features.some(f => f.title.toLowerCase() === item.title.toLowerCase());
+    if (exists) {
+      console.warn(`Feature with title "${item.title}" already exists.`);
+      return content.features.find(f => f.title.toLowerCase() === item.title.toLowerCase()) as FeatureItem;
+    }
+
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, features: [...content.features, newItem] };
     updateContent(newContent);
     return newItem;
@@ -140,7 +187,7 @@ export function useContent() {
 
   // Weapons
   const addWeaponItem = useCallback((item: Omit<WeaponItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, weapons: [...content.weapons, newItem] };
     updateContent(newContent);
     return newItem;
@@ -160,7 +207,7 @@ export function useContent() {
 
   // Maps
   const addMapItem = useCallback((item: Omit<MapItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, maps: [...content.maps, newItem] };
     updateContent(newContent);
     return newItem;
@@ -180,7 +227,7 @@ export function useContent() {
 
   // Game Devices
   const addGameDeviceItem = useCallback((item: Omit<GameDeviceItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, gameDevices: [...content.gameDevices, newItem] };
     updateContent(newContent);
     return newItem;
@@ -200,7 +247,7 @@ export function useContent() {
 
   // Game Modes
   const addGameModeItem = useCallback((item: Omit<GameModeItem, 'id'>) => {
-    const newItem = { ...item, id: Date.now().toString() };
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
     const newContent = { ...content, gameModes: [...content.gameModes, newItem] };
     updateContent(newContent);
     return newItem;
@@ -249,12 +296,14 @@ export function useContent() {
     addNewsItem,
     updateNewsItem,
     deleteNewsItem,
+    deleteNewsItems,
     addClassItem,
     updateClassItem,
     deleteClassItem,
     addMediaItem,
     updateMediaItem,
     deleteMediaItem,
+    deleteMediaItems,
     addFAQItem,
     updateFAQItem,
     deleteFAQItem,
@@ -277,5 +326,6 @@ export function useContent() {
     updateTerms,
     updateContent,
     reset,
+    refresh,
   };
 }

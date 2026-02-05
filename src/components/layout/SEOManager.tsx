@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export function SEOManager() {
   const { settings } = useSiteSettings();

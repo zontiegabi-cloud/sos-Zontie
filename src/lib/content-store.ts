@@ -8,7 +8,10 @@ export interface NewsItem {
   description: string;
   content: string;
   image: string;
+  thumbnail?: string;
+  bgImage?: string;
   tag: string;
+  createdAt?: string;
 }
 
 export interface ClassDevice {
@@ -27,6 +30,7 @@ export interface ClassItem {
   color: string;
   devices?: ClassDevice[];
   devicesUsedTitle?: string;
+  createdAt?: string;
 }
 
 export interface MediaItem {
@@ -37,12 +41,14 @@ export interface MediaItem {
   category: string;
   description?: string;
   thumbnail?: string;
+  createdAt?: string;
 }
 
 export interface FAQItem {
   id: string;
   question: string;
   answer: string;
+  createdAt?: string;
 }
 
 export interface PageContent {
@@ -68,6 +74,7 @@ export interface FeatureItem {
   icon: string;
   devices: Device[];
   devicesSectionTitle?: string;
+  createdAt?: string;
 }
 
 // ========== Game Content Interfaces ==========
@@ -97,6 +104,7 @@ export interface WeaponItem {
   image: string;
   stats: WeaponStats;
   attachments: WeaponAttachment[];
+  createdAt?: string;
 }
 
 export interface MapMediaItem {
@@ -113,6 +121,7 @@ export interface MapItem {
   environment: string; // e.g., "Urban", "Desert", "Forest"
   image: string;
   media: MapMediaItem[];
+  createdAt?: string;
 }
 
 export interface GameDeviceItem {
@@ -123,6 +132,7 @@ export interface GameDeviceItem {
   image: string;
   media: MapMediaItem[];
   classRestriction?: string; // Which class can use it, if any
+  createdAt?: string;
 }
 
 export interface GameModeItem {
@@ -135,20 +145,29 @@ export interface GameModeItem {
   media: MapMediaItem[];
   playerCount?: string;
   roundTime?: string;
+  createdAt?: string;
 }
 
 // ========== Site Settings Interfaces ==========
 
 export interface BackgroundSettings {
-  type: 'color' | 'gradient' | 'image';
+  type: 'color' | 'gradient' | 'image' | 'video';
   color?: string; // HSL values like "220 15% 6%"
   gradientFrom?: string;
   gradientTo?: string;
   gradientDirection?: string;
-  imageUrl?: string;
+  image?: string; // For backward compatibility and newer code
+  imageUrl?: string; // For older code
+  videoUrl?: string; // For video backgrounds
+  opacity?: number; // 0-1
   imageOverlayOpacity?: number; // 0-100
   textureEnabled?: boolean;
   textureOpacity?: number; // 0-100
+  // Video settings
+  muted?: boolean;
+  autoplay?: boolean;
+  loop?: boolean;
+  showControls?: boolean;
 }
 
 export interface SectionBackground {
@@ -214,8 +233,11 @@ export interface ThemeSettings {
 export interface HeroButton {
   text: string;
   url: string;
-  variant: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link' | 'glow' | 'glass' | 'soft' | 'outline-glow' | 'neo';
   icon?: string;
+  width?: string;
+  height?: string;
+  fontSize?: string;
 }
 
 export interface HeroSettings {
@@ -224,6 +246,12 @@ export interface HeroSettings {
   backgroundImage: string;
   overlayOpacity: number;
   buttons: HeroButton[];
+  // Styling
+  titleColor?: string;
+  titleFontSize?: string; // e.g., "text-5xl"
+  titleFontWeight?: string; // e.g., "font-bold"
+  titleAlignment?: 'left' | 'center' | 'right';
+  titleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
 }
 
 export interface CTASettings {
@@ -232,14 +260,124 @@ export interface CTASettings {
   buttons: HeroButton[];
 }
 
+export interface NewsSectionSettings {
+  title: string;
+  description: string;
+  columns: number;
+  maxItems: number;
+  showDate: boolean;
+  showTag: boolean;
+  showImage: boolean;
+  // Styling
+  titleColor?: string;
+  titleFontSize?: string;
+  titleFontWeight?: string;
+  titleAlignment?: 'left' | 'center' | 'right';
+  titleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
+}
+
+export interface CustomSection {
+  id: string;
+  type: 'rich-text' | 'hero' | 'cta' | 'features' | 'html' | 'dynamic-content';
+  name: string;
+  content: {
+    title?: string;
+    subtitle?: string;
+    description?: string; // HTML allowed
+    buttons?: HeroButton[];
+    image?: string;
+    html?: string; // For raw HTML sections
+    [key: string]: any;
+  };
+  settings: {
+    paddingTop: string; 
+    paddingBottom: string;
+    containerWidth: 'default' | 'full' | 'narrow';
+    minHeight?: string; // e.g. "100vh", "600px"
+    background: BackgroundSettings;
+    textColor?: string;
+    titleStyle?: 'default' | 'glow' | 'outline' | 'shadow';
+    titleColor?: string;
+    titleFontSize?: string;
+    titleFontWeight?: string;
+    titleLineHeight?: string;
+    titleLetterSpacing?: string;
+    titlePaddingTop?: string;
+    titlePaddingBottom?: string;
+    titleMarginTop?: string;
+    titleMarginBottom?: string;
+    titleWrapperMarginTop?: string;
+    titleWrapperMarginBottom?: string;
+    titleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
+    titleDecorationType?: 'none' | 'icon' | 'image' | 'line-icon-line';
+    titleDecorationIcon?: string;
+    titleDecorationImage?: string;
+    titleDecorationPosition?: 'top' | 'bottom' | 'left' | 'right';
+    titleDecorationColor?: string;
+    titleDecorationSize?: string;
+    titleDecorationPaddingTop?: string;
+    titleDecorationPaddingBottom?: string;
+    titleDecorationMarginTop?: string;
+    titleDecorationMarginBottom?: string;
+    subtitleColor?: string;
+    subtitleFontSize?: string;
+    subtitleFontWeight?: string;
+    subtitleLineHeight?: string;
+    subtitleLetterSpacing?: string;
+    subtitlePaddingTop?: string;
+    subtitlePaddingBottom?: string;
+    subtitleMarginTop?: string;
+    subtitleMarginBottom?: string;
+    subtitleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
+    bodyFontSize?: string;
+    bodyFontWeight?: string;
+    bodyLineHeight?: string;
+    bodyLetterSpacing?: string;
+    overlayOpacity?: number;
+    scrollIndicator?: {
+      enabled: boolean;
+      style: 'bounce' | 'pulse' | 'static';
+      color?: string; // e.g. "text-primary", "text-white"
+      icon: 'chevron-down' | 'arrow-down' | 'mouse';
+      text?: string;
+      opacity?: number; // 0-1
+      position?: {
+        bottom?: string; // e.g. "2rem"
+        align?: 'left' | 'center' | 'right';
+      };
+    };
+    textAlign?: 'left' | 'center' | 'right';
+    sourceTextAlign?: 'left' | 'center' | 'right';
+    customCss?: string;
+    animation?: {
+      type: 'none' | 'fade' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'zoom';
+      duration?: number;
+      delay?: number;
+    };
+  };
+  dynamicSources?: DynamicContentSource[];
+}
+
+export interface DynamicContentSource {
+  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry';
+  cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured';
+  count: number;
+  title?: string;
+  ids?: string[]; // For manual selection
+  gridColumns?: number; // 1, 2, 3, 4
+}
+
 export interface SiteSettings {
   branding: BrandingSettings;
   hero: HeroSettings;
   cta: CTASettings;
+  newsSection: NewsSectionSettings;
   backgrounds: SectionBackground;
   socialLinks: SocialLink[];
   seo: SEOSettings;
   homepageSections: HomepageSection[];
+  customSections: Record<string, CustomSection>;
   theme: ThemeSettings;
 }
 
@@ -694,6 +832,15 @@ const defaultSettings: SiteSettings = {
       { text: "Join Our Discord", url: "https://discord.gg/shadowsofsoldiers", variant: "outline", icon: "MessageCircle" }
     ]
   },
+  newsSection: {
+    title: "Latest Intel",
+    description: "Stay updated with the latest news and development progress.",
+    columns: 3,
+    maxItems: 3,
+    showDate: true,
+    showTag: true,
+    showImage: true
+  },
   backgrounds: {
     hero: {
       type: "image",
@@ -761,6 +908,7 @@ const defaultSettings: SiteSettings = {
     { id: "classes", name: "Classes Section", enabled: true, order: 3 },
     { id: "cta", name: "CTA Section", enabled: true, order: 4 },
   ],
+  customSections: {},
   theme: {
     fonts: {
       display: "Bebas Neue",
@@ -780,6 +928,9 @@ const defaultSettings: SiteSettings = {
     },
   },
 };
+
+const LOCAL_LAST_SAVED_KEY = 'zontie_local_last_saved';
+const SERVER_LAST_SYNCED_KEY = 'zontie_server_last_synced';
 
 export function getContent(): SiteContent {
   const defaultContent: SiteContent = {
@@ -809,17 +960,17 @@ export function getContent(): SiteContent {
   try {
     const parsed = JSON.parse(stored);
     return {
-      news: parsed.news || defaultNews,
-      classes: parsed.classes || defaultClasses,
-      media: parsed.media || defaultMedia,
-      faq: parsed.faq || defaultFAQ,
-      features: parsed.features || defaultFeatures,
-      privacy: parsed.privacy || defaultPrivacy,
-      terms: parsed.terms || defaultTerms,
-      weapons: parsed.weapons || defaultWeapons,
-      maps: parsed.maps || defaultMaps,
-      gameDevices: parsed.gameDevices || defaultGameDevices,
-      gameModes: parsed.gameModes || defaultGameModes,
+      news: parsed.news ?? defaultNews,
+      classes: parsed.classes ?? defaultClasses,
+      media: parsed.media ?? defaultMedia,
+      faq: parsed.faq ?? defaultFAQ,
+      features: parsed.features ?? defaultFeatures,
+      privacy: parsed.privacy ?? defaultPrivacy,
+      terms: parsed.terms ?? defaultTerms,
+      weapons: parsed.weapons ?? defaultWeapons,
+      maps: parsed.maps ?? defaultMaps,
+      gameDevices: parsed.gameDevices ?? defaultGameDevices,
+      gameModes: parsed.gameModes ?? defaultGameModes,
       settings: parsed.settings ? {
         ...defaultSettings,
         ...parsed.settings,
@@ -827,6 +978,7 @@ export function getContent(): SiteContent {
         branding: { ...defaultSettings.branding, ...(parsed.settings.branding || {}) },
         hero: { ...defaultSettings.hero, ...(parsed.settings.hero || {}) },
         cta: { ...defaultSettings.cta, ...(parsed.settings.cta || {}) },
+        newsSection: { ...defaultSettings.newsSection, ...(parsed.settings.newsSection || {}) },
         backgrounds: { ...defaultSettings.backgrounds, ...(parsed.settings.backgrounds || {}) },
         socialLinks: parsed.settings.socialLinks || defaultSettings.socialLinks,
         seo: { ...defaultSettings.seo, ...(parsed.settings.seo || {}) },
@@ -841,19 +993,62 @@ export function getContent(): SiteContent {
 
 export function saveContent(content: SiteContent): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+  localStorage.setItem(LOCAL_LAST_SAVED_KEY, Date.now().toString());
+}
+
+function isDefaultContent(content: SiteContent): boolean {
+  // Simple heuristic: check if key arrays match default lengths and IDs
+  if (!content) return true;
+  
+  const newsMatch = content.news.length === defaultNews.length && content.news[0]?.id === defaultNews[0]?.id;
+  const classesMatch = content.classes.length === defaultClasses.length && content.classes[0]?.id === defaultClasses[0]?.id;
+  const featuresMatch = content.features.length === defaultFeatures.length && content.features[0]?.id === defaultFeatures[0]?.id;
+  
+  return newsMatch && classesMatch && featuresMatch;
 }
 
 // Async data fetching with fallback to localStorage
 export async function getData(): Promise<SiteContent> {
+  // Attempt to fetch from API first, then fall back to localStorage
   try {
     const response = await fetch(`${API_BASE_URL}/api/data`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-    const data = await response.json();
-    // Update local storage to keep it in sync
-    saveContent(data);
-    return data;
+    const serverData = await response.json();
+    
+    // Check for "Local-First" Persistence Strategy
+    // If server returns default data (e.g. after restart) but we have local changes,
+    // we should PRESERVE the local changes and sync them back to the server.
+    const localData = getContent();
+    const serverIsDefault = isDefaultContent(serverData);
+    const localIsDefault = isDefaultContent(localData);
+
+    if (serverIsDefault && !localIsDefault) {
+      console.warn('Server returned default data but local has changes. Preserving local data and syncing to server.');
+      // Background sync to server
+      saveData(localData).catch(err => console.error('Failed to sync local data to server:', err));
+      return localData;
+    }
+
+    // Check for "Unsynced Local Changes" Persistence Strategy
+    const localLastSaved = parseInt(localStorage.getItem(LOCAL_LAST_SAVED_KEY) || '0');
+    const serverLastSynced = parseInt(localStorage.getItem(SERVER_LAST_SYNCED_KEY) || '0');
+
+    // If we have local changes that haven't been successfully synced to the server yet
+    // (and the server data isn't "default" which is handled above)
+    if (localLastSaved > serverLastSynced && !localIsDefault) {
+       console.warn('Local changes detected that were not synced to server. Preserving local data and syncing to server.');
+       saveData(localData).catch(err => console.error('Failed to sync local data to server:', err));
+       return localData;
+    }
+
+    // Otherwise, server data is authoritative (or both are default)
+    saveContent(serverData);
+    // Update sync timestamps since we just pulled fresh data from server
+    localStorage.setItem(SERVER_LAST_SYNCED_KEY, Date.now().toString());
+    
+    return serverData;
   } catch (error) {
     console.warn('Failed to fetch from API, falling back to localStorage', error);
     return getContent();
@@ -875,17 +1070,22 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
     });
     
     if (!response.ok) {
-      throw new Error('Failed to save to server');
+      const errorText = await response.text();
+      console.error('Server error response:', errorText);
+      throw new Error(`Failed to save to server: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const result = await response.json();
     if (result.success && result.data) {
       // Update local storage with server response (contains clean IDs)
       saveContent(result.data);
+      // Update server sync timestamp to match local last saved (since we just saved)
+      localStorage.setItem(SERVER_LAST_SYNCED_KEY, localStorage.getItem(LOCAL_LAST_SAVED_KEY) || Date.now().toString());
       return result.data;
     }
   } catch (error) {
     console.error('Failed to save to server:', error);
+    // We rely on local storage (already saved at start of function)
   }
   return undefined;
 }

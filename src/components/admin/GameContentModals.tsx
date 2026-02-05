@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
+import { ServerFilePicker } from "./server-file-picker";
 import { 
   WeaponItem, 
   WeaponAttachment, 
@@ -112,12 +113,26 @@ export function WeaponEditModal({
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
             <div className="space-y-4">
-              <FileUpload 
-                currentValue={formData.image}
-                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-                accept="image/*"
-                label="Upload Weapon Image"
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FileUpload 
+                    currentValue={formData.image}
+                    onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                    accept="image/*"
+                    label="Upload Weapon Image"
+                  />
+                </div>
+                <ServerFilePicker 
+                  onSelect={(url) => setFormData({ ...formData, image: url })}
+                  accept="image"
+                  trigger={
+                    <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Uploads</span>
+                    </Button>
+                  }
+                />
+              </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -325,12 +340,26 @@ export function MapEditModal({
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Main Image URL</label>
               <div className="space-y-4">
-                <FileUpload 
-                  currentValue={formData.image}
-                  onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-                  accept="image/*"
-                  label="Upload Main Image"
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <FileUpload 
+                      currentValue={formData.image}
+                      onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                      accept="image/*"
+                      label="Upload Main Image"
+                    />
+                  </div>
+                  <ServerFilePicker 
+                    onSelect={(url) => setFormData({ ...formData, image: url })}
+                    accept="image"
+                    trigger={
+                      <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                        <ImageIcon className="h-4 w-4" />
+                        <span>Uploads</span>
+                      </Button>
+                    }
+                  />
+                </div>
                  <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-border" />
@@ -400,13 +429,27 @@ export function MapEditModal({
                         />
                       </div>
                     </div>
-                    <FileUpload 
-                      currentValue={mediaItem.url}
-                      onUploadComplete={(url) => updateMedia(index, "url", url)}
-                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
-                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
-                      className="w-full"
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <FileUpload 
+                          currentValue={mediaItem.url}
+                          onUploadComplete={(url) => updateMedia(index, "url", url)}
+                          accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                          label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                          className="w-full"
+                        />
+                      </div>
+                      <ServerFilePicker 
+                        onSelect={(url) => updateMedia(index, "url", url)}
+                        accept={mediaItem.type === "video" ? "video" : "image"}
+                        trigger={
+                          <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Uploads</span>
+                          </Button>
+                        }
+                      />
+                    </div>
                   </div>
                   <Input
                     value={mediaItem.title || ""}
@@ -514,12 +557,26 @@ export function DeviceEditModal({
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
             <div className="space-y-4">
-              <FileUpload 
-                currentValue={formData.image}
-                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-                accept="image/*"
-                label="Upload Device Image"
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FileUpload 
+                    currentValue={formData.image}
+                    onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                    accept="image/*"
+                    label="Upload Device Image"
+                  />
+                </div>
+                <ServerFilePicker 
+                  onSelect={(url) => setFormData({ ...formData, image: url })}
+                  accept="image"
+                  trigger={
+                    <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Uploads</span>
+                    </Button>
+                  }
+                />
+              </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -598,13 +655,27 @@ export function DeviceEditModal({
                         />
                       </div>
                     </div>
-                    <FileUpload 
-                      currentValue={mediaItem.url}
-                      onUploadComplete={(url) => updateMedia(index, "url", url)}
-                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
-                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
-                      className="w-full"
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <FileUpload 
+                          currentValue={mediaItem.url}
+                          onUploadComplete={(url) => updateMedia(index, "url", url)}
+                          accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                          label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                          className="w-full"
+                        />
+                      </div>
+                      <ServerFilePicker 
+                        onSelect={(url) => updateMedia(index, "url", url)}
+                        accept={mediaItem.type === "video" ? "video" : "image"}
+                        trigger={
+                          <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Uploads</span>
+                          </Button>
+                        }
+                      />
+                    </div>
                   </div>
                   <Input
                     value={mediaItem.title || ""}
@@ -751,12 +822,26 @@ export function GameModeEditModal({
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
             <div className="space-y-4">
-              <FileUpload 
-                currentValue={formData.image}
-                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-                accept="image/*"
-                label="Upload Game Mode Image"
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FileUpload 
+                    currentValue={formData.image}
+                    onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                    accept="image/*"
+                    label="Upload Game Mode Image"
+                  />
+                </div>
+                <ServerFilePicker 
+                  onSelect={(url) => setFormData({ ...formData, image: url })}
+                  accept="image"
+                  trigger={
+                    <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Uploads</span>
+                    </Button>
+                  }
+                />
+              </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -861,13 +946,27 @@ export function GameModeEditModal({
                         />
                       </div>
                     </div>
-                    <FileUpload 
-                      currentValue={mediaItem.url}
-                      onUploadComplete={(url) => updateMedia(index, "url", url)}
-                      accept={mediaItem.type === "video" ? "video/*" : "image/*"}
-                      label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
-                      className="w-full"
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <FileUpload 
+                          currentValue={mediaItem.url}
+                          onUploadComplete={(url) => updateMedia(index, "url", url)}
+                          accept={mediaItem.type === "video" ? "video/*" : "image/*"}
+                          label={`Upload ${mediaItem.type === "video" ? "Video" : "Image"}`}
+                          className="w-full"
+                        />
+                      </div>
+                      <ServerFilePicker 
+                        onSelect={(url) => updateMedia(index, "url", url)}
+                        accept={mediaItem.type === "video" ? "video" : "image"}
+                        trigger={
+                          <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Uploads</span>
+                          </Button>
+                        }
+                      />
+                    </div>
                   </div>
                   <Input
                     value={mediaItem.title || ""}

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface DashboardTabProps {
-  onNavigate: (tab: any) => void;
+  onNavigate: (tab: string) => void;
   userRole?: string;
 }
 

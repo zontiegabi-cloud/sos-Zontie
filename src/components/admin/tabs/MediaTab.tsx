@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Search, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Video, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useContent } from "@/hooks/use-content";
 import { MediaItem } from "@/lib/content-store";
 import { toast } from "sonner";
 import { MediaEditModal } from "@/components/admin/modals/MediaEditModal";
+import { API_BASE_URL } from "@/config";
 
 export function MediaTab() {
-  const { media, addMediaItem, updateMediaItem, deleteMediaItem, updateContent, content } = useContent();
+  const { media, addMediaItem, updateMediaItem, deleteMediaItem, deleteMediaItems, updateContent, content } = useContent();
   const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,16 +48,53 @@ export function MediaTab() {
     setSelectedIds(newSelected);
   };
 
+  const handleSelectDuplicates = () => {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    
+    // Iterate through filtered media to find duplicates based on src
+    filteredMedia.forEach(item => {
+      // Use src as key. If src is missing (shouldn't be), use title.
+      const key = item.src || item.title;
+      if (seen.has(key)) {
+        duplicates.add(item.id);
+      } else {
+        seen.add(key);
+      }
+    });
+    
+    setSelectedIds(duplicates);
+    if (duplicates.size > 0) {
+      toast.info(`Selected ${duplicates.size} duplicate items.`);
+    } else {
+      toast.info("No duplicates found.");
+    }
+  };
+
   const handleBatchDelete = () => {
     if (confirm(`Are you sure you want to delete ${selectedIds.size} media items?`)) {
-      const newMedia = media.filter((item) => !selectedIds.has(item.id));
-      updateContent({ ...content, media: newMedia });
+      deleteMediaItems(selectedIds);
       setSelectedIds(new Set());
       toast.success("Selected media items deleted!");
     }
   };
 
   const handleSaveMedia = (item: MediaItem) => {
+    // Check for duplicates (src or title)
+    const duplicate = media.find(m => 
+      m.id !== item.id && ( // Ignore self
+        (m.src && item.src && m.src === item.src) || 
+        (m.title.trim().toLowerCase() === item.title.trim().toLowerCase())
+      )
+    );
+
+    if (duplicate) {
+       const reason = duplicate.src === item.src ? 'source link' : 'title';
+       if (!confirm(`Warning: A media item with the same ${reason} already exists. Do you want to add it anyway?`)) {
+         return;
+       }
+    }
+
     if (isCreating) {
       addMediaItem(item);
       toast.success("Media item created!");
@@ -109,90 +155,124 @@ export function MediaTab() {
             className="pl-8"
           />
         </div>
+        <Button variant="outline" onClick={handleSelectDuplicates} title="Auto-select duplicate items">
+          <Copy className="w-4 h-4 mr-2" />
+          Select Duplicates
+        </Button>
         {selectedIds.size > 0 && (
           <Button variant="destructive" onClick={handleBatchDelete}>
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Selected ({selectedIds.size})
           </Button>
         )}
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={filteredMedia.length > 0 && selectedIds.size === filteredMedia.length}
-            onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-            id="select-all"
-          />
-          <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
-            Select All
-          </label>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMedia.map((item) => (
-          <motion.div
-            key={item.id}
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`bg-card border rounded-lg overflow-hidden flex flex-col transition-colors ${
-              selectedIds.has(item.id) ? "border-primary ring-1 ring-primary" : "border-border"
-            }`}
-          >
-            <div className="relative aspect-video bg-muted group">
-              {item.src ? (
-                <img
-                  src={item.src}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <ImageIcon className="w-12 h-12 opacity-20" />
-                </div>
-              )}
-              
-              <div className="absolute top-2 left-2 z-10">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
                 <Checkbox
-                  checked={selectedIds.has(item.id)}
-                  onCheckedChange={(checked) => handleSelectOne(item.id, checked as boolean)}
-                  className="bg-background/80 backdrop-blur-sm border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                  checked={filteredMedia.length > 0 && selectedIds.size === filteredMedia.length}
+                  onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                 />
-              </div>
-
-              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-                  onClick={() => {
-                    setEditingMedia(item);
-                    setIsCreating(false);
-                  }}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  className="h-8 w-8"
-                  onClick={() => handleDeleteMedia(item.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="p-4 flex-1">
-              <h3 className="font-heading text-foreground truncate" title={item.title}>{item.title}</h3>
-              <p className="text-sm text-muted-foreground">{item.type} • {item.category}</p>
-            </div>
-          </motion.div>
-        ))}
-        {filteredMedia.length === 0 && (
-          <div className="col-span-full py-12 text-center text-muted-foreground bg-card/50 border border-border border-dashed rounded-lg">
-            <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p>No media found matching your search.</p>
-          </div>
-        )}
+              </TableHead>
+              <TableHead>Preview</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredMedia.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  No media found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredMedia.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(item.id)}
+                      onCheckedChange={(checked) => handleSelectOne(item.id, checked as boolean)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {item.type === 'video' ? (
+                       item.thumbnail ? (
+                         <div className="relative w-16 h-10 rounded overflow-hidden">
+                           <img
+                             src={item.thumbnail}
+                             alt={item.title}
+                             className="w-full h-full object-cover"
+                           />
+                           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                             <Video className="w-4 h-4 text-white opacity-80" />
+                           </div>
+                         </div>
+                       ) : (
+                         <div className="w-16 h-10 flex items-center justify-center text-muted-foreground bg-accent/50 rounded">
+                           <Video className="w-6 h-6 opacity-20" />
+                         </div>
+                       )
+                     ) : (
+                       <div className="w-16 h-10 rounded overflow-hidden bg-muted">
+                        {item.src ? (
+                          <img
+                            src={item.src}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="w-4 h-4 text-muted-foreground opacity-50" />
+                          </div>
+                        )}
+                       </div>
+                     )}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <div className="truncate max-w-[200px]" title={item.title}>
+                      {item.title}
+                    </div>
+                  </TableCell>
+                  <TableCell className="capitalize">{item.type}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                      {item.category}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setEditingMedia(item);
+                          setIsCreating(false);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                        onClick={() => handleDeleteMedia(item.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {editingMedia && (

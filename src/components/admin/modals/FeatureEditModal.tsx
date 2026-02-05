@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "../../ui/file-upload";
 import { FeatureItem } from "@/lib/content-store";
+import { ServerFilePicker } from "../server-file-picker";
 
 export function FeatureEditModal({
   item,
@@ -78,12 +79,26 @@ export function FeatureEditModal({
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image</label>
-            <FileUpload
-              currentValue={formData.image}
-              onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-              accept="image/*"
-              label="Upload Feature Image"
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <FileUpload
+                  currentValue={formData.image}
+                  onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                  accept="image/*"
+                  label="Upload Feature Image"
+                />
+              </div>
+              <ServerFilePicker 
+                onSelect={(url) => setFormData({ ...formData, image: url })}
+                accept="image"
+                trigger={
+                  <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                    <ImageIcon className="h-4 w-4" />
+                    <span>Uploads</span>
+                  </Button>
+                }
+              />
+            </div>
           </div>
 
           <div>

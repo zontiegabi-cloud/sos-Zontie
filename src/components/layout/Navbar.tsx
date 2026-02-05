@@ -14,7 +14,7 @@ import {
   Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 const navLinks = [
   { name: "Home", path: "/" },

@@ -7,8 +7,33 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { PoolConnection } from 'mariadb';
+import { 
+  NewsItem, 
+  ClassItem, 
+  MediaItem, 
+  FAQItem, 
+  FeatureItem, 
+  WeaponItem, 
+  MapItem, 
+  GameDeviceItem, 
+  GameModeItem,
+  DynamicContentSource 
+} from '../src/lib/content-store';
 
 dotenv.config();
+
+// Helper to format ISO date to MySQL DATETIME (YYYY-MM-DD HH:MM:SS)
+const formatDateForDb = (isoDate: string | undefined | null): string | null => {
+  if (!isoDate) return null;
+  try {
+    const date = new Date(isoDate);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  } catch (e) {
+    return null;
+  }
+};
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -52,6 +77,27 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   // Return the URL to access the file
   const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
   res.json({ url: fileUrl, filename: req.file.filename, originalname: req.file.originalname });
+});
+
+// GET /api/uploads - List all files in uploads directory
+app.get('/api/uploads', (req, res) => {
+  try {
+    if (!fs.existsSync(uploadDir)) {
+      return res.json([]);
+    }
+    
+    const files = fs.readdirSync(uploadDir).map(file => {
+      return {
+        filename: file,
+        url: `${req.protocol}://${req.get('host')}/uploads/${file}`,
+      };
+    });
+    
+    res.json(files);
+  } catch (error) {
+    console.error('Error listing uploads:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Login Route
@@ -197,8 +243,11 @@ app.delete('/api/users/:id', async (req, res) => {
 });
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DbRow = Record<string, any>;
+
 // Helper to fetch all data
-async function fetchAllData(conn: any) {
+async function fetchAllData(conn: PoolConnection) {
   const [
     news,
     classes,
@@ -233,7 +282,7 @@ async function fetchAllData(conn: any) {
     // But since we might have defined some as TEXT (seo_keywords), handle that.
     
     // Helper to safely parse JSON if it's a string, or return as is if object
-    const parse = (val: any) => {
+    const parse = (val: unknown) => {
         if (typeof val === 'string') {
             try { return JSON.parse(val); } catch (e) { return val; }
         }
@@ -241,40 +290,44 @@ async function fetchAllData(conn: any) {
     };
 
     settings = {
-      branding: {
-        siteName: row.site_name,
-        siteTagline: row.site_tagline,
-        logoUrl: row.logo_url,
-        faviconUrl: row.favicon_url,
-        copyrightText: row.copyright_text,
-        poweredByText: row.powered_by_text
-      },
-      seo: {
-        defaultTitle: row.seo_title,
-        defaultDescription: row.seo_description,
-        defaultKeywords: typeof row.seo_keywords === 'string' && row.seo_keywords.startsWith('[') ? parse(row.seo_keywords) : (row.seo_keywords ? row.seo_keywords.split(',').map((s:string) => s.trim()) : []),
-        ogImage: row.og_image,
-        twitterHandle: row.twitter_handle
-      },
-      socialLinks: parse(row.social_links) || [],
-      theme: parse(row.theme) || {},
-      backgrounds: parse(row.backgrounds) || {},
-      homepageSections: parse(row.homepage_sections) || []
-    };
+        branding: {
+          siteName: row.site_name,
+          siteTagline: row.site_tagline,
+          logoUrl: row.logo_url,
+          faviconUrl: row.favicon_url,
+          copyrightText: row.copyright_text,
+          poweredByText: row.powered_by_text
+        },
+        seo: {
+          defaultTitle: row.seo_title,
+          defaultDescription: row.seo_description,
+          defaultKeywords: typeof row.seo_keywords === 'string' && row.seo_keywords.startsWith('[') ? parse(row.seo_keywords) : (row.seo_keywords ? row.seo_keywords.split(',').map((s:string) => s.trim()) : []),
+          ogImage: row.og_image,
+          twitterHandle: row.twitter_handle
+        },
+        socialLinks: parse(row.social_links) || [],
+        theme: parse(row.theme) || {},
+        backgrounds: parse(row.backgrounds) || {},
+        homepageSections: parse(row.homepage_sections) || [],
+        hero: parse(row.hero) || {},
+        cta: parse(row.cta) || {},
+        newsSection: parse(row.news_section) || {},
+        customSections: parse(row.custom_sections) || {}
+      };
   }
 
   return {
-    news: news.map((i: any) => ({...i, id: i.id.toString(), created_at: undefined})), // Convert ID to string for frontend compatibility
-    classes: classes.map((i: any) => ({...i, id: i.id.toString(), details: i.details, devices: i.devices})),
-    media: media.map((i: any) => ({...i, id: i.id.toString()})),
-    faq: faq.map((i: any) => ({...i, id: i.id.toString()})),
-    features: features.map((i: any) => ({...i, id: i.id.toString(), devices: i.devices})),
-    privacy: pages.find((p: any) => p.id === 'privacy') || { title: '', lastUpdated: '', sections: [] },
-    terms: pages.find((p: any) => p.id === 'terms') || { title: '', lastUpdated: '', sections: [] },
-    weapons: weapons.map((i: any) => ({...i, id: i.id.toString(), stats: i.stats, attachments: i.attachments})),
-    maps: maps.map((i: any) => ({...i, id: i.id.toString(), media: i.media})),
-    gameDevices: gameDevices.map((i: any) => ({...i, id: i.id.toString(), media: i.media})),
-    gameModes: gameModes.map((i: any) => ({...i, id: i.id.toString(), rules: i.rules, media: i.media})),
+    news: news.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
+    classes: classes.map((i: DbRow) => ({...i, id: i.id.toString(), details: i.details, devices: i.devices, createdAt: i.created_at})),
+    media: media.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
+    faq: faq.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
+    features: features.map((i: DbRow) => ({...i, id: i.id.toString(), devices: i.devices, createdAt: i.created_at})),
+    privacy: pages.find((p: DbRow) => p.id === 'privacy') || { title: '', lastUpdated: '', sections: [] },
+    terms: pages.find((p: DbRow) => p.id === 'terms') || { title: '', lastUpdated: '', sections: [] },
+    weapons: weapons.map((i: DbRow) => ({...i, id: i.id.toString(), stats: i.stats, attachments: i.attachments, createdAt: i.created_at})),
+    maps: maps.map((i: DbRow) => ({...i, id: i.id.toString(), media: i.media, createdAt: i.created_at})),
+    gameDevices: gameDevices.map((i: DbRow) => ({...i, id: i.id.toString(), media: i.media, createdAt: i.created_at})),
+    gameModes: gameModes.map((i: DbRow) => ({...i, id: i.id.toString(), rules: i.rules, media: i.media, createdAt: i.created_at})),
     settings: settings
   };
 }
@@ -308,44 +361,44 @@ app.post('/api/data', async (req, res) => {
     // 1. News
     await conn.query('TRUNCATE TABLE news');
     if (content.news?.length) {
-      const batch = content.news.map((item: any) => [
-        item.title, item.date, item.description, item.content, item.image, item.tag
+      const batch = content.news.map((item: NewsItem) => [
+        item.id, item.title, item.date, item.description, item.content, item.image, item.thumbnail || null, item.bgImage || null, item.tag, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO news (title, date, description, content, image, tag) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO news (id, title, date, description, content, image, thumbnail, bgImage, tag, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 2. Classes
     await conn.query('TRUNCATE TABLE classes');
     if (content.classes?.length) {
-      const batch = content.classes.map((item: any) => [
-        item.name, item.role, item.description, JSON.stringify(item.details), item.image, item.icon, item.color, JSON.stringify(item.devices), item.devicesUsedTitle
+      const batch = content.classes.map((item: ClassItem) => [
+        item.id, item.name, item.role, item.description, JSON.stringify(item.details || []), item.image, item.icon, item.color, JSON.stringify(item.devices || []), item.devicesUsedTitle, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO classes (name, role, description, details, image, icon, color, devices, devicesUsedTitle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO classes (id, name, role, description, details, image, icon, color, devices, devicesUsedTitle, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 3. Media
     await conn.query('TRUNCATE TABLE media');
     if (content.media?.length) {
-      const batch = content.media.map((item: any) => [
-        item.type, item.title, item.src, item.category, item.description, item.thumbnail
+      const batch = content.media.map((item: MediaItem) => [
+        item.id, item.type, item.title, item.src, item.category, item.description, item.thumbnail, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO media (type, title, src, category, description, thumbnail) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO media (id, type, title, src, category, description, thumbnail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 4. FAQ
     await conn.query('TRUNCATE TABLE faq');
     if (content.faq?.length) {
-      const batch = content.faq.map((item: any) => [item.question, item.answer]);
-      await conn.batch('INSERT INTO faq (question, answer) VALUES (?, ?)', batch);
+      const batch = content.faq.map((item: FAQItem) => [item.id, item.question, item.answer, formatDateForDb(item.createdAt)]);
+      await conn.batch('INSERT INTO faq (id, question, answer, created_at) VALUES (?, ?, ?, ?)', batch);
     }
 
     // 5. Features
     await conn.query('TRUNCATE TABLE features');
     if (content.features?.length) {
-      const batch = content.features.map((item: any) => [
-        item.title, item.description, item.image, item.icon, JSON.stringify(item.devices), item.devicesSectionTitle
+      const batch = content.features.map((item: FeatureItem) => [
+        item.id, item.title, item.description, item.image, item.icon, JSON.stringify(item.devices || []), item.devicesSectionTitle, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO features (title, description, image, icon, devices, devicesSectionTitle) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO features (id, title, description, image, icon, devices, devicesSectionTitle, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 6. Pages (Privacy, Terms) - KEEP using DELETE as ID is fixed
@@ -360,37 +413,37 @@ app.post('/api/data', async (req, res) => {
     // 7. Weapons
     await conn.query('TRUNCATE TABLE weapons');
     if (content.weapons?.length) {
-      const batch = content.weapons.map((item: any) => [
-        item.name, item.category, item.description, item.image, JSON.stringify(item.stats), JSON.stringify(item.attachments)
+      const batch = content.weapons.map((item: WeaponItem) => [
+        item.id, item.name, item.category, item.description, item.image, JSON.stringify(item.stats || {}), JSON.stringify(item.attachments || []), formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO weapons (name, category, description, image, stats, attachments) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO weapons (id, name, category, description, image, stats, attachments, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 8. Maps
     await conn.query('TRUNCATE TABLE maps');
     if (content.maps?.length) {
-      const batch = content.maps.map((item: any) => [
-        item.name, item.description, item.size, item.environment, item.image, JSON.stringify(item.media)
+      const batch = content.maps.map((item: MapItem) => [
+        item.id, item.name, item.description, item.size, item.environment, item.image, JSON.stringify(item.media || []), formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO maps (name, description, size, environment, image, media) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO maps (id, name, description, size, environment, image, media, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 9. Game Devices
     await conn.query('TRUNCATE TABLE game_devices');
     if (content.gameDevices?.length) {
-      const batch = content.gameDevices.map((item: any) => [
-        item.name, item.description, item.details, item.image, JSON.stringify(item.media), item.classRestriction
+      const batch = content.gameDevices.map((item: GameDeviceItem) => [
+        item.id, item.name, item.description, item.details, item.image, JSON.stringify(item.media || []), item.classRestriction, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO game_devices (name, description, details, image, media, classRestriction) VALUES (?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO game_devices (id, name, description, details, image, media, classRestriction, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 10. Game Modes
     await conn.query('TRUNCATE TABLE game_modes');
     if (content.gameModes?.length) {
-      const batch = content.gameModes.map((item: any) => [
-        item.name, item.shortName, item.description, JSON.stringify(item.rules), item.image, JSON.stringify(item.media), item.playerCount, item.roundTime
+      const batch = content.gameModes.map((item: GameModeItem) => [
+        item.id, item.name, item.shortName, item.description, JSON.stringify(item.rules || []), item.image, JSON.stringify(item.media || []), item.playerCount, item.roundTime, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO game_modes (name, shortName, description, rules, image, media, playerCount, roundTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO game_modes (id, name, shortName, description, rules, image, media, playerCount, roundTime, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 11. Settings (Flattened)
@@ -404,8 +457,9 @@ app.post('/api/data', async (req, res) => {
           id, 
           site_name, site_tagline, logo_url, favicon_url, copyright_text, powered_by_text,
           seo_title, seo_description, seo_keywords, og_image, twitter_handle,
-          social_links, theme, backgrounds, homepage_sections
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          social_links, theme, backgrounds, homepage_sections,
+          hero, cta, news_section, custom_sections
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           site_name = VALUES(site_name),
           site_tagline = VALUES(site_tagline),
@@ -421,12 +475,18 @@ app.post('/api/data', async (req, res) => {
           social_links = VALUES(social_links),
           theme = VALUES(theme),
           backgrounds = VALUES(backgrounds),
-          homepage_sections = VALUES(homepage_sections)
+          homepage_sections = VALUES(homepage_sections),
+          hero = VALUES(hero),
+          cta = VALUES(cta),
+          news_section = VALUES(news_section),
+          custom_sections = VALUES(custom_sections)
       `, [
         'main_settings',
         b.siteName || null, b.siteTagline || null, b.logoUrl || null, b.faviconUrl || null, b.copyrightText || null, b.poweredByText || null,
         seo.defaultTitle || null, seo.defaultDescription || null, JSON.stringify(seo.defaultKeywords || []), seo.ogImage || null, seo.twitterHandle || null,
-        JSON.stringify(s.socialLinks || {}), JSON.stringify(s.theme || {}), JSON.stringify(s.backgrounds || {}), JSON.stringify(s.homepageSections || {})
+        JSON.stringify(s.socialLinks || {}), JSON.stringify(s.theme || {}), JSON.stringify(s.backgrounds || {}), JSON.stringify(s.homepageSections || {}),
+        JSON.stringify(s.hero || {}), JSON.stringify(s.cta || {}), JSON.stringify(s.newsSection || {}),
+        JSON.stringify(s.customSections || {})
       ]);
     }
 
@@ -440,7 +500,7 @@ app.post('/api/data', async (req, res) => {
   } catch (error) {
     if (conn) await conn.rollback();
     console.error('Error saving data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) });
   } finally {
     if (conn) conn.release();
   }

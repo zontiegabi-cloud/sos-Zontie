@@ -63,50 +63,98 @@ export async function initDB() {
     // 1. News Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS news (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         date VARCHAR(255),
         description TEXT,
         content LONGTEXT,
-        image TEXT,
+        image LONGTEXT,
+        thumbnail LONGTEXT,
+        bgImage LONGTEXT,
         tag VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
+    // Ensure new columns exist (migration)
+    try {
+      await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS thumbnail TEXT');
+      await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS bgImage TEXT');
+      await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      
+      await connection.query('ALTER TABLE classes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE media ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      
+      await connection.query('ALTER TABLE faq ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE features ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE weapons ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE maps ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE game_devices ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE game_modes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+
+      // Migrate TEXT columns to LONGTEXT to support Base64 images
+      await connection.query('ALTER TABLE news MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE news MODIFY thumbnail LONGTEXT');
+      await connection.query('ALTER TABLE news MODIFY bgImage LONGTEXT');
+      await connection.query('ALTER TABLE news MODIFY content LONGTEXT');
+
+      await connection.query('ALTER TABLE classes MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE media MODIFY src LONGTEXT');
+      await connection.query('ALTER TABLE media MODIFY thumbnail LONGTEXT');
+      await connection.query('ALTER TABLE features MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE weapons MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE maps MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE game_devices MODIFY image LONGTEXT');
+      await connection.query('ALTER TABLE game_modes MODIFY image LONGTEXT');
+      
+      // Check if settings table exists before trying to modify it
+      const settingsExists = await connection.query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_name = 'settings'", [process.env.DB_NAME]);
+      if (settingsExists[0].count > 0) {
+        await connection.query('ALTER TABLE settings MODIFY logo_url LONGTEXT');
+        await connection.query('ALTER TABLE settings MODIFY favicon_url LONGTEXT');
+        await connection.query('ALTER TABLE settings MODIFY og_image LONGTEXT');
+      }
+      
+      console.log('Schema migration completed successfully');
+    } catch (e) {
+      console.log('Error during schema migration:', e);
+    }
+
     // 2. Classes Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS classes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         role VARCHAR(255),
         description TEXT,
         details JSON,
-        image TEXT,
+        image LONGTEXT,
         icon VARCHAR(255),
         color VARCHAR(255),
         devices JSON,
-        devicesUsedTitle VARCHAR(255)
+        devicesUsedTitle VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // 3. Media Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS media (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         type VARCHAR(50),
         title VARCHAR(255),
-        src TEXT,
+        src LONGTEXT,
         category VARCHAR(255),
         description TEXT,
-        thumbnail TEXT
+        thumbnail LONGTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     // 4. FAQ Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS faq (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         question TEXT,
         answer TEXT
       )
@@ -115,10 +163,10 @@ export async function initDB() {
     // 5. Features Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS features (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         title VARCHAR(255),
         description TEXT,
-        image TEXT,
+        image LONGTEXT,
         icon VARCHAR(100),
         devices JSON,
         devicesSectionTitle VARCHAR(255)
@@ -138,11 +186,11 @@ export async function initDB() {
     // 7. Weapons Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS weapons (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         name VARCHAR(100),
         category VARCHAR(50),
         description TEXT,
-        image TEXT,
+        image LONGTEXT,
         stats JSON,
         attachments JSON
       )
@@ -151,12 +199,12 @@ export async function initDB() {
     // 8. Maps Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS maps (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         name VARCHAR(100),
         description TEXT,
         size VARCHAR(50),
         environment VARCHAR(100),
-        image TEXT,
+        image LONGTEXT,
         media JSON
       )
     `);
@@ -164,11 +212,11 @@ export async function initDB() {
     // 9. Game Devices Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS game_devices (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         name VARCHAR(100),
         description TEXT,
         details TEXT,
-        image TEXT,
+        image LONGTEXT,
         media JSON,
         classRestriction VARCHAR(100)
       )
@@ -177,34 +225,25 @@ export async function initDB() {
     // 10. Game Modes Table
     await connection.query(`
       CREATE TABLE IF NOT EXISTS game_modes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
         name VARCHAR(100),
         shortName VARCHAR(50),
         description TEXT,
         rules JSON,
-        image TEXT,
+        image LONGTEXT,
         media JSON,
         playerCount VARCHAR(50),
         roundTime VARCHAR(50)
       )
     `);
 
-    // 11. Settings Table (Refactored for readability)
-    // Check if the old table exists and has the 'content' column but not the new columns
-    // For simplicity in this environment, we'll try to create the new structure if it doesn't exist
-    // If the table exists with the old schema, we might need to alter it or drop it.
-    // Given the user wants it "readable", we'll force the new structure.
-    
-    // First, check if table exists
+    // 11. Settings Table
+    // Check if table exists
     const tableExists = await connection.query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_name = 'settings'", [process.env.DB_NAME]);
     
     if (tableExists[0].count > 0) {
-      // Check if it has the old 'content' column
       const columns = await connection.query("SHOW COLUMNS FROM settings LIKE 'content'");
       if (columns.length > 0) {
-         // It has the old column, let's drop it to recreate with new schema
-         // WARNING: This deletes existing settings, but it's necessary to change the schema
-         // Ideally we would migrate data, but JSON to columns is complex in SQL
          await connection.query("DROP TABLE settings");
          console.log("Dropped old settings table to migrate to new schema");
       }
@@ -217,25 +256,55 @@ export async function initDB() {
         -- Branding
         site_name VARCHAR(255),
         site_tagline VARCHAR(255),
-        logo_url TEXT,
-        favicon_url TEXT,
+        logo_url LONGTEXT,
+        favicon_url LONGTEXT,
         copyright_text VARCHAR(255),
         powered_by_text VARCHAR(255),
         
         -- SEO
         seo_title VARCHAR(255),
         seo_description TEXT,
-        seo_keywords TEXT, -- stored as comma separated or JSON
-        og_image TEXT,
+        seo_keywords TEXT, 
+        og_image LONGTEXT,
         twitter_handle VARCHAR(100),
         
         -- Complex structures kept as JSON but separated
         social_links JSON,
         theme JSON,
         backgrounds JSON,
-        homepage_sections JSON
+        homepage_sections JSON,
+        hero JSON,
+        cta JSON,
+        news_section JSON,
+        custom_sections JSON
       )
     `);
+
+    // ID MIGRATION LOGIC (Convert INT to VARCHAR)
+    const tablesToMigrate = [
+      'news', 'classes', 'media', 'faq', 'features', 
+      'weapons', 'maps', 'game_devices', 'game_modes'
+    ];
+
+    for (const table of tablesToMigrate) {
+      try {
+        const columns = await connection.query(`SHOW COLUMNS FROM ${table} LIKE 'id'`);
+        if (columns.length > 0) {
+          const type = columns[0].Type.toLowerCase();
+          // If type contains 'int', we need to migrate
+          if (type.includes('int')) {
+            console.log(`Migrating ${table} ID from INT to VARCHAR...`);
+            // 1. Remove AUTO_INCREMENT (by modifying column to INT NOT NULL)
+            await connection.query(`ALTER TABLE ${table} MODIFY id INT NOT NULL`);
+            // 2. Change to VARCHAR
+            await connection.query(`ALTER TABLE ${table} MODIFY id VARCHAR(36) NOT NULL`);
+            console.log(`Migrated ${table} ID successfully.`);
+          }
+        }
+      } catch (e) {
+        console.error(`Error migrating ID for table ${table}:`, e);
+      }
+    }
 
     console.log('Database initialized successfully with normalized tables');
   } catch (error) {

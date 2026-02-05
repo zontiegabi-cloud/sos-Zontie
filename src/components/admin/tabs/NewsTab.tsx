@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { NewsEditModal } from "@/components/admin/modals/NewsEditModal";
 
 export function NewsTab() {
-  const { news, addNewsItem, updateNewsItem, deleteNewsItem, updateContent, content } = useContent();
+  const { news, addNewsItem, updateNewsItem, deleteNewsItem, deleteNewsItems, updateContent, content } = useContent();
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,10 +47,31 @@ export function NewsTab() {
     setSelectedIds(newSelected);
   };
 
+  const handleSelectDuplicates = () => {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    
+    // Iterate through filtered news to find duplicates based on title and date
+    filteredNews.forEach(item => {
+      const key = (item.title || '').trim().toLowerCase() + '|' + item.date;
+      if (seen.has(key)) {
+        duplicates.add(item.id);
+      } else {
+        seen.add(key);
+      }
+    });
+    
+    setSelectedIds(duplicates);
+    if (duplicates.size > 0) {
+      toast.info(`Selected ${duplicates.size} duplicate items.`);
+    } else {
+      toast.info("No duplicates found.");
+    }
+  };
+
   const handleBatchDelete = () => {
     if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
-      const newNews = news.filter((item) => !selectedIds.has(item.id));
-      updateContent({ ...content, news: newNews });
+      deleteNewsItems(selectedIds);
       setSelectedIds(new Set());
       toast.success("Selected items deleted!");
     }
@@ -81,6 +102,8 @@ export function NewsTab() {
       title: "",
       date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
       image: "",
+      thumbnail: "",
+      bgImage: "",
       description: "",
       content: "",
       tag: "News"
@@ -119,6 +142,10 @@ export function NewsTab() {
             className="pl-8"
           />
         </div>
+        <Button variant="outline" onClick={handleSelectDuplicates} title="Auto-select duplicate items">
+          <Copy className="w-4 h-4 mr-2" />
+          Select Duplicates
+        </Button>
         {selectedIds.size > 0 && (
           <Button variant="destructive" onClick={handleBatchDelete}>
             <Trash2 className="w-4 h-4 mr-2" />

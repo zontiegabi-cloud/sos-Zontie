@@ -25,7 +25,7 @@ export default function NewsArticle() {
       <section className="relative h-[50vh] lg:h-[60vh]">
         <div className="absolute inset-0">
           <img
-            src={article.image}
+            src={article.bgImage || article.image || '/placeholder.jpg'}
             alt={article.title}
             className="w-full h-full object-cover"
           />
@@ -65,74 +65,33 @@ export default function NewsArticle() {
       </section>
 
       {/* Article Content */}
-      <section className="py-16 lg:py-24 bg-background">
+      <section className="py-16 lg:py-24 bg-background relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="prose prose-invert prose-lg max-w-none"
+              className="bg-card border border-border rounded-xl p-8 md:p-12 shadow-sm"
             >
               {/* Lead paragraph */}
-              <p className="text-xl text-muted-foreground leading-relaxed mb-8">
+              <p className="text-xl text-muted-foreground leading-relaxed mb-8 font-medium border-l-4 border-primary pl-4">
                 {article.description}
               </p>
               
-              {/* Full content - render markdown-like content */}
-              <div className="space-y-6">
-                {article.content.split('\n\n').map((paragraph, index) => {
-                  // Handle headers
-                  if (paragraph.startsWith('## ')) {
-                    return (
-                      <h2 key={index} className="font-heading text-2xl text-foreground mt-12 mb-4">
-                        {paragraph.replace('## ', '')}
-                      </h2>
-                    );
-                  }
-                  
-                  // Handle bullet lists
-                  if (paragraph.startsWith('- ')) {
-                    const items = paragraph.split('\n').filter(line => line.startsWith('- '));
-                    return (
-                      <ul key={index} className="space-y-3 my-6">
-                        {items.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3 text-muted-foreground">
-                            <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                            <span>{item.replace('- ', '')}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  
-                  // Handle numbered lists
-                  if (/^\d+\./.test(paragraph)) {
-                    const items = paragraph.split('\n').filter(line => /^\d+\./.test(line));
-                    return (
-                      <ol key={index} className="space-y-3 my-6">
-                        {items.map((item, i) => (
-                          <li key={i} className="flex items-start gap-3 text-muted-foreground">
-                            <span className="text-primary font-heading">{i + 1}.</span>
-                            <span>{item.replace(/^\d+\.\s*/, '')}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    );
-                  }
-                  
-                  // Regular paragraphs
-                  if (paragraph.trim()) {
-                    return (
-                      <p key={index} className="text-muted-foreground leading-relaxed">
-                        {paragraph}
-                      </p>
-                    );
-                  }
-                  
-                  return null;
-                })}
-              </div>
+              {/* Full content - render HTML content */}
+              <div 
+                className="prose prose-invert prose-lg max-w-none break-words
+                  [&>h2]:font-heading [&>h2]:text-2xl [&>h2]:text-foreground [&>h2]:mt-12 [&>h2]:mb-4 
+                  [&>h3]:font-heading [&>h3]:text-xl [&>h3]:text-foreground [&>h3]:mt-8 [&>h3]:mb-3
+                  [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>ul]:my-6 
+                  [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2 [&>ol]:my-6 
+                  [&>li]:text-muted-foreground [&>li]:pl-1
+                  [&>p]:text-muted-foreground [&>p]:leading-relaxed [&>p]:mb-6
+                  [&>img]:rounded-lg [&>img]:my-8 [&>img]:w-full [&>img]:shadow-md
+                  [&>a]:text-primary [&>a]:underline [&>a]:underline-offset-4 hover:[&>a]:text-primary/80"
+                dangerouslySetInnerHTML={{ __html: article.content }} 
+              />
             </motion.div>
           </div>
         </div>
@@ -162,7 +121,7 @@ export default function NewsArticle() {
                   >
                     <div className="relative aspect-video overflow-hidden">
                       <img
-                        src={item.image}
+                        src={item.thumbnail || item.image || '/placeholder.jpg'}
                         alt={item.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />

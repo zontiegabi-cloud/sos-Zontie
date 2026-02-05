@@ -9,7 +9,7 @@ import {
   Gamepad2, 
   Globe 
 } from "lucide-react";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 // Map platform names to icons
 const PlatformIcons: Record<string, React.ElementType> = {

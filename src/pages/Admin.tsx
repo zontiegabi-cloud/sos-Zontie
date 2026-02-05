@@ -32,7 +32,6 @@ import { SettingsPanel } from "@/components/admin/SettingsPanel";
 // Import modular tabs
 import { DashboardTab } from "@/components/admin/tabs/DashboardTab";
 import { NewsTab } from "@/components/admin/tabs/NewsTab";
-import { HeroTab } from "@/components/admin/tabs/HeroTab";
 import { ClassesTab } from "@/components/admin/tabs/ClassesTab";
 import { WeaponsTab } from "@/components/admin/tabs/WeaponsTab";
 import { MapsTab } from "@/components/admin/tabs/MapsTab";
@@ -40,12 +39,13 @@ import { DevicesTab } from "@/components/admin/tabs/DevicesTab";
 import { GameModesTab } from "@/components/admin/tabs/GameModesTab";
 import { MediaTab } from "@/components/admin/tabs/MediaTab";
 import { FeaturesTab } from "@/components/admin/tabs/FeaturesTab";
+import { SectionBuilderTab } from "@/components/admin/tabs/SectionBuilderTab";
 import { FAQTab } from "@/components/admin/tabs/FAQTab";
 import { PrivacyTab } from "@/components/admin/tabs/PrivacyTab";
 import { TermsTab } from "@/components/admin/tabs/TermsTab";
 import { UsersTab } from "@/components/admin/tabs/UsersTab";
 
-type Tab = "dashboard" | "hero" | "news" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
+type Tab = "dashboard" | "news" | "section_builder" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -115,8 +115,8 @@ export default function Admin() {
   // Define all possible navigation items
   const allNavItems = [
     { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'moderator', 'editor'] },
-    { id: "hero" as Tab, label: "Hero Editor", icon: Layout, roles: ['admin'] },
     { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
+    { id: "section_builder" as Tab, label: "Section Builder", icon: LayoutDashboard, roles: ['admin'] },
     { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
     { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
     { id: "maps" as Tab, label: "Maps", icon: Map, roles: ['admin', 'moderator'] },
@@ -348,9 +348,9 @@ export default function Admin() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {activeTab === "dashboard" && <DashboardTab onNavigate={setActiveTab} userRole={user?.role} />}
-            {activeTab === "hero" && <HeroTab />}
+            {activeTab === "dashboard" && <DashboardTab onNavigate={(tab) => handleTabChange(tab as Tab)} userRole={user?.role} />}
             {activeTab === "news" && <NewsTab />}
+            {activeTab === "section_builder" && <SectionBuilderTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}
             {activeTab === "maps" && <MapsTab />}

@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaItem } from "@/lib/content-store";
+import { useContent } from "@/hooks/use-content";
 import { FileUpload } from "@/components/ui/file-upload";
+import { toast } from "sonner";
+import { ServerFilePicker } from "../server-file-picker";
+import { FolderOpen } from "lucide-react";
 
 export function MediaEditModal({
   item,
@@ -18,7 +22,76 @@ export function MediaEditModal({
   onCancel: () => void;
   isCreating: boolean;
 }) {
+  const { media } = useContent();
   const [formData, setFormData] = useState(item);
+
+  const detectMediaType = (url: string): MediaItem['type'] | null => {
+    if (!url) return null;
+    const lowerUrl = url.toLowerCase();
+    
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || lowerUrl.includes('vimeo.com')) {
+      return 'video';
+    }
+    
+    if (lowerUrl.match(/\.(mp4|webm|ogg|mov)$/)) {
+      return 'video';
+    }
+    
+    if (lowerUrl.match(/\.(gif)$/)) {
+      return 'gif';
+    }
+    
+    if (lowerUrl.match(/\.(jpg|jpeg|png|webp|svg|bmp|tiff)$/)) {
+      return 'image';
+    }
+    
+    return null;
+  };
+
+  const handleSourceChange = (value: string) => {
+    const detectedType = detectMediaType(value);
+    const newFormData = { ...formData, src: value };
+    
+    if (detectedType && detectedType !== formData.type) {
+      newFormData.type = detectedType;
+      toast.info(`Type automatically switched to ${detectedType}`);
+    }
+    
+    setFormData(newFormData);
+  };
+
+  const handleSave = () => {
+    const detectedType = detectMediaType(formData.src);
+    
+    // Strict validation: if we definitely know it's a specific type and it doesn't match the selection
+    if (detectedType && detectedType !== formData.type) {
+      toast.error(`Mismatch detected: This looks like a ${detectedType}, but 'Type' is set to ${formData.type}.`);
+      return;
+    }
+
+    // Check for duplicates
+    const isDuplicateSrc = media.some(m => 
+      m.id !== formData.id && // Ignore self
+      m.src === formData.src
+    );
+
+    const isDuplicateTitle = media.some(m => 
+      m.id !== formData.id && // Ignore self
+      m.title.trim().toLowerCase() === formData.title.trim().toLowerCase()
+    );
+
+    if (isDuplicateSrc) {
+      toast.error("Error: Media with this source URL already exists.");
+      return;
+    }
+
+    if (isDuplicateTitle) {
+      toast.error("Error: Media with this title already exists.");
+      return;
+    }
+    
+    onSave(formData);
+  };
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -74,12 +147,26 @@ export function MediaEditModal({
               {formData.type === "video" ? "Video Source" : "Image Source"}
             </label>
             <div className="space-y-4">
-              <FileUpload 
-                currentValue={formData.src}
-                onUploadComplete={(url) => setFormData({ ...formData, src: url })}
-                accept={formData.type === "video" ? "video/*" : "image/*"}
-                label={`Upload ${formData.type === "video" ? "Video" : "Image"}`}
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FileUpload 
+                    currentValue={formData.src}
+                    onUploadComplete={handleSourceChange}
+                    accept={formData.type === "video" ? "video/*" : "image/*"}
+                    label={`Upload ${formData.type === "video" ? "Video" : "Image"}`}
+                  />
+                </div>
+                <ServerFilePicker 
+                  onSelect={handleSourceChange}
+                  accept={formData.type === "video" ? "video" : "image"}
+                  trigger={
+                    <Button variant="outline" className="h-full px-3 gap-2" title="Select from Server Uploads">
+                      <FolderOpen className="h-4 w-4" />
+                      <span>Uploads</span>
+                    </Button>
+                  }
+                />
+              </div>
               
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -92,7 +179,7 @@ export function MediaEditModal({
 
               <Input
                 value={formData.src}
-                onChange={(e) => setFormData({ ...formData, src: e.target.value })}
+                onChange={(e) => handleSourceChange(e.target.value)}
                 placeholder={formData.type === "video" ? "https://youtube.com/watch?v=... or https://.../video.mp4" : "https://..."}
               />
               {formData.type === "video" && (
@@ -146,7 +233,7 @@ export function MediaEditModal({
 
         <div className="p-6 border-t border-border flex justify-end gap-4">
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
+          <Button onClick={handleSave}>
             <Save className="w-4 h-4 mr-2" />
             Save
           </Button>

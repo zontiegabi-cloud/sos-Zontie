@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Save, Plus, Trash2 } from "lucide-react";
+import { X, Save, Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ClassItem } from "@/lib/content-store";
+import { useContent } from "@/hooks/use-content";
+import { toast } from "sonner";
 import { FileUpload } from "@/components/ui/file-upload";
+import { ServerFilePicker } from "../server-file-picker";
 
 export function ClassEditModal({
   item,
@@ -18,7 +21,23 @@ export function ClassEditModal({
   onCancel: () => void;
   isCreating: boolean;
 }) {
+  const { classes } = useContent();
   const [formData, setFormData] = useState(item);
+
+  const handleSave = () => {
+    // Check for duplicates
+    const isDuplicate = classes.some(c => 
+      c.id !== formData.id && // Ignore self
+      c.name.trim().toLowerCase() === formData.name.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      toast.error("Error: Class with this name already exists. Please choose a different name.");
+      return;
+    }
+    
+    onSave(formData);
+  };
 
   const updateDetail = (index: number, value: string) => {
     const newDetails = [...formData.details];
@@ -85,12 +104,26 @@ export function ClassEditModal({
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Image URL</label>
             <div className="space-y-4">
-              <FileUpload 
-                currentValue={formData.image}
-                onUploadComplete={(url) => setFormData({ ...formData, image: url })}
-                accept="image/*"
-                label="Upload Class Image"
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <FileUpload 
+                    currentValue={formData.image}
+                    onUploadComplete={(url) => setFormData({ ...formData, image: url })}
+                    accept="image/*"
+                    label="Upload Class Image"
+                  />
+                </div>
+                <ServerFilePicker 
+                  onSelect={(url) => setFormData({ ...formData, image: url })}
+                  accept="image"
+                  trigger={
+                    <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Uploads</span>
+                    </Button>
+                  }
+                />
+              </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-border" />
@@ -211,7 +244,7 @@ export function ClassEditModal({
 
         <div className="p-6 border-t border-border flex justify-end gap-4">
           <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={() => onSave(formData)}>
+          <Button onClick={handleSave}>
             <Save className="w-4 h-4 mr-2" />
             Save
           </Button>

@@ -8,7 +8,11 @@ interface SiteSettingsContextValue {
   updateBackground: (section: keyof SiteSettings['backgrounds'], bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>) => Promise<void>;
   updateSocialLinks: (links: SiteSettings['socialLinks']) => Promise<void>;
   updateSEO: (seo: Partial<SiteSettings['seo']>) => Promise<void>;
+  updateNewsSection: (newsSection: Partial<SiteSettings['newsSection']>) => Promise<void>;
   updateHomepageSections: (sections: SiteSettings['homepageSections']) => Promise<void>;
+  updateCustomSections: (sections: Record<string, import("@/lib/content-store").CustomSection>) => Promise<void>;
+  addCustomSection: (section: import("@/lib/content-store").CustomSection) => Promise<void>;
+  removeCustomSection: (id: string) => Promise<void>;
   updateTheme: (theme: Partial<ThemeSettings>) => Promise<void>;
   updateThemeFonts: (fonts: Partial<ThemeSettings['fonts']>) => Promise<void>;
   updateThemeColors: (colors: Partial<ThemeSettings['colors']>) => Promise<void>;
@@ -16,7 +20,7 @@ interface SiteSettingsContextValue {
   isLoading: boolean;
 }
 
-const SiteSettingsContext = createContext<SiteSettingsContextValue | undefined>(undefined);
+export const SiteSettingsContext = createContext<SiteSettingsContextValue | undefined>(undefined);
 
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings>(getDefaultSettings());
@@ -75,8 +79,43 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
+  const updateNewsSection = useCallback(async (newsSection: Partial<SiteSettings['newsSection']>) => {
+    const newSettings = {
+      ...settings,
+      newsSection: { ...settings.newsSection, ...newsSection },
+    };
+    await saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
   const updateHomepageSections = useCallback(async (sections: SiteSettings['homepageSections']) => {
     const newSettings = { ...settings, homepageSections: sections };
+    await saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const updateCustomSections = useCallback(async (sections: Record<string, import("@/lib/content-store").CustomSection>) => {
+    const newSettings = { ...settings, customSections: sections };
+    await saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const addCustomSection = useCallback(async (section: import("@/lib/content-store").CustomSection) => {
+    const newSettings = {
+      ...settings,
+      customSections: { ...settings.customSections, [section.id]: section },
+      homepageSections: [
+        ...settings.homepageSections,
+        { id: section.id, name: section.name, enabled: true, order: settings.homepageSections.length }
+      ]
+    };
+    await saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const removeCustomSection = useCallback(async (id: string) => {
+    const { [id]: removed, ...remainingCustomSections } = settings.customSections;
+    const newSettings = {
+      ...settings,
+      customSections: remainingCustomSections,
+      homepageSections: settings.homepageSections.filter(s => s.id !== id)
+    };
     await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
@@ -194,9 +233,13 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         updateBranding,
         updateBackground,
         updateSocialLinks,
-        updateSEO,
-        updateHomepageSections,
-        updateTheme,
+    updateSEO,
+    updateNewsSection,
+    updateHomepageSections,
+    updateCustomSections,
+    addCustomSection,
+    removeCustomSection,
+    updateTheme,
         updateThemeFonts,
         updateThemeColors,
         resetSettings,
@@ -208,10 +251,3 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   );
 }
 
-export function useSiteSettings() {
-  const context = useContext(SiteSettingsContext);
-  if (!context) {
-    throw new Error("useSiteSettings must be used within a SiteSettingsProvider");
-  }
-  return context;
-}

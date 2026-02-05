@@ -28,8 +28,9 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/ui/file-upload";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings } from "@/lib/content-store";
+import { ServerFilePicker } from "./server-file-picker";
+import { useSiteSettings } from "@/hooks/use-site-settings";
+import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings, HeroButton } from "@/lib/content-store";
 import { toast } from "sonner";
 import { BackgroundEditor } from "./BackgroundEditor";
 
@@ -323,12 +324,26 @@ export function SettingsPanel() {
               <div className="space-y-2">
                 <Label>Logo URL (optional)</Label>
                 <div className="space-y-4">
-                  <FileUpload 
-                    currentValue={localSettings.branding.logoUrl}
-                    onUploadComplete={(url) => updateBranding({ logoUrl: url })}
-                    accept="image/*"
-                    label="Upload Logo"
-                  />
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <FileUpload 
+                        currentValue={localSettings.branding.logoUrl}
+                        onUploadComplete={(url) => updateBranding({ logoUrl: url })}
+                        accept="image/*"
+                        label="Upload Logo"
+                      />
+                    </div>
+                    <ServerFilePicker 
+                      onSelect={(url) => updateBranding({ logoUrl: url })}
+                      accept="image"
+                      trigger={
+                        <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                          <Image className="h-4 w-4" />
+                          <span>Uploads</span>
+                        </Button>
+                      }
+                    />
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-border" />
@@ -459,13 +474,13 @@ export function SettingsPanel() {
                           placeholder="Button URL (e.g., /register)"
                         />
                         <Select
-                          value={button.variant}
-                          onValueChange={(v: any) => {
-                            const newButtons = [...(localSettings.cta?.buttons || [])];
-                            newButtons[index] = { ...button, variant: v };
-                            updateCTA({ buttons: newButtons });
-                          }}
-                        >
+                      value={button.variant}
+                      onValueChange={(v: HeroButton['variant']) => {
+                        const newButtons = [...(localSettings.cta?.buttons || [])];
+                        newButtons[index] = { ...button, variant: v };
+                        updateCTA({ buttons: newButtons });
+                      }}
+                    >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>

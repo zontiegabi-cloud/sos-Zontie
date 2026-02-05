@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUpload } from "@/components/ui/file-upload";
+import { ServerFilePicker } from "./server-file-picker";
 import { BackgroundSettings, SiteSettings } from "@/lib/content-store";
 import { getBackgroundStyle } from "@/lib/background-utils";
 
@@ -127,12 +129,26 @@ export function BackgroundEditor({ section, label, background, onChange }: Backg
               <div className="space-y-2">
                 <Label>Image URL</Label>
                 <div className="space-y-4">
-                  <FileUpload 
-                    currentValue={background.imageUrl}
-                    onUploadComplete={(url) => onChange({ imageUrl: url })}
-                    accept="image/*"
-                    label="Upload Background Image"
-                  />
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <FileUpload 
+                        currentValue={background.imageUrl}
+                        onUploadComplete={(url) => onChange({ imageUrl: url })}
+                        accept="image/*"
+                        label="Upload Background Image"
+                      />
+                    </div>
+                    <ServerFilePicker 
+                      onSelect={(url) => onChange({ imageUrl: url })}
+                      accept="image"
+                      trigger={
+                        <Button variant="outline" className="h-full px-3 gap-2" title="Select from Uploads">
+                          <ImageIcon className="h-4 w-4" />
+                          <span>Uploads</span>
+                        </Button>
+                      }
+                    />
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-border" />

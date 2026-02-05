@@ -4,6 +4,15 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { useContent } from "@/hooks/use-content";
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime()) && dateString.includes('-')) {
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  return dateString;
+};
+
 export default function News() {
   const { news } = useContent();
 
@@ -49,34 +58,36 @@ export default function News() {
               >
                 <Link 
                   to={`/news/${item.id}`}
-                  className="block bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-300"
+                  className="block bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-300 h-full flex flex-col"
                 >
                   {/* Image */}
                   <div className="relative aspect-video overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-                    <span className="absolute top-4 left-4 px-3 py-1 bg-accent text-accent-foreground text-xs font-heading uppercase tracking-wide rounded">
-                      {item.tag}
-                    </span>
+                      <img
+                        src={item.thumbnail || item.image || '/placeholder.jpg'}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+                    {item.tag && (
+                      <span className="absolute top-4 left-4 px-3 py-1 bg-accent text-accent-foreground text-xs font-heading uppercase tracking-wide rounded">
+                        {item.tag}
+                      </span>
+                    )}
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-1">
                     <div className="flex items-center gap-2 text-muted-foreground text-sm mb-3">
                       <Calendar className="w-4 h-4" />
-                      <span>{item.date}</span>
+                      <span>{formatDate(item.date)}</span>
                     </div>
                     <h2 className="font-heading text-xl uppercase text-foreground mb-3 group-hover:text-primary transition-colors">
                       {item.title}
                     </h2>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4 flex-1">
                       {item.description}
                     </p>
-                    <div className="flex items-center gap-2 text-primary text-sm font-heading uppercase">
+                    <div className="flex items-center gap-2 text-primary text-sm font-heading uppercase mt-auto">
                       Read More
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </div>

@@ -11,6 +11,7 @@ interface FileUploadProps {
   className?: string;
   label?: string;
   currentValue?: string;
+  variant?: 'default' | 'button';
 }
 
 export function FileUpload({ 
@@ -18,7 +19,8 @@ export function FileUpload({
   accept = "image/*,video/*", 
   className,
   label = "Upload File",
-  currentValue
+  currentValue,
+  variant = 'default'
 }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,22 +30,40 @@ export function FileUpload({
     if (!file) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+      // Always try to upload to server if we have a URL
+      if (API_BASE_URL) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/upload`, {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
+        if (response.ok) {
+          const data = await response.json();
+          onUploadComplete(data.url);
+          toast.success('File uploaded successfully');
+          return;
+        } else {
+           console.warn('Server upload failed, falling back to local base64');
+        }
       }
 
-      const data = await response.json();
-      onUploadComplete(data.url);
-      toast.success('File uploaded successfully');
+      // Fallback to Base64 (Data URL) for offline/demo mode
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        onUploadComplete(base64String);
+        toast.success('File uploaded successfully (Local)');
+      };
+      reader.onerror = () => {
+        throw new Error('Failed to read file');
+      };
+      reader.readAsDataURL(file);
+
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload file');
@@ -61,6 +81,33 @@ export function FileUpload({
     e.stopPropagation();
     onUploadComplete('');
   };
+
+  if (variant === 'button') {
+    return (
+      <div className={className}>
+        <input 
+          type="file" 
+          ref={fileInputRef}
+          className="hidden" 
+          accept={accept}
+          onChange={handleFileChange}
+        />
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          title={label}
+        >
+           {isUploading ? (
+             <Loader2 className="w-4 h-4 animate-spin" />
+           ) : (
+             <Upload className="w-4 h-4" />
+           )}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -92,13 +139,13 @@ export function FileUpload({
               <X className="w-3 h-3" />
             </Button>
             
-            {currentValue.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) ? (
+            {currentValue.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || currentValue.startsWith('data:image/') ? (
               <img 
                 src={currentValue} 
                 alt="Preview" 
                 className="max-h-48 mx-auto rounded-md object-contain shadow-sm" 
               />
-            ) : currentValue.match(/\.(mp4|webm|mov)$/i) ? (
+            ) : currentValue.match(/\.(mp4|webm|mov)$/i) || currentValue.startsWith('data:video/') ? (
               <video 
                 src={currentValue} 
                 className="max-h-48 mx-auto rounded-md shadow-sm" 
