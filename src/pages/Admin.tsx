@@ -39,13 +39,12 @@ import { DevicesTab } from "@/components/admin/tabs/DevicesTab";
 import { GameModesTab } from "@/components/admin/tabs/GameModesTab";
 import { MediaTab } from "@/components/admin/tabs/MediaTab";
 import { FeaturesTab } from "@/components/admin/tabs/FeaturesTab";
-import { SectionBuilderTab } from "@/components/admin/tabs/SectionBuilderTab";
+import { PageBuilderTab } from "@/components/admin/tabs/PageBuilderTab";
 import { FAQTab } from "@/components/admin/tabs/FAQTab";
-import { PrivacyTab } from "@/components/admin/tabs/PrivacyTab";
-import { TermsTab } from "@/components/admin/tabs/TermsTab";
 import { UsersTab } from "@/components/admin/tabs/UsersTab";
+import { RoadMapTab } from "@/components/admin/tabs/RoadMapTab";
 
-type Tab = "dashboard" | "news" | "section_builder" | "classes" | "media" | "faq" | "features" | "privacy" | "terms" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users";
+type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -116,7 +115,7 @@ export default function Admin() {
   const allNavItems = [
     { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'moderator', 'editor'] },
     { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
-    { id: "section_builder" as Tab, label: "Section Builder", icon: LayoutDashboard, roles: ['admin'] },
+    { id: "pages" as Tab, label: "Pages", icon: Layout, roles: ['admin', 'editor'] },
     { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
     { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
     { id: "maps" as Tab, label: "Maps", icon: Map, roles: ['admin', 'moderator'] },
@@ -125,16 +124,12 @@ export default function Admin() {
     { id: "media" as Tab, label: "Media", icon: Image, roles: ['admin', 'moderator'] },
     { id: "features" as Tab, label: "Features", icon: Shield, roles: ['admin'] },
     { id: "faq" as Tab, label: "FAQ", icon: HelpCircle, roles: ['admin'] },
+    { id: "roadmap" as Tab, label: "Roadmap", icon: Map, roles: ['admin'] },
     { id: "users" as Tab, label: "Users", icon: UserCog, roles: ['admin'] },
     { id: "settings" as Tab, label: "Settings", icon: Settings, roles: ['admin'] },
   ];
 
   const navItems = allNavItems.filter(item => item.roles.includes(user?.role || ''));
-
-  const legalItems = [
-    { id: "privacy" as Tab, label: "Privacy Policy", icon: Shield, roles: ['admin'] },
-    { id: "terms" as Tab, label: "Terms of Service", icon: FileText, roles: ['admin'] },
-  ].filter(item => item.roles.includes(user?.role || ''));
 
   const SidebarContent = () => (
     <>
@@ -174,26 +169,6 @@ export default function Admin() {
             {item.label}
           </button>
         ))}
-
-        {legalItems.length > 0 && (
-          <>
-            <div className="text-xs font-semibold text-muted-foreground uppercase px-3 mt-6 mb-2">Legal</div>
-            {legalItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleTabChange(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </button>
-            ))}
-          </>
-        )}
       </div>
 
       <div className="p-4 border-t border-border bg-card">
@@ -350,7 +325,7 @@ export default function Admin() {
           >
             {activeTab === "dashboard" && <DashboardTab onNavigate={(tab) => handleTabChange(tab as Tab)} userRole={user?.role} />}
             {activeTab === "news" && <NewsTab />}
-            {activeTab === "section_builder" && <SectionBuilderTab />}
+            {activeTab === "pages" && <PageBuilderTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}
             {activeTab === "maps" && <MapsTab />}
@@ -359,8 +334,7 @@ export default function Admin() {
             {activeTab === "media" && <MediaTab />}
             {activeTab === "features" && <FeaturesTab />}
             {activeTab === "faq" && <FAQTab />}
-            {activeTab === "privacy" && <PrivacyTab />}
-            {activeTab === "terms" && <TermsTab />}
+            {activeTab === "roadmap" && <RoadMapTab />}
             {activeTab === "settings" && <SettingsPanel />}
             {activeTab === "users" && <UsersTab />}
           </motion.div>

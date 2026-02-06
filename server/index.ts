@@ -18,6 +18,7 @@ import {
   MapItem, 
   GameDeviceItem, 
   GameModeItem,
+  RoadmapItem,
   DynamicContentSource 
 } from '../src/lib/content-store';
 
@@ -255,10 +256,12 @@ async function fetchAllData(conn: PoolConnection) {
     faq,
     features,
     pages,
+    systemPages,
     weapons,
     maps,
     gameDevices,
     gameModes,
+    roadmap,
     settingsRows
   ] = await Promise.all([
     conn.query('SELECT * FROM news'),
@@ -267,10 +270,12 @@ async function fetchAllData(conn: PoolConnection) {
     conn.query('SELECT * FROM faq'),
     conn.query('SELECT * FROM features'),
     conn.query('SELECT * FROM pages'),
+    conn.query('SELECT * FROM system_pages'),
     conn.query('SELECT * FROM weapons'),
     conn.query('SELECT * FROM maps'),
     conn.query('SELECT * FROM game_devices'),
     conn.query('SELECT * FROM game_modes'),
+    conn.query('SELECT * FROM roadmap'),
     conn.query('SELECT * FROM settings WHERE id = ?', ['main_settings'])
   ]);
 
@@ -322,12 +327,29 @@ async function fetchAllData(conn: PoolConnection) {
     media: media.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
     faq: faq.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
     features: features.map((i: DbRow) => ({...i, id: i.id.toString(), devices: i.devices, createdAt: i.created_at})),
-    privacy: pages.find((p: DbRow) => p.id === 'privacy') || { title: '', lastUpdated: '', sections: [] },
-    terms: pages.find((p: DbRow) => p.id === 'terms') || { title: '', lastUpdated: '', sections: [] },
+    pages: pages.map((p: DbRow) => ({
+      id: p.id.toString(),
+      slug: p.slug || p.id, // Fallback for old pages
+      title: p.title,
+      status: p.status || 'published',
+      sections: typeof p.sections === 'string' ? JSON.parse(p.sections) : p.sections || [],
+      seo: typeof p.seo === 'string' ? JSON.parse(p.seo) : p.seo || {},
+      createdAt: p.created_at,
+      updatedAt: p.updated_at
+    })),
+    privacy: systemPages.find((p: DbRow) => p.id === 'privacy') || { title: '', lastUpdated: '', sections: [] },
+    terms: systemPages.find((p: DbRow) => p.id === 'terms') || { title: '', lastUpdated: '', sections: [] },
     weapons: weapons.map((i: DbRow) => ({...i, id: i.id.toString(), stats: i.stats, attachments: i.attachments, createdAt: i.created_at})),
     maps: maps.map((i: DbRow) => ({...i, id: i.id.toString(), media: i.media, createdAt: i.created_at})),
     gameDevices: gameDevices.map((i: DbRow) => ({...i, id: i.id.toString(), media: i.media, createdAt: i.created_at})),
     gameModes: gameModes.map((i: DbRow) => ({...i, id: i.id.toString(), rules: i.rules, media: i.media, createdAt: i.created_at})),
+    roadmap: roadmap.map((i: DbRow) => ({
+      ...i, 
+      id: i.id.toString(), 
+      tasks: i.tasks, 
+      order: i.sort_order, // Map DB sort_order to interface order
+      createdAt: i.created_at
+    })),
     settings: settings
   };
 }
@@ -402,12 +424,12 @@ app.post('/api/data', async (req, res) => {
     }
 
     // 6. Pages (Privacy, Terms) - KEEP using DELETE as ID is fixed
-    await conn.query('DELETE FROM pages');
+    await conn.query('DELETE FROM system_pages');
     const pagesBatch = [];
     if (content.privacy) pagesBatch.push(['privacy', content.privacy.title, content.privacy.lastUpdated, JSON.stringify(content.privacy.sections)]);
     if (content.terms) pagesBatch.push(['terms', content.terms.title, content.terms.lastUpdated, JSON.stringify(content.terms.sections)]);
     if (pagesBatch.length) {
-        await conn.batch('INSERT INTO pages (id, title, lastUpdated, sections) VALUES (?, ?, ?, ?)', pagesBatch);
+        await conn.batch('INSERT INTO system_pages (id, title, lastUpdated, sections) VALUES (?, ?, ?, ?)', pagesBatch);
     }
 
     // 7. Weapons
@@ -446,7 +468,31 @@ app.post('/api/data', async (req, res) => {
       await conn.batch('INSERT INTO game_modes (id, name, shortName, description, rules, image, media, playerCount, roundTime, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
-    // 11. Settings (Flattened)
+    // 11. Roadmap
+    await conn.query('TRUNCATE TABLE roadmap');
+    if (content.roadmap?.length) {
+      const batch = content.roadmap.map((item: RoadmapItem) => [
+        item.id, item.phase, item.title, item.date, item.status, item.description, item.image, item.category, JSON.stringify(item.tasks || []), item.order, formatDateForDb(item.createdAt)
+      ]);
+      await conn.batch('INSERT INTO roadmap (id, phase, title, date, status, description, image, category, tasks, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
+    }
+
+    // 12. Pages
+    if (content.pages && content.pages.length > 0) {
+      await conn.query('DELETE FROM pages'); // Full sync approach for simplicity, or use upsert
+      const batch = content.pages.map((p: any) => [
+        p.id,
+        p.slug,
+        p.title,
+        p.status || 'draft',
+        JSON.stringify(p.sections || []),
+        JSON.stringify(p.seo || {}),
+        formatDateForDb(p.createdAt)
+      ]);
+      await conn.batch('INSERT INTO pages (id, slug, title, status, sections, seo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', batch);
+    }
+
+    // 11. Settings
     if (content.settings) {
       const s = content.settings;
       const b = s.branding || {};

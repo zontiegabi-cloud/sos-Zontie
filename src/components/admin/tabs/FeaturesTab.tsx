@@ -4,6 +4,16 @@ import { Plus, Pencil, Trash2, Search, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useContent } from "@/hooks/use-content";
 import { FeatureItem } from "@/lib/content-store";
 import { toast } from "sonner";
@@ -16,6 +26,8 @@ export function FeaturesTab() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
 
   const filteredFeatures = features.filter(item => 
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,10 +47,22 @@ export function FeaturesTab() {
   };
 
   const handleDeleteFeature = (id: string) => {
-    if (confirm("Are you sure you want to delete this feature?")) {
-      deleteFeatureItem(id);
+    setDeleteId(id);
+    setIsBatchDelete(false);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
+      const newFeatures = features.filter(item => !selectedIds.has(item.id));
+      updateContent({ ...content, features: newFeatures });
+      setSelectedIds(new Set());
+      toast.success("Selected items deleted!");
+    } else if (deleteId) {
+      deleteFeatureItem(deleteId);
       toast.success("Feature deleted!");
     }
+    setDeleteId(null);
+    setIsBatchDelete(false);
   };
 
   const handleSelectAll = () => {
@@ -60,12 +84,7 @@ export function FeaturesTab() {
   };
 
   const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
-      const newFeatures = features.filter(item => !selectedIds.has(item.id));
-      updateContent({ ...content, features: newFeatures });
-      setSelectedIds(new Set());
-      toast.success("Selected items deleted!");
-    }
+    setIsBatchDelete(true);
   };
 
   const createNewFeature = () => {
@@ -210,6 +229,25 @@ export function FeaturesTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => !open && (setDeleteId(null), setIsBatchDelete(false))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This action cannot be undone. This will permanently delete ${selectedIds.size} selected features.`
+                : "This action cannot be undone. This will permanently delete this feature."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

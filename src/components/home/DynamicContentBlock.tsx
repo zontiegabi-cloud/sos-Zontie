@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -17,7 +17,7 @@ import {
   Play,
   Calendar
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   DynamicContentSource, 
   NewsItem, 
@@ -27,16 +27,41 @@ import {
   WeaponItem, 
   MapItem, 
   GameDeviceItem,
+  GameModeItem,
   SiteContent,
-  Device
+  Device,
+  FAQItem,
+  PageContent,
+  RoadmapItem
 } from '@/lib/content-store';
 import { useContent } from '@/hooks/use-content';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from "@/lib/utils";
 import { NewsDetailDialog } from '@/components/news/NewsDetailDialog';
+import { MediaDetailDialog } from '@/components/home/MediaDetailDialog';
+import { 
+  WeaponCard, 
+  MapCard, 
+  DeviceCard, 
+  GameModeCard, 
+  WeaponDetail, 
+  MapDetail, 
+  DeviceDetail, 
+  GameModeDetail 
+} from '@/components/game';
+import { RoadmapCard } from '@/components/game/RoadmapCard';
+import { RoadmapTimeline } from '@/components/game/RoadmapTimeline';
+import { RoadmapShowcase } from '@/components/game/RoadmapShowcase';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 
 // Define a union type for all content items
-type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem;
+type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem | FAQItem | GameModeItem | RoadmapItem;
 
 // Helper to format date strings that might be non-standard (e.g. "Coming Soon")
 const formatDate = (dateString: string) => {
@@ -271,9 +296,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group relative bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -315,9 +343,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group relative h-full min-h-[300px] rounded-xl overflow-hidden border border-border/50 hover:border-primary/50 transition-all cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -359,9 +390,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group h-full flex flex-col border-b border-border/50 pb-6 last:border-0 cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -405,9 +439,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group bg-card/50 hover:bg-card border border-border/50 hover:border-primary/30 rounded-lg p-3 transition-all h-full cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -447,9 +484,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group relative bg-black/40 border border-primary/20 hover:border-primary/60 transition-colors h-full flex flex-col cursor-pointer"
         style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%)' }}
         onClick={() => onView(item)}
@@ -498,9 +538,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 15 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group bg-card border-l-4 border-l-primary/70 border-y border-r border-border hover:border-l-primary hover:shadow-md transition-all h-full cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -537,9 +580,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, scale: 0.98 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
         className="group relative rounded-xl overflow-hidden h-full cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -586,9 +632,12 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     return (
       <motion.div
         ref={ref}
+        layout
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
         className="group relative h-full min-h-[400px] rounded-2xl overflow-hidden shadow-2xl cursor-pointer"
         onClick={() => onView(item)}
       >
@@ -634,11 +683,11 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      exit={{ opacity: 0 }}
       className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col cursor-pointer"
       onClick={() => onView(item)}
     >
@@ -683,8 +732,8 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
 });
 NewsContentCard.displayName = "NewsContentCard";
 
-const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem }>(
-  ({ item }, ref) => {
+const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem, onView?: (item: ContentItem) => void }>(
+  ({ item, onView }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const embedUrl = getEmbedUrl(item.src);
   const isVideo = item.type === 'video' || !!embedUrl;
@@ -693,10 +742,11 @@ const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem }>(
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: false }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
       className="group relative aspect-video bg-muted rounded-lg overflow-hidden border border-border hover:border-primary/50"
     >
       {isVideo ? (
@@ -736,11 +786,21 @@ const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem }>(
           </div>
         )
       ) : (
-        <img 
-          src={item.src} 
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        <div 
+          className="w-full h-full relative cursor-pointer"
+          onClick={() => onView?.(item)}
+        >
+          <img 
+            src={item.src} 
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100">
+             <div className="p-2 rounded-full bg-black/50 text-white backdrop-blur-sm">
+                <Eye className="w-6 h-6" />
+             </div>
+          </div>
+        </div>
       )}
       
       {!isPlaying && (
@@ -766,24 +826,26 @@ const DefaultContentCard = forwardRef<HTMLDivElement, { item: ContentItem }>(
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false }}
-      exit={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      exit={{ opacity: 0 }}
       className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col"
     >
-      <div className="aspect-video overflow-hidden relative">
-        <img 
-          src={image} 
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        {tag && (
-          <div className="absolute top-2 right-2 px-2 py-1 bg-background/80 backdrop-blur text-xs font-bold rounded uppercase">
-            {tag}
-          </div>
-        )}
-      </div>
+      {image && (
+        <div className="aspect-video overflow-hidden relative">
+          <img 
+            src={image} 
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          {tag && (
+            <div className="absolute top-2 right-2 px-2 py-1 bg-background/80 backdrop-blur text-xs font-bold rounded uppercase">
+              {tag}
+            </div>
+          )}
+        </div>
+      )}
       <div className="p-4 flex flex-col flex-1">
         <h3 className="font-heading text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
           {title}
@@ -825,7 +887,47 @@ const ContentCard = forwardRef<HTMLDivElement, {
   }
 
   if (type === 'media') {
-    return <MediaContentCard ref={ref} item={item as MediaItem} />;
+    return <MediaContentCard ref={ref} item={item as MediaItem} onView={onView} />;
+  }
+
+  if (type === 'weapons') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <WeaponCard item={item as unknown as WeaponItem} index={index} onClick={() => onView(item)} />
+      </div>
+    );
+  }
+
+  if (type === 'maps') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <MapCard item={item as unknown as MapItem} index={index} onClick={() => onView(item)} />
+      </div>
+    );
+  }
+
+  if (type === 'roadmap') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <RoadmapCard item={item as unknown as RoadmapItem} className="h-full" />
+      </div>
+    );
+  }
+
+  if (type === 'gameDevices') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <DeviceCard item={item as unknown as GameDeviceItem} index={index} onClick={() => onView(item)} />
+      </div>
+    );
+  }
+
+  if (type === 'gameModes' || type === 'gamemodetab') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <GameModeCard item={item as unknown as GameModeItem} index={index} onClick={() => onView(item)} />
+      </div>
+    );
   }
 
   return <DefaultContentCard ref={ref} item={item} />;
@@ -955,24 +1057,116 @@ function CarouselView({ items, source, onView }: { items: ContentItem[], source:
   );
 }
 
+function AccordionView({ items, source }: { items: ContentItem[], source: DynamicContentSource }) {
+  return (
+    <Accordion type="single" collapsible className="space-y-4 w-full">
+      {items.map((item, index) => {
+        // Safe access for FAQ items or fallback properties
+        const question = 'question' in item ? (item as FAQItem).question : 'title' in item ? (item as { title: string }).title : 'name' in item ? (item as { name: string }).name : 'Item';
+        const answer = 'answer' in item ? (item as FAQItem).answer : 'description' in item ? (item as { description: string }).description : '';
+
+        return (
+          <AccordionItem
+            key={item.id}
+            value={`item-${index}`}
+            className="bg-card border border-border rounded px-6 data-[state=open]:border-primary/50 transition-colors"
+          >
+            <AccordionTrigger className="font-heading text-lg uppercase text-foreground hover:text-primary py-6 text-left">
+              {question}
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
+              <div className="prose prose-sm prose-invert max-w-none whitespace-pre-line">
+                {answer}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
+  );
+}
+
 export function DynamicContentBlock({ source, alignment = 'left' }: { source: DynamicContentSource, alignment?: 'left' | 'center' | 'right' }) {
   const { content } = useContent();
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState("All");
 
   // Get items based on type
-  const getItems = (): ContentItem[] => {
+  const baseItems = useMemo(() => {
     if (!content) return [];
-    const key = source.type as keyof SiteContent;
-    const allItems = (content[key] as ContentItem[]) || [];
     
-    // Filter by specific IDs if provided, otherwise take first N
-    if (source.ids && source.ids.length > 0) {
-      return allItems.filter((item) => source.ids?.includes(item.id));
+    // Handle gamemodetab content mapping
+    if (source.type === 'gamemodetab') {
+      return content.gameModes || [];
     }
-    return allItems.slice(0, source.count);
-  };
 
-  const items = getItems();
+    const key = source.type as keyof SiteContent;
+    let allItems = (content[key] as ContentItem[]) || [];
+    
+    // Sort by createdAt descending for news and media
+    if (['news', 'media'].includes(source.type)) {
+      allItems = [...allItems].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+    
+    return allItems;
+  }, [content, source.type]);
+
+  // Extract Categories (for Media & News)
+  const categories = useMemo(() => {
+    if (source.type !== 'media' && source.type !== 'news') return [];
+    const cats = new Set<string>();
+    baseItems.forEach((item) => {
+      if (source.type === 'media' && 'category' in item) cats.add((item as MediaItem).category);
+      if (source.type === 'news' && 'tag' in item) cats.add((item as NewsItem).tag);
+    });
+    return Array.from(cats).sort();
+  }, [baseItems, source.type]);
+
+  // Filter & Slice
+  const items = useMemo(() => {
+    let result = baseItems;
+    
+    // Filter by Category/Tag (Client-side interactive filter)
+    if (activeCategory !== 'All') {
+      if (source.type === 'media') {
+        result = result.filter((item) => 'category' in item && (item as MediaItem).category === activeCategory);
+      } else if (source.type === 'news') {
+        result = result.filter((item) => 'tag' in item && (item as NewsItem).tag === activeCategory);
+      }
+    }
+
+    // Filter by Configured Category (e.g. for Roadmap sections)
+    if (source.type === 'roadmap' && source.category && source.category !== 'all') {
+      result = result.filter((item) => 'category' in item && (item as RoadmapItem).category === source.category);
+    }
+
+    // Filter by specific IDs if provided
+    if (source.ids && source.ids.length > 0) {
+      result = result.filter((item) => source.ids?.includes(item.id));
+    }
+    
+    if (source.fetchAll) {
+      return result;
+    }
+    
+    return result.slice(0, source.count);
+  }, [baseItems, activeCategory, source.ids, source.fetchAll, source.count, source.type, source.category]);
+
+  // Handle deep linking for news
+  useEffect(() => {
+    if (source.type === 'news') {
+      const articleId = searchParams.get("articleId");
+      if (articleId && items.length > 0) {
+        const item = items.find(i => i.id === articleId);
+        if (item) setSelectedItem(item);
+      }
+    }
+  }, [searchParams, items, source.type]);
 
   if (!items.length && !source.title) return null;
 
@@ -995,9 +1189,40 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         })}>{source.title}</h3>
       )}
 
+      {/* Media & News Category Filter */}
+      {(source.type === 'media' || source.type === 'news') && categories.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <Button
+            variant={activeCategory === 'All' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setActiveCategory('All')}
+            className="uppercase tracking-wide"
+          >
+            All
+          </Button>
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={activeCategory === category ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveCategory(category)}
+              className="uppercase tracking-wide"
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {items.length > 0 && (
-        source.displayMode === 'carousel' ? (
+        source.displayMode === 'timeline' && source.type === 'roadmap' ? (
+          <RoadmapTimeline items={items as unknown as RoadmapItem[]} />
+        ) : source.displayMode === 'showcase' && source.type === 'roadmap' ? (
+          <RoadmapShowcase items={items as unknown as RoadmapItem[]} />
+        ) : source.displayMode === 'carousel' ? (
           <CarouselView items={items} source={source} onView={setSelectedItem} />
+        ) : source.displayMode === 'accordion' ? (
+          <AccordionView items={items} source={source} />
         ) : source.displayMode === 'featured' || source.displayMode === 'spotlight' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Featured Item (First one) */}
@@ -1073,12 +1298,72 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         <NewsDetailDialog 
           item={selectedItem as NewsItem} 
           open={!!selectedItem} 
-          onOpenChange={(open) => !open && setSelectedItem(null)} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedItem(null);
+              setSearchParams(params => {
+                params.delete("articleId");
+                return params;
+              });
+            }
+          }} 
+        />
+      )}
+
+      {/* Game Content Detail Modals */}
+      {selectedItem && source.type === 'weapons' && (
+        <AnimatePresence>
+          <WeaponDetail 
+            weapon={selectedItem as unknown as WeaponItem} 
+            onClose={() => setSelectedItem(null)} 
+          />
+        </AnimatePresence>
+      )}
+
+      {selectedItem && source.type === 'maps' && (
+        <AnimatePresence>
+          <MapDetail 
+            map={selectedItem as unknown as MapItem} 
+            onClose={() => setSelectedItem(null)} 
+          />
+        </AnimatePresence>
+      )}
+
+      {selectedItem && source.type === 'gameDevices' && (
+        <AnimatePresence>
+          <DeviceDetail 
+            device={selectedItem as unknown as GameDeviceItem} 
+            onClose={() => setSelectedItem(null)} 
+          />
+        </AnimatePresence>
+      )}
+
+      {selectedItem && (source.type === 'gameModes' || source.type === 'gamemodetab') && (
+        <AnimatePresence>
+          <GameModeDetail 
+            mode={selectedItem as unknown as GameModeItem} 
+            onClose={() => setSelectedItem(null)} 
+          />
+        </AnimatePresence>
+      )}
+
+      {/* Media Detail Dialog */}
+      {source.type === 'media' && (
+        <MediaDetailDialog
+          item={selectedItem as MediaItem}
+          open={!!selectedItem}
+          onOpenChange={(open) => !open && setSelectedItem(null)}
         />
       )}
 
       {/* Detail Dialog for Features/Classes */}
-      {source.type !== 'news' && (
+      {source.type !== 'news' && 
+       source.type !== 'weapons' && 
+       source.type !== 'maps' && 
+       source.type !== 'gameDevices' && 
+       source.type !== 'gameModes' && 
+       source.type !== 'gamemodetab' && 
+       source.type !== 'media' && (
         <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
           <DialogContent className={cn(
             "max-h-[90vh] overflow-y-auto border-primary/20",

@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,6 +33,8 @@ export function ClassesTab() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
 
   const filteredClasses = classes.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,12 +60,21 @@ export function ClassesTab() {
   };
 
   const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} classes?`)) {
+    setIsBatchDelete(true);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
       const newClasses = classes.filter((item) => !selectedIds.has(item.id));
       updateContent({ ...content, classes: newClasses });
       setSelectedIds(new Set());
       toast.success("Selected classes deleted!");
+    } else if (deleteId) {
+      deleteClassItem(deleteId);
+      toast.success("Class deleted!");
     }
+    setDeleteId(null);
+    setIsBatchDelete(false);
   };
 
   const handleSaveClass = (item: ClassItem) => {
@@ -69,10 +90,8 @@ export function ClassesTab() {
   };
 
   const handleDeleteClass = (id: string) => {
-    if (confirm("Are you sure you want to delete this class?")) {
-      deleteClassItem(id);
-      toast.success("Class deleted!");
-    }
+    setDeleteId(id);
+    setIsBatchDelete(false);
   };
 
   const createNewClass = () => {
@@ -215,6 +234,25 @@ export function ClassesTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => !open && (setDeleteId(null), setIsBatchDelete(false))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This action cannot be undone. This will permanently delete ${selectedIds.size} selected classes.`
+                : "This action cannot be undone. This will permanently delete this class."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

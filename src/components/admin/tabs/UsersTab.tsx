@@ -34,6 +34,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 
@@ -49,6 +59,9 @@ export function UsersTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
+  // Delete confirmation state
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
   // New user form state
   const [newUserUsername, setNewUserUsername] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
@@ -109,11 +122,15 @@ export function UsersTab() {
     }
   };
 
-  const handleDeleteUser = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  const handleDeleteClick = (id: number) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${deleteId}`, {
         method: 'DELETE',
       });
 
@@ -126,6 +143,8 @@ export function UsersTab() {
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Error connecting to server");
+    } finally {
+      setDeleteId(null);
     }
   };
 
@@ -239,7 +258,7 @@ export function UsersTab() {
                       variant="ghost" 
                       size="sm" 
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => handleDeleteClick(user.id)}
                       disabled={user.username === 'admin'} // Prevent deleting default admin
                     >
                       <Trash2 className="h-4 w-4" />
@@ -251,6 +270,23 @@ export function UsersTab() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

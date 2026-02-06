@@ -7,10 +7,12 @@ import {
   FAQItem,
   FeatureItem,
   PageContent,
+  Page,
   WeaponItem,
   MapItem,
   GameDeviceItem,
   GameModeItem,
+  RoadmapItem,
   getContent, 
   getData,
   saveData, 
@@ -265,13 +267,67 @@ export function useContent() {
     updateContent({ ...content, gameModes: newGameModes });
   }, [content, updateContent]);
 
-  // Privacy & Terms
-  const updatePrivacy = useCallback((privacy: PageContent) => {
-    updateContent({ ...content, privacy });
+  // Roadmap
+  const addRoadmapItem = useCallback((item: Omit<RoadmapItem, 'id'>) => {
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
+    const newContent = { ...content, roadmap: [...(content.roadmap || []), newItem] };
+    updateContent(newContent);
+    return newItem;
   }, [content, updateContent]);
 
-  const updateTerms = useCallback((terms: PageContent) => {
-    updateContent({ ...content, terms });
+  const updateRoadmapItem = useCallback((id: string, updates: Partial<RoadmapItem>) => {
+    const newRoadmap = (content.roadmap || []).map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, roadmap: newRoadmap });
+  }, [content, updateContent]);
+
+  const deleteRoadmapItem = useCallback((id: string) => {
+    const newRoadmap = (content.roadmap || []).filter(item => item.id !== id);
+    updateContent({ ...content, roadmap: newRoadmap });
+  }, [content, updateContent]);
+
+  // Pages
+  const addPage = useCallback((item: Omit<Page, 'id'>) => {
+    const currentPages = content.pages || [];
+    // Check for duplicates
+    const exists = currentPages.some(p => p.slug.trim().toLowerCase() === item.slug.trim().toLowerCase());
+    if (exists) {
+      console.warn(`Page with slug "${item.slug}" already exists.`);
+      return currentPages.find(p => p.slug.trim().toLowerCase() === item.slug.trim().toLowerCase()) as Page;
+    }
+
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
+    const newContent = { ...content, pages: [...currentPages, newItem] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updatePage = useCallback((id: string, updates: Partial<Page>) => {
+    const currentPages = content.pages || [];
+    const newPages = currentPages.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, pages: newPages });
+  }, [content, updateContent]);
+
+  const deletePage = useCallback((id: string) => {
+    const currentPages = content.pages || [];
+    const pageToDelete = currentPages.find(p => p.id === id);
+    const newPages = currentPages.filter(item => item.id !== id);
+    
+    let newSettings = content.settings;
+    if (pageToDelete) {
+      const currentDeleted = content.settings.deletedPageSlugs || [];
+      if (!currentDeleted.includes(pageToDelete.slug)) {
+        newSettings = {
+          ...content.settings,
+          deletedPageSlugs: [...currentDeleted, pageToDelete.slug]
+        };
+      }
+    }
+    
+    updateContent({ ...content, pages: newPages, settings: newSettings });
   }, [content, updateContent]);
 
   const reset = useCallback(() => {
@@ -287,12 +343,12 @@ export function useContent() {
     media: content.media,
     faq: content.faq,
     features: content.features,
-    privacy: content.privacy,
-    terms: content.terms,
+    pages: content.pages,
     weapons: content.weapons,
     maps: content.maps,
     gameDevices: content.gameDevices,
     gameModes: content.gameModes,
+    roadmap: content.roadmap,
     addNewsItem,
     updateNewsItem,
     deleteNewsItem,
@@ -322,8 +378,12 @@ export function useContent() {
     addGameModeItem,
     updateGameModeItem,
     deleteGameModeItem,
-    updatePrivacy,
-    updateTerms,
+    addRoadmapItem,
+    updateRoadmapItem,
+    deleteRoadmapItem,
+    addPage,
+    updatePage,
+    deletePage,
     updateContent,
     reset,
     refresh,

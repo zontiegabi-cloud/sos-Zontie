@@ -178,8 +178,31 @@ export async function initDB() {
     `);
 
     // 6. Pages Table (Privacy, Terms, etc.) - KEEP VARCHAR ID
+    // Check for old 'pages' table that should be 'system_pages'
+    try {
+      const pagesTableExists = await connection.query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_name = 'pages'", [process.env.DB_NAME]);
+      if (pagesTableExists[0].count > 0) {
+        const slugColumn = await connection.query("SHOW COLUMNS FROM pages LIKE 'slug'");
+        if (slugColumn.length === 0) {
+           console.log("Detected old 'pages' table (system pages). Renaming to 'system_pages'...");
+           // Check if system_pages already exists
+           const sysPagesExists = await connection.query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_name = 'system_pages'", [process.env.DB_NAME]);
+           if (sysPagesExists[0].count === 0) {
+             await connection.query("RENAME TABLE pages TO system_pages");
+           } else {
+             // If system_pages already exists, the old 'pages' table is likely a leftover or duplicate.
+             // We should back it up or drop it so the NEW 'pages' table (with slug) can be created.
+             console.log("system_pages already exists. Dropping old 'pages' table to allow creation of new schema...");
+             await connection.query("DROP TABLE pages");
+           }
+        }
+      }
+    } catch (e) {
+      console.log('Error checking/renaming pages table:', e);
+    }
+
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS pages (
+      CREATE TABLE IF NOT EXISTS system_pages (
         id VARCHAR(50) PRIMARY KEY, -- e.g., 'privacy', 'terms'
         title VARCHAR(255),
         lastUpdated VARCHAR(100),
@@ -237,7 +260,46 @@ export async function initDB() {
         image LONGTEXT,
         media JSON,
         playerCount VARCHAR(50),
-        roundTime VARCHAR(50)
+        roundTime VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 11. Roadmap Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS roadmap (
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
+        phase VARCHAR(255),
+        title VARCHAR(255),
+        date VARCHAR(100),
+        status VARCHAR(50),
+        description TEXT,
+        image LONGTEXT,
+        category VARCHAR(255),
+        tasks JSON,
+        sort_order INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Ensure roadmap columns exist (migration)
+    try {
+      await connection.query('ALTER TABLE roadmap ADD COLUMN IF NOT EXISTS category VARCHAR(255)');
+      await connection.query('ALTER TABLE roadmap ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    } catch (e) {
+      console.log('Error during roadmap schema migration:', e);
+    }
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS pages (
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        title VARCHAR(255) NOT NULL,
+        status VARCHAR(20) DEFAULT 'draft',
+        sections LONGTEXT,
+        seo LONGTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 

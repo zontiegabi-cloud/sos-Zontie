@@ -1,28 +1,34 @@
 import { Layout } from "@/components/layout/Layout";
 import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
-import { useSiteSettings } from "@/hooks/use-site-settings";
-import { DEFAULT_SECTIONS } from "@/lib/default-sections";
+import { useContent } from "@/hooks/use-content";
 
 const Index = () => {
-  const { settings } = useSiteSettings();
-  
-  // Get enabled sections sorted by order
-  const enabledSections = settings.homepageSections
-    .filter(s => s.enabled)
-    .sort((a, b) => a.order - b.order);
+  const { pages, isLoading } = useContent();
+  const page = pages.find(p => p.slug === 'home');
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">Loading...</div>
+      </Layout>
+    );
+  }
+
+  if (!page) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-muted-foreground">Home page not found. Please check Admin &gt; Pages.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      {enabledSections.map(section => {
-        // Use custom section from settings, or fallback to default configuration
-        const sectionData = settings.customSections?.[section.id] || DEFAULT_SECTIONS[section.id];
-        
-        if (sectionData) {
-          return <CustomSectionRenderer key={section.id} section={sectionData} />;
-        }
-        
-        return null;
-      })}
+      {page.sections.map(section => (
+        <CustomSectionRenderer key={section.id} section={section} />
+      ))}
     </Layout>
   );
 };

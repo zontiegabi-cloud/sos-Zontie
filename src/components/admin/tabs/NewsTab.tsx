@@ -16,6 +16,16 @@ import { useContent } from "@/hooks/use-content";
 import { NewsItem } from "@/lib/content-store";
 import { toast } from "sonner";
 import { NewsEditModal } from "@/components/admin/modals/NewsEditModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function NewsTab() {
   const { news, addNewsItem, updateNewsItem, deleteNewsItem, deleteNewsItems, updateContent, content } = useContent();
@@ -23,11 +33,18 @@ export function NewsTab() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ type: 'single' | 'batch', id?: string } | null>(null);
 
-  const filteredNews = news.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.tag.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNews = news
+    .filter((item) =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tag.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -70,11 +87,21 @@ export function NewsTab() {
   };
 
   const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
+    setDeleteConfirmation({ type: 'batch' });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirmation) return;
+
+    if (deleteConfirmation.type === 'single' && deleteConfirmation.id) {
+      deleteNewsItem(deleteConfirmation.id);
+      toast.success("News article deleted!");
+    } else if (deleteConfirmation.type === 'batch') {
       deleteNewsItems(selectedIds);
       setSelectedIds(new Set());
       toast.success("Selected items deleted!");
     }
+    setDeleteConfirmation(null);
   };
 
   const handleSaveNews = (item: NewsItem) => {
@@ -90,10 +117,7 @@ export function NewsTab() {
   };
 
   const handleDeleteNews = (id: string) => {
-    if (confirm("Are you sure you want to delete this news article?")) {
-      deleteNewsItem(id);
-      toast.success("News article deleted!");
-    }
+    setDeleteConfirmation({ type: 'single', id });
   };
 
   const createNewNews = () => {
@@ -255,6 +279,26 @@ export function NewsTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteConfirmation} onOpenChange={(open) => !open && setDeleteConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmation?.type === 'batch' 
+                ? `This will permanently delete ${selectedIds.size} selected news articles.` 
+                : "This will permanently delete this news article."}
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

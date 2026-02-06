@@ -8,6 +8,16 @@ import { useContent } from "@/hooks/use-content";
 import { WeaponItem } from "@/lib/content-store";
 import { toast } from "sonner";
 import { WeaponEditModal } from "@/components/admin/GameContentModals";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function WeaponsTab() {
   const { weapons, addWeaponItem, updateWeaponItem, deleteWeaponItem, updateContent, content } = useContent();
@@ -15,6 +25,10 @@ export function WeaponsTab() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Delete confirmation state
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
 
   const filteredWeapons = weapons.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -39,12 +53,25 @@ export function WeaponsTab() {
     setSelectedIds(newSelected);
   };
 
-  const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} weapons?`)) {
+  const handleBatchDeleteClick = () => {
+    setIsBatchDelete(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
       const newWeapons = weapons.filter((item) => !selectedIds.has(item.id));
       updateContent({ ...content, weapons: newWeapons });
       setSelectedIds(new Set());
       toast.success("Selected weapons deleted!");
+      setIsBatchDelete(false);
+    } else if (deleteId) {
+      deleteWeaponItem(deleteId);
+      toast.success("Weapon deleted!");
+      setDeleteId(null);
     }
   };
 
@@ -58,13 +85,6 @@ export function WeaponsTab() {
     }
     setEditingWeapon(null);
     setIsCreating(false);
-  };
-
-  const handleDeleteWeapon = (id: string) => {
-    if (confirm("Are you sure you want to delete this weapon?")) {
-      deleteWeaponItem(id);
-      toast.success("Weapon deleted!");
-    }
   };
 
   const createNewWeapon = () => {
@@ -111,105 +131,111 @@ export function WeaponsTab() {
             className="pl-8"
           />
         </div>
-        {selectedIds.size > 0 && (
-          <Button variant="destructive" onClick={handleBatchDelete}>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            disabled={selectedIds.size === 0}
+            onClick={handleBatchDeleteClick}
+          >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Selected ({selectedIds.size})
           </Button>
-        )}
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={filteredWeapons.length > 0 && selectedIds.size === filteredWeapons.length}
-            onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-            id="select-all"
-          />
-          <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
-            Select All
-          </label>
         </div>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredWeapons.map((item) => (
           <motion.div
             key={item.id}
             layout
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`bg-card border rounded-lg overflow-hidden flex flex-col transition-colors ${
-              selectedIds.has(item.id) ? "border-primary ring-1 ring-primary" : "border-border"
-            }`}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className={`
+              relative group rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden
+              ${selectedIds.has(item.id) ? 'ring-2 ring-primary' : ''}
+            `}
           >
-            <div className="relative aspect-video bg-muted group">
+            <div className="absolute top-2 left-2 z-10">
+              <Checkbox 
+                checked={selectedIds.has(item.id)}
+                onCheckedChange={(checked) => handleSelectOne(item.id, !!checked)}
+              />
+            </div>
+            
+            <div className="aspect-video bg-muted relative">
               {item.image ? (
-                <img
-                  src={item.image}
+                <img 
+                  src={item.image} 
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <Crosshair className="w-12 h-12 opacity-20" />
+                  <Crosshair className="w-8 h-8 opacity-20" />
                 </div>
               )}
-              
-              <div className="absolute top-2 left-2 z-10">
-                <Checkbox
-                  checked={selectedIds.has(item.id)}
-                  onCheckedChange={(checked) => handleSelectOne(item.id, checked as boolean)}
-                  className="bg-background/80 backdrop-blur-sm border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                />
-              </div>
-
-              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-                  onClick={() => {
-                    setEditingWeapon(item);
-                    setIsCreating(false);
-                  }}
-                >
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <Button size="icon" variant="secondary" onClick={() => setEditingWeapon(item)}>
                   <Pencil className="w-4 h-4" />
                 </Button>
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  className="h-8 w-8"
-                  onClick={() => handleDeleteWeapon(item.id)}
-                >
+                <Button size="icon" variant="destructive" onClick={() => handleDeleteClick(item.id)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-            <div className="p-4 flex-1">
-              <span className="text-xs text-primary uppercase font-heading">{item.category}</span>
-              <h3 className="font-heading text-foreground">{item.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
-              <p className="text-xs text-muted-foreground">{item.attachments.length} attachments</p>
+
+            <div className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="font-semibold leading-none mb-1">{item.name}</h3>
+                  <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {item.description}
+              </p>
             </div>
           </motion.div>
         ))}
-        {filteredWeapons.length === 0 && (
-          <div className="col-span-full py-12 text-center text-muted-foreground bg-card/50 border border-border border-dashed rounded-lg">
-            <Crosshair className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p>No weapons found matching your search.</p>
-          </div>
-        )}
       </div>
+  
 
       {editingWeapon && (
         <WeaponEditModal
           item={editingWeapon}
-          onSave={handleSaveWeapon}
           onCancel={() => {
             setEditingWeapon(null);
             setIsCreating(false);
           }}
+          onSave={handleSaveWeapon}
           isCreating={isCreating}
         />
       )}
+    
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteId(null);
+          setIsBatchDelete(false);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This will permanently delete ${selectedIds.size} weapons. This action cannot be undone.`
+                : "This will permanently delete this weapon. This action cannot be undone."
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

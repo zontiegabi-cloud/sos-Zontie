@@ -150,6 +150,26 @@ export interface GameModeItem {
   createdAt?: string;
 }
 
+export interface RoadmapTask {
+  id: string;
+  text: string;
+  status: 'pending' | 'in-progress' | 'completed';
+}
+
+export interface RoadmapItem {
+  id: string;
+  phase: string;
+  title: string;
+  date: string;
+  status: 'planned' | 'in-progress' | 'completed' | 'delayed';
+  description?: string;
+  image?: string;
+  category?: string;
+  tasks: RoadmapTask[];
+  order: number;
+  createdAt?: string;
+}
+
 // ========== Site Settings Interfaces ==========
 
 export interface BackgroundSettings {
@@ -170,6 +190,7 @@ export interface BackgroundSettings {
   autoplay?: boolean;
   loop?: boolean;
   showControls?: boolean;
+  parallax?: boolean;
 }
 
 export interface SectionBackground {
@@ -294,10 +315,16 @@ export interface CustomSection {
   settings: {
     paddingTop: string; 
     paddingBottom: string;
+    paddingLeft?: string;
+    paddingRight?: string;
     containerWidth: 'default' | 'full' | 'narrow';
     minHeight?: string; // e.g. "100vh", "600px"
     background: BackgroundSettings;
     textColor?: string;
+    id?: string;
+    showInNav?: boolean;
+    navLabel?: string;
+    className?: string;
     titleStyle?: 'default' | 'glow' | 'outline' | 'shadow';
     titleColor?: string;
     titleFontSize?: string;
@@ -306,21 +333,32 @@ export interface CustomSection {
     titleLetterSpacing?: string;
     titlePaddingTop?: string;
     titlePaddingBottom?: string;
+    titlePaddingLeft?: string;
+    titlePaddingRight?: string;
     titleMarginTop?: string;
     titleMarginBottom?: string;
+    titleMarginLeft?: string;
+    titleMarginRight?: string;
     titleWrapperMarginTop?: string;
     titleWrapperMarginBottom?: string;
     titleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
-    titleDecorationType?: 'none' | 'icon' | 'image' | 'line-icon-line';
+    titleFontFamily?: string;
+    titleDecorationType?: 'none' | 'icon' | 'image' | 'line-icon-line' | 'line-image-line';
     titleDecorationIcon?: string;
     titleDecorationImage?: string;
     titleDecorationPosition?: 'top' | 'bottom' | 'left' | 'right';
     titleDecorationColor?: string;
     titleDecorationSize?: string;
+    titleDecorationAlignment?: 'start' | 'center' | 'end';
+    titleDecorationOpacity?: number;
     titleDecorationPaddingTop?: string;
     titleDecorationPaddingBottom?: string;
+    titleDecorationPaddingLeft?: string;
+    titleDecorationPaddingRight?: string;
     titleDecorationMarginTop?: string;
     titleDecorationMarginBottom?: string;
+    titleDecorationMarginLeft?: string;
+    titleDecorationMarginRight?: string;
     subtitleColor?: string;
     subtitleFontSize?: string;
     subtitleFontWeight?: string;
@@ -328,13 +366,19 @@ export interface CustomSection {
     subtitleLetterSpacing?: string;
     subtitlePaddingTop?: string;
     subtitlePaddingBottom?: string;
+    subtitlePaddingLeft?: string;
+    subtitlePaddingRight?: string;
     subtitleMarginTop?: string;
     subtitleMarginBottom?: string;
+    subtitleMarginLeft?: string;
+    subtitleMarginRight?: string;
     subtitleTransform?: 'uppercase' | 'capitalize' | 'lowercase' | 'none';
+    subtitleFontFamily?: string;
     bodyFontSize?: string;
     bodyFontWeight?: string;
     bodyLineHeight?: string;
     bodyLetterSpacing?: string;
+    bodyFontFamily?: string;
     overlayOpacity?: number;
     scrollIndicator?: {
       enabled: boolean;
@@ -347,10 +391,16 @@ export interface CustomSection {
         bottom?: string; // e.g. "2rem"
         align?: 'left' | 'center' | 'right';
       };
+      paddingTop?: string;
+      paddingBottom?: string;
+      paddingLeft?: string;
+      paddingRight?: string;
     };
     textAlign?: 'left' | 'center' | 'right';
     sourceTextAlign?: 'left' | 'center' | 'right';
     customCss?: string;
+    customFontName?: string;
+    customFontUrl?: string;
     animation?: {
       type: 'none' | 'fade' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right' | 'zoom';
       duration?: number;
@@ -361,12 +411,14 @@ export interface CustomSection {
 }
 
 export interface DynamicContentSource {
-  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry';
+  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured';
   count: number;
+  fetchAll?: boolean;
   title?: string;
   ids?: string[]; // For manual selection
+  category?: string; // For filtering by category
   gridColumns?: number; // 1, 2, 3, 4
 }
 
@@ -381,6 +433,7 @@ export interface SiteSettings {
   homepageSections: HomepageSection[];
   customSections: Record<string, CustomSection>;
   theme: ThemeSettings;
+  deletedPageSlugs?: string[];
 }
 
 export interface SiteContent {
@@ -389,16 +442,444 @@ export interface SiteContent {
   media: MediaItem[];
   faq: FAQItem[];
   features: FeatureItem[];
-  privacy: PageContent;
-  terms: PageContent;
   // Game content
   weapons: WeaponItem[];
   maps: MapItem[];
   gameDevices: GameDeviceItem[];
-  gameModes: GameModeItem[];
+  gameModes?: GameModeItem[];
+  roadmap?: RoadmapItem[];
+  pages: Page[];
   // Site settings
   settings: SiteSettings;
 }
+
+export interface Page {
+  id: string;
+  slug: string;
+  title: string;
+  status: 'draft' | 'published';
+  sections: CustomSection[];
+  seo?: {
+    title: string;
+    description: string;
+    keywords?: string[];
+    ogImage?: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  settings?: {
+    showGameContentNav?: boolean;
+    [key: string]: any;
+  };
+}
+
+// Default pages data
+const defaultPages: Page[] = [
+  {
+    id: "home",
+    slug: "home",
+    title: "Home",
+    status: "published",
+    sections: [
+      {
+        id: "hero",
+        type: "hero",
+        name: "Main Hero",
+        content: {
+          title: '<span class="text-primary text-glow-primary">SHADOWS</span><br/><span class="text-foreground">OF SOLDIERS</span>',
+          subtitle: "Pick Your Role. Shape the Battlefield.",
+          buttons: [
+            { text: "Wishlist on Steam", url: "https://store.steampowered.com/app/2713480/Shadows_of_Soldiers/", variant: "primary" },
+            { text: "Join Discord", url: "https://discord.gg/shadowsofsoldiers", variant: "outline" }
+          ]
+        },
+        settings: {
+          paddingTop: "0",
+          paddingBottom: "0",
+          containerWidth: "default",
+          minHeight: "100vh",
+          textAlign: "center",
+          titleStyle: "default",
+          titleFontSize: "text-5xl sm:text-7xl lg:text-9xl",
+          titleFontWeight: "font-display",
+          titleTransform: "uppercase",
+          overlayOpacity: 60,
+          background: { type: "image", image: "/images/hero-bg.jpg", opacity: 0.6 }
+        }
+      },
+      {
+        id: "news",
+        type: "dynamic-content",
+        name: "Latest News",
+        content: {
+          title: "LATEST NEWS",
+          description: "Stay updated with the latest developments and announcements",
+          dynamicSources: [
+            { type: "news", count: 3, displayMode: "grid", gridColumns: 3 }
+          ]
+        },
+        settings: {
+          paddingTop: "5rem",
+          paddingBottom: "5rem",
+          containerWidth: "default",
+          textAlign: "center",
+          background: { type: "color", color: "transparent" }
+        }
+      },
+      {
+        id: "features",
+        type: "dynamic-content",
+        name: "Game Features",
+        content: {
+          title: "GAME FEATURES",
+          subtitle: "What makes it unique",
+          description: "<p>Explore the key features of our game.</p>",
+          dynamicSources: [
+            { type: "features", count: 6, displayMode: "grid", gridColumns: 3 }
+          ]
+        },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          textAlign: "center",
+          background: { type: "color", color: "transparent" }
+        }
+      },
+      {
+        id: "classes",
+        type: "dynamic-content",
+        name: "Classes",
+        content: {
+          title: "CHOOSE YOUR CLASS",
+          subtitle: "Find your playstyle",
+          dynamicSources: [
+            { type: "classes", count: 4, displayMode: "grid", gridColumns: 4 }
+          ]
+        },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          textAlign: "center",
+          background: { type: "color", color: "transparent" }
+        }
+      },
+      {
+        id: "cta",
+        type: "cta",
+        name: "Call to Action",
+        content: {
+          title: "JOIN THE FIGHT",
+          subtitle: "Ready to deploy?",
+          description: "<p>Join thousands of players online now.</p>",
+          buttons: [{ text: "Download Now", url: "#", variant: "primary" }]
+        },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "narrow",
+          textAlign: "center",
+          background: { type: "color", color: "transparent" }
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "news",
+    slug: "news",
+    title: "News",
+    status: "published",
+    sections: [
+      {
+        id: "news-hero",
+        type: "hero",
+        name: "News Hero",
+        content: { 
+          title: "LATEST NEWS", 
+          subtitle: "Updates from the battlefield" 
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      },
+      {
+        id: "news-list",
+        type: "dynamic-content",
+        name: "News List",
+        content: {},
+        settings: {
+          paddingTop: "2rem",
+          paddingBottom: "6rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" }
+        },
+        dynamicSources: [
+          { type: "news", displayMode: "grid", count: 12, gridColumns: 3 }
+        ]
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "media",
+    slug: "media",
+    title: "Media",
+    status: "published",
+    sections: [
+      {
+        id: "media-hero",
+        type: "hero",
+        name: "Media Hero",
+        content: { 
+          title: "MEDIA GALLERY", 
+          subtitle: "Screenshots and videos" 
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      },
+      {
+        id: "media-list",
+        type: "dynamic-content",
+        name: "Media List",
+        content: {},
+        settings: {
+          paddingTop: "2rem",
+          paddingBottom: "6rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" }
+        },
+        dynamicSources: [
+          { type: "media", displayMode: "masonry", count: 20 }
+        ]
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "faq",
+    slug: "faq",
+    title: "FAQ",
+    status: "published",
+    sections: [
+      {
+        id: "faq-hero",
+        type: "hero",
+        name: "FAQ Hero",
+        content: { 
+          title: "FAQ", 
+          subtitle: "Frequently Asked Questions" 
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      },
+      {
+        id: "faq-list",
+        type: "dynamic-content",
+        name: "FAQ List",
+        content: {},
+        settings: {
+          paddingTop: "2rem",
+          paddingBottom: "6rem",
+          containerWidth: "narrow",
+          background: { type: "color", color: "transparent" }
+        },
+        dynamicSources: [
+          { type: "faq", displayMode: "accordion", count: 50 }
+        ]
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "privacy",
+    slug: "privacy",
+    title: "Privacy Policy",
+    status: "published",
+    sections: [
+      {
+        id: "privacy-content",
+        type: "rich-text",
+        name: "Privacy Content",
+        content: { 
+          title: "Privacy Policy",
+          description: `<h2>1. Introduction</h2>
+<p>Welcome to Shadows of Soldiers. We respect your privacy and are committed to protecting your personal data.</p>
+<h2>2. Information We Collect</h2>
+<p>We may collect identity data, contact data, technical data, and usage data.</p>
+<h2>3. How We Use Your Information</h2>
+<p>We use your personal data to provide services, notify you of changes, and allow participation in playtests.</p>
+<h2>4. Data Security</h2>
+<p>We have implemented appropriate security measures to prevent unauthorized access.</p>
+<h2>5. Your Rights</h2>
+<p>You have rights to access, correct, and request deletion of your personal data.</p>
+<h2>6. Contact Us</h2>
+<p>Contact us through our social media channels or Discord community.</p>`
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "6rem",
+          containerWidth: "narrow",
+          background: { type: "color", color: "transparent" }
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "terms",
+    slug: "terms",
+    title: "Terms of Service",
+    status: "published",
+    sections: [
+      {
+        id: "terms-content",
+        type: "rich-text",
+        name: "Terms Content",
+        content: { 
+          title: "Terms of Service",
+          description: `<h2>1. Agreement to Terms</h2>
+<p>By accessing our services, you agree to be bound by these Terms and Conditions.</p>
+<h2>2. Intellectual Property</h2>
+<p>All game content and materials are protected by copyright and trademark laws.</p>
+<h2>3. User Conduct</h2>
+<p>You agree not to violate laws, harass others, or engage in hacking activities.</p>
+<h2>4. Playtest Participation</h2>
+<p>Playtest content is confidential and may not be shared without permission.</p>
+<h2>5. Disclaimer of Warranties</h2>
+<p>Our services are provided 'as is' without warranties.</p>
+<h2>6. Contact</h2>
+<p>Contact us through our official social media channels or Discord.</p>`
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "6rem",
+          containerWidth: "narrow",
+          background: { type: "color", color: "transparent" }
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "game-content",
+    slug: "game-content",
+    title: "Game Content",
+    status: "published",
+    sections: [
+      {
+        id: "game-hero",
+        type: "hero",
+        name: "Game Hero",
+        content: { 
+          title: "GAME CONTENT", 
+          subtitle: "Weapons, Maps, and more" 
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      },
+      {
+        id: "weapons-section",
+        type: "dynamic-content",
+        name: "Weapons",
+        content: { title: "Weapons" },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          showInNav: true,
+          navLabel: "Weapons"
+        },
+        dynamicSources: [
+          { type: "weapons", displayMode: "grid", count: 20, gridColumns: 3 }
+        ]
+      },
+      {
+        id: "maps-section",
+        type: "dynamic-content",
+        name: "Maps",
+        content: { title: "Maps" },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          showInNav: true,
+          navLabel: "Maps"
+        },
+        dynamicSources: [
+          { type: "maps", displayMode: "grid", count: 20, gridColumns: 2 }
+        ]
+      },
+      {
+        id: "devices-section",
+        type: "dynamic-content",
+        name: "Devices",
+        content: { title: "Devices" },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          showInNav: true,
+          navLabel: "Devices"
+        },
+        dynamicSources: [
+          { type: "gameDevices", displayMode: "grid", count: 20, gridColumns: 3 }
+        ]
+      },
+      {
+        id: "modes-section",
+        type: "dynamic-content",
+        name: "Game Modes",
+        content: { title: "Game Modes" },
+        settings: {
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          showInNav: true,
+          navLabel: "Game Modes"
+        },
+        dynamicSources: [
+          { type: "gameModes", displayMode: "grid", count: 20, gridColumns: 3 }
+        ]
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+];
+
+
 
 const STORAGE_KEY = 'sos-content';
 
@@ -564,6 +1045,58 @@ const defaultFAQ: FAQItem[] = [
   { id: "8", question: "How can I support the game?", answer: "Wishlist on Steam, join our Discord, and follow us on social media!" },
 ];
 
+// Default Roadmap data
+const defaultRoadmap: RoadmapItem[] = [
+  {
+    id: "1",
+    phase: "Prototype",
+    title: "Prototype",
+    date: "Q4 2024",
+    status: "completed",
+    description: "The internal prototyping phase of Shadows of Soldiers fundamental mechanics and systems.",
+    tasks: [
+      { id: "1", text: "Basic weapon mechanics", status: "completed" },
+      { id: "2", text: "Basic movement system", status: "completed" },
+      { id: "3", text: "Basic health and armor system", status: "completed" },
+      { id: "4", text: "Prototype of the class system", status: "completed" }
+    ],
+    order: 0,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "2",
+    phase: "Pre-Alpha",
+    title: "Pre-Alpha",
+    date: "Q1 2025",
+    status: "in-progress",
+    description: "The first small version designed to demonstrate technical potential.",
+    tasks: [
+      { id: "5", text: "Advanced destruction system", status: "completed" },
+      { id: "6", text: "New weapon types", status: "completed" },
+      { id: "7", text: "Network services and Matchmaking", status: "completed" },
+      { id: "8", text: "Weapon Customization System", status: "in-progress" },
+      { id: "9", text: "Class gadgets implementation", status: "pending" }
+    ],
+    order: 1,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "3",
+    phase: "Alpha",
+    title: "Alpha",
+    date: "Q4 2026",
+    status: "planned",
+    description: "Move to dedicated servers and run the game 24/7.",
+    tasks: [
+      { id: "10", text: "Tactical movement v1.0", status: "pending" },
+      { id: "11", text: "Interactive world", status: "pending" },
+      { id: "12", text: "Further graphics improvements", status: "pending" }
+    ],
+    order: 2,
+    createdAt: new Date().toISOString()
+  }
+];
+
 // Default features data
 const defaultFeatures: FeatureItem[] = [
   {
@@ -620,34 +1153,6 @@ const defaultFeatures: FeatureItem[] = [
     ],
   },
 ];
-
-// Default privacy policy
-const defaultPrivacy: PageContent = {
-  title: "Privacy Policy",
-  lastUpdated: "August 2024",
-  sections: [
-    { heading: "1. Introduction", content: "Welcome to Shadows of Soldiers. We respect your privacy and are committed to protecting your personal data." },
-    { heading: "2. Information We Collect", content: "We may collect identity data, contact data, technical data, and usage data." },
-    { heading: "3. How We Use Your Information", content: "We use your personal data to provide services, notify you of changes, and allow participation in playtests." },
-    { heading: "4. Data Security", content: "We have implemented appropriate security measures to prevent unauthorized access." },
-    { heading: "5. Your Rights", content: "You have rights to access, correct, and request deletion of your personal data." },
-    { heading: "6. Contact Us", content: "Contact us through our social media channels or Discord community." },
-  ],
-};
-
-// Default terms
-const defaultTerms: PageContent = {
-  title: "Terms & Conditions",
-  lastUpdated: "August 2024",
-  sections: [
-    { heading: "1. Agreement to Terms", content: "By accessing our services, you agree to be bound by these Terms and Conditions." },
-    { heading: "2. Intellectual Property", content: "All game content and materials are protected by copyright and trademark laws." },
-    { heading: "3. User Conduct", content: "You agree not to violate laws, harass others, or engage in hacking activities." },
-    { heading: "4. Playtest Participation", content: "Playtest content is confidential and may not be shared without permission." },
-    { heading: "5. Disclaimer of Warranties", content: "Our services are provided 'as is' without warranties." },
-    { heading: "6. Contact", content: "Contact us through our official social media channels or Discord." },
-  ],
-};
 
 // Default weapons data
 const defaultWeapons: WeaponItem[] = [
@@ -929,27 +1434,77 @@ const defaultSettings: SiteSettings = {
       border: "220 10% 20%",
     },
   },
+  deletedPageSlugs: [],
 };
 
 const LOCAL_LAST_SAVED_KEY = 'zontie_local_last_saved';
 const SERVER_LAST_SYNCED_KEY = 'zontie_server_last_synced';
 
-export function getContent(): SiteContent {
-  const defaultContent: SiteContent = {
-    news: defaultNews,
-    classes: defaultClasses,
-    media: defaultMedia,
-    faq: defaultFAQ,
-    features: defaultFeatures,
-    privacy: defaultPrivacy,
-    terms: defaultTerms,
-    weapons: defaultWeapons,
-    maps: defaultMaps,
-    gameDevices: defaultGameDevices,
-    gameModes: defaultGameModes,
-    settings: defaultSettings,
-  };
+function mergePages(storedPages: Page[], defaults: Page[], deletedSlugs: string[] = []): Page[] {
+  // 1. Deduplicate stored pages by ID to prevent React key warnings
+  const uniqueById = new Map<string, Page>();
+  storedPages.forEach(p => uniqueById.set(p.id, p));
 
+  // 2. Deduplicate by Slug to prevent logical duplicates (e.g. multiple "game-content" pages)
+  const uniqueBySlug = new Map<string, Page>();
+  uniqueById.forEach(p => {
+    if (!uniqueBySlug.has(p.slug)) {
+      uniqueBySlug.set(p.slug, p);
+    } else {
+      console.warn(`Duplicate page slug found: ${p.slug}. Removing duplicate with ID ${p.id}.`);
+    }
+  });
+
+  // Start with clean, unique stored pages
+  const merged = Array.from(uniqueBySlug.values());
+  const storedSlugs = new Set(merged.map(p => p.slug));
+  const storedIds = new Set(merged.map(p => p.id));
+
+  defaults.forEach(defaultPage => {
+    // Only merge default page if:
+    // 1. It's not already in stored pages (by Slug OR ID)
+    // 2. It hasn't been explicitly deleted (checked via deletedSlugs)
+    const slugExists = storedSlugs.has(defaultPage.slug);
+    const idExists = storedIds.has(defaultPage.id);
+    const isDeleted = deletedSlugs.includes(defaultPage.slug);
+
+    if (!slugExists && !idExists && !isDeleted) {
+      merged.push(defaultPage);
+      // Update check sets to prevent subsequent duplicates from defaults
+      storedSlugs.add(defaultPage.slug);
+      storedIds.add(defaultPage.id);
+    } else if (slugExists) {
+      // If page exists but has no sections (corrupted/empty), restore default sections
+      const existingIndex = merged.findIndex(p => p.slug === defaultPage.slug);
+      if (existingIndex !== -1 && (!merged[existingIndex].sections || merged[existingIndex].sections.length === 0)) {
+        console.warn(`Restoring empty sections for page: ${defaultPage.slug}`);
+        merged[existingIndex] = {
+          ...merged[existingIndex],
+          sections: defaultPage.sections
+        };
+      }
+    }
+  });
+  
+  return merged;
+}
+
+const defaultContent: SiteContent = {
+  news: defaultNews,
+  classes: defaultClasses,
+  media: defaultMedia,
+  faq: defaultFAQ,
+  features: defaultFeatures,
+  weapons: defaultWeapons,
+  maps: defaultMaps,
+  gameDevices: defaultGameDevices,
+  gameModes: defaultGameModes,
+  roadmap: defaultRoadmap,
+  pages: defaultPages,
+  settings: defaultSettings,
+};
+
+export function getContent(): SiteContent {
   if (typeof window === 'undefined') {
     return defaultContent;
   }
@@ -961,18 +1516,50 @@ export function getContent(): SiteContent {
   
   try {
     const parsed = JSON.parse(stored);
+    
+    // Migration: Migrate Home Page from Settings to Pages if missing
+    let pages = parsed.pages || [];
+    const hasHomePage = pages.some((p: any) => p.slug === 'home');
+    
+    if (!hasHomePage && parsed.settings && parsed.settings.homepageSections) {
+      const homeSections = (parsed.settings.homepageSections as HomepageSection[])
+        .filter(s => s.enabled)
+        .sort((a, b) => a.order - b.order)
+        .map(s => {
+          const custom = parsed.settings.customSections?.[s.id];
+          if (custom) return custom;
+          
+          // Find default section from defaultPages 'home'
+          const defaultHome = defaultPages.find(p => p.slug === 'home');
+          return defaultHome?.sections.find(ds => ds.id === s.id);
+        })
+        .filter(Boolean) as CustomSection[];
+
+      if (homeSections.length > 0) {
+        pages.push({
+          id: "home",
+          slug: "home",
+          title: "Home",
+          status: "published",
+          sections: homeSections,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    }
+
     return {
       news: parsed.news ?? defaultNews,
       classes: parsed.classes ?? defaultClasses,
       media: parsed.media ?? defaultMedia,
       faq: parsed.faq ?? defaultFAQ,
       features: parsed.features ?? defaultFeatures,
-      privacy: parsed.privacy ?? defaultPrivacy,
-      terms: parsed.terms ?? defaultTerms,
       weapons: parsed.weapons ?? defaultWeapons,
       maps: parsed.maps ?? defaultMaps,
       gameDevices: parsed.gameDevices ?? defaultGameDevices,
       gameModes: parsed.gameModes ?? defaultGameModes,
+      roadmap: parsed.roadmap ?? defaultRoadmap,
+      pages: mergePages(pages, defaultPages, parsed.settings?.deletedPageSlugs || []),
       settings: parsed.settings ? {
         ...defaultSettings,
         ...parsed.settings,
@@ -1005,8 +1592,9 @@ function isDefaultContent(content: SiteContent): boolean {
   const newsMatch = content.news.length === defaultNews.length && content.news[0]?.id === defaultNews[0]?.id;
   const classesMatch = content.classes.length === defaultClasses.length && content.classes[0]?.id === defaultClasses[0]?.id;
   const featuresMatch = content.features.length === defaultFeatures.length && content.features[0]?.id === defaultFeatures[0]?.id;
+  const roadmapMatch = (content.roadmap || []).length === defaultRoadmap.length && (content.roadmap || [])[0]?.id === defaultRoadmap[0]?.id;
   
-  return newsMatch && classesMatch && featuresMatch;
+  return newsMatch && classesMatch && featuresMatch && roadmapMatch;
 }
 
 // Async data fetching with fallback to localStorage
@@ -1017,7 +1605,27 @@ export async function getData(): Promise<SiteContent> {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-    const serverData = await response.json();
+    const rawServerData = await response.json();
+    
+    // Ensure server data has all required fields by merging with defaultContent
+    // This handles cases where the server file has an older schema (e.g. missing 'pages')
+    const deletedSlugs = rawServerData.settings?.deletedPageSlugs || [];
+    const serverData: SiteContent = {
+      ...defaultContent,
+      ...rawServerData,
+      // Explicitly ensure arrays are defined
+      news: rawServerData.news ?? [],
+      classes: rawServerData.classes ?? [],
+      media: rawServerData.media ?? [],
+      faq: rawServerData.faq ?? [],
+      features: rawServerData.features ?? [],
+      weapons: rawServerData.weapons ?? [],
+      maps: rawServerData.maps ?? [],
+      gameDevices: rawServerData.gameDevices ?? [],
+      gameModes: rawServerData.gameModes ?? [],
+      roadmap: rawServerData.roadmap ?? defaultRoadmap,
+      pages: mergePages(rawServerData.pages || [], defaultPages, deletedSlugs),
+    };
     
     // Check for "Local-First" Persistence Strategy
     // If server returns default data (e.g. after restart) but we have local changes,
@@ -1059,8 +1667,28 @@ export async function getData(): Promise<SiteContent> {
 
 // Async data saving
 export async function saveData(content: SiteContent): Promise<SiteContent | undefined> {
+  // Deduplicate pages to prevent errors and ensure clean state
+  // 1. By ID
+  const uniqueById = new Map<string, Page>();
+  if (content.pages) {
+    content.pages.forEach(p => uniqueById.set(p.id, p));
+  }
+
+  // 2. By Slug (keep first encountered)
+  const uniqueBySlug = new Map<string, Page>();
+  uniqueById.forEach(p => {
+    if (!uniqueBySlug.has(p.slug)) {
+      uniqueBySlug.set(p.slug, p);
+    }
+  });
+
+  const cleanContent = {
+    ...content,
+    pages: Array.from(uniqueBySlug.values())
+  };
+
   // Always save to local storage first for immediate feedback
-  saveContent(content);
+  saveContent(cleanContent);
   
   try {
     const response = await fetch(`${API_BASE_URL}/api/data`, {
@@ -1068,7 +1696,7 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(content),
+      body: JSON.stringify(cleanContent),
     });
     
     if (!response.ok) {
@@ -1079,11 +1707,18 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
 
     const result = await response.json();
     if (result.success && result.data) {
+      // Merge back any fields that the server might have dropped (if it's an older backend)
+      // specifically roadmap which is a new feature
+      const mergedData = {
+        ...result.data,
+        roadmap: result.data.roadmap ?? cleanContent.roadmap
+      };
+
       // Update local storage with server response (contains clean IDs)
-      saveContent(result.data);
+      saveContent(mergedData);
       // Update server sync timestamp to match local last saved (since we just saved)
       localStorage.setItem(SERVER_LAST_SYNCED_KEY, localStorage.getItem(LOCAL_LAST_SAVED_KEY) || Date.now().toString());
-      return result.data;
+      return mergedData;
     }
   } catch (error) {
     console.error('Failed to save to server:', error);

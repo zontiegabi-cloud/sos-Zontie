@@ -8,6 +8,16 @@ import { useContent } from "@/hooks/use-content";
 import { MapItem } from "@/lib/content-store";
 import { MapEditModal } from "../GameContentModals";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function MapsTab() {
   const { maps, addMapItem, updateMapItem, deleteMapItem, updateContent, content } = useContent();
@@ -15,6 +25,10 @@ export function MapsTab() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Delete confirmation state
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredMaps = maps.filter((map) =>
     map.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -39,12 +53,25 @@ export function MapsTab() {
     setSelectedIds(newSelected);
   };
 
-  const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} maps?`)) {
+  const handleBatchDeleteClick = () => {
+    setIsBatchDelete(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
       const newMaps = maps.filter((map) => !selectedIds.has(map.id));
       updateContent({ ...content, maps: newMaps });
       setSelectedIds(new Set());
       toast.success("Selected maps deleted!");
+      setIsBatchDelete(false);
+    } else if (deleteId) {
+      deleteMapItem(deleteId);
+      toast.success("Map deleted!");
+      setDeleteId(null);
     }
   };
 
@@ -58,13 +85,6 @@ export function MapsTab() {
     }
     setEditingMap(null);
     setIsCreating(false);
-  };
-
-  const handleDeleteMap = (id: string) => {
-    if (confirm("Are you sure you want to delete this map?")) {
-      deleteMapItem(id);
-      toast.success("Map deleted!");
-    }
   };
 
   const createNewMap = () => {
@@ -111,7 +131,7 @@ export function MapsTab() {
           />
         </div>
         {selectedIds.size > 0 && (
-          <Button variant="destructive" onClick={handleBatchDelete}>
+          <Button variant="destructive" onClick={handleBatchDeleteClick}>
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Selected ({selectedIds.size})
           </Button>
@@ -176,7 +196,7 @@ export function MapsTab() {
                   size="icon"
                   variant="destructive"
                   className="h-8 w-8"
-                  onClick={() => handleDeleteMap(map.id)}
+                  onClick={() => handleDeleteClick(map.id)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -220,6 +240,31 @@ export function MapsTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteId(null);
+          setIsBatchDelete(false);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This will permanently delete ${selectedIds.size} maps. This action cannot be undone.`
+                : "This will permanently delete this map. This action cannot be undone."
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

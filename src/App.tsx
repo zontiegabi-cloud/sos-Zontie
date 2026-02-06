@@ -9,10 +9,9 @@ import Index from "./pages/Index";
 import Media from "./pages/Media";
 import FAQ from "./pages/FAQ";
 import GameContent from "./pages/GameContent";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
 import News from "./pages/News";
 import NewsArticle from "./pages/NewsArticle";
+import CustomPage from "./pages/CustomPage";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -31,11 +30,10 @@ const App = () => (
             <Route path="/media" element={<Media />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/game-content" element={<GameContent />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
             <Route path="/news" element={<News />} />
             <Route path="/news/:id" element={<NewsArticle />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/:slug" element={<CustomPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

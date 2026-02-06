@@ -8,6 +8,16 @@ import { useContent } from "@/hooks/use-content";
 import { GameModeItem } from "@/lib/content-store";
 import { GameModeEditModal } from "../GameContentModals";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function GameModesTab() {
   const { gameModes, addGameModeItem, updateGameModeItem, deleteGameModeItem, content, updateContent } = useContent();
@@ -16,6 +26,10 @@ export function GameModesTab() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  
+  // Delete confirmation state
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const filteredGameModes = gameModes.filter(mode => 
     mode.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,10 +49,25 @@ export function GameModesTab() {
     setIsCreating(false);
   };
 
-  const handleDeleteGameMode = (id: string) => {
-    if (confirm("Are you sure you want to delete this game mode?")) {
-      deleteGameModeItem(id);
+  const handleBatchDeleteClick = () => {
+    setIsBatchDelete(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
+      const newGameModes = gameModes.filter(item => !selectedIds.has(item.id));
+      updateContent({ ...content, gameModes: newGameModes });
+      setSelectedIds(new Set());
+      toast.success("Selected items deleted!");
+      setIsBatchDelete(false);
+    } else if (deleteId) {
+      deleteGameModeItem(deleteId);
       toast.success("Game mode deleted!");
+      setDeleteId(null);
     }
   };
 
@@ -58,15 +87,6 @@ export function GameModesTab() {
       newSelected.add(id);
     }
     setSelectedIds(newSelected);
-  };
-
-  const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
-      const newGameModes = gameModes.filter(item => !selectedIds.has(item.id));
-      updateContent({ ...content, gameModes: newGameModes });
-      setSelectedIds(new Set());
-      toast.success("Selected items deleted!");
-    }
   };
 
   const createNewGameMode = () => {
@@ -98,7 +118,7 @@ export function GameModesTab() {
         </div>
         <div className="flex items-center gap-2">
            {selectedIds.size > 0 && (
-            <Button variant="destructive" size="sm" onClick={handleBatchDelete}>
+            <Button variant="destructive" size="sm" onClick={handleBatchDeleteClick}>
               <Trash2 className="w-4 h-4 mr-2" />
               Delete ({selectedIds.size})
             </Button>
@@ -188,7 +208,7 @@ export function GameModesTab() {
                   size="icon"
                   variant="destructive"
                   className="h-8 w-8"
-                  onClick={() => handleDeleteGameMode(mode.id)}
+                  onClick={() => handleDeleteClick(mode.id)}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -237,6 +257,31 @@ export function GameModesTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteId(null);
+          setIsBatchDelete(false);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This will permanently delete ${selectedIds.size} items. This action cannot be undone.`
+                : "This will permanently delete this game mode. This action cannot be undone."
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

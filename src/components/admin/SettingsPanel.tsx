@@ -33,6 +33,16 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings, HeroButton } from "@/lib/content-store";
 import { toast } from "sonner";
 import { BackgroundEditor } from "./BackgroundEditor";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const socialPlatforms = [
   { id: "discord", label: "Discord", icon: "🎮" },
@@ -113,6 +123,7 @@ export function SettingsPanel() {
 
   const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
   const [activeSubTab, setActiveSubTab] = useState("cta");
+  const [isResetting, setIsResetting] = useState(false);
   
   // Keep local settings in sync if they are updated externally (e.g. reset)
   useEffect(() => {
@@ -131,11 +142,14 @@ export function SettingsPanel() {
     toast.info("Changes discarded.");
   };
 
-  const handleResetSettings = async () => {
-    if (confirm("Reset all site settings to defaults? This cannot be undone.")) {
-      await resetSettings();
-      toast.success("Settings reset to defaults!");
-    }
+  const handleResetSettings = () => {
+    setIsResetting(true);
+  };
+
+  const confirmReset = async () => {
+    await resetSettings();
+    toast.success("Settings reset to defaults!");
+    setIsResetting(false);
   };
 
   // Local update helpers
@@ -269,6 +283,23 @@ export function SettingsPanel() {
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={isResetting} onOpenChange={setIsResetting}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Settings?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reset all site settings to defaults? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="grid grid-cols-3 sm:grid-cols-6 mb-6 h-auto gap-2">

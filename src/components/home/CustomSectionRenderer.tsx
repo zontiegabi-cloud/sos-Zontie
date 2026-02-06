@@ -25,7 +25,31 @@ import {
   Volume2,
   VolumeX,
   Play,
-  Pause
+  Pause,
+  Target,
+  Ghost,
+  Rocket,
+  Bomb,
+  Map,
+  Flag,
+  Medal,
+  Heart,
+  Bell,
+  User,
+  AlertTriangle,
+  Info,
+  HelpCircle,
+  Calendar,
+  Diamond,
+  Sun,
+  Moon,
+  Cloud,
+  Snowflake,
+  Droplet,
+  Anchor,
+  Feather,
+  Lock,
+  Unlock
 } from "lucide-react";
 
 interface CustomSectionRendererProps {
@@ -49,7 +73,31 @@ const decorationIcons: Record<string, any> = {
   'external-link': ExternalLink,
   mouse: Mouse,
   'arrow-down': ArrowDown,
-  'chevron-down': ChevronDown
+  'chevron-down': ChevronDown,
+  target: Target,
+  ghost: Ghost,
+  rocket: Rocket,
+  bomb: Bomb,
+  map: Map,
+  flag: Flag,
+  medal: Medal,
+  heart: Heart,
+  bell: Bell,
+  user: User,
+  'alert-triangle': AlertTriangle,
+  info: Info,
+  'help-circle': HelpCircle,
+  calendar: Calendar,
+  diamond: Diamond,
+  sun: Sun,
+  moon: Moon,
+  cloud: Cloud,
+  snowflake: Snowflake,
+  droplet: Droplet,
+  anchor: Anchor,
+  feather: Feather,
+  lock: Lock,
+  unlock: Unlock
 };
 
 interface VideoBackgroundProps {
@@ -62,7 +110,8 @@ interface VideoBackgroundProps {
 
 function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: VideoBackgroundProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const youtubeId = getYoutubeId(settings.background.videoUrl || '');
+  const background = settings.background || {};
+  const youtubeId = getYoutubeId(background.videoUrl || '');
 
   // Handle mute/unmute
   useEffect(() => {
@@ -105,7 +154,7 @@ function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: 
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: videoDims?.w || '100%', height: videoDims?.h || '100%' }}>
       <iframe
         ref={iframeRef}
-        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${settings.background.autoplay !== false ? 1 : 0}&mute=${settings.background.muted !== false ? 1 : 0}&controls=0&loop=${settings.background.loop !== false ? 1 : 0}&playlist=${youtubeId}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`}
+        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${background.autoplay !== false ? 1 : 0}&mute=${background.muted !== false ? 1 : 0}&controls=0&loop=${background.loop !== false ? 1 : 0}&playlist=${youtubeId}&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`}
         className="w-full h-full"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         style={{ pointerEvents: 'none' }}
@@ -116,6 +165,7 @@ function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: 
 
 function NativeVideoBackground({ settings, isMuted, isPlaying, volume }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const background = settings.background || {};
 
   useEffect(() => {
     if (videoRef.current) {
@@ -142,11 +192,11 @@ function NativeVideoBackground({ settings, isMuted, isPlaying, volume }: VideoBa
   return (
     <video
       ref={videoRef}
-      src={settings.background.videoUrl}
+      src={background.videoUrl}
       className="w-full h-full object-cover"
-      autoPlay={settings.background.autoplay !== false}
+      autoPlay={background.autoplay !== false}
       muted={isMuted} // Initial state
-      loop={settings.background.loop !== false}
+      loop={background.loop !== false}
       playsInline
     />
   );
@@ -159,15 +209,19 @@ const getYoutubeId = (url: string) => {
 };
 
 export function CustomSectionRenderer({ section }: CustomSectionRendererProps) {
-  const { type, content, settings } = section;
+  const { type, content } = section;
+  // Type assertion to ensure TypeScript knows this object matches the expected shape
+  const settings = section.settings || {} as CustomSection['settings'];
   
   // Background Style
+  const background = settings.background || { type: 'color', color: 'transparent', opacity: 1 };
+  
   const backgroundStyle: React.CSSProperties = {
-    backgroundColor: settings.background.type === 'color' ? settings.background.color : undefined,
-    backgroundImage: settings.background.type === 'image' && settings.background.image 
-      ? `url('${settings.background.image}')` 
-      : settings.background.type === 'gradient'
-        ? `linear-gradient(${settings.background.gradientDirection || 'to bottom'}, ${settings.background.gradientFrom || '#000000'}, ${settings.background.gradientTo || '#000000'})`
+    backgroundColor: background.type === 'color' ? background.color : undefined,
+    backgroundImage: background.type === 'image' && background.image 
+      ? `url('${background.image}')` 
+      : background.type === 'gradient'
+        ? `linear-gradient(${background.gradientDirection || 'to bottom'}, ${background.gradientFrom || '#000000'}, ${background.gradientTo || '#000000'})`
         : undefined,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -179,9 +233,9 @@ export function CustomSectionRenderer({ section }: CustomSectionRendererProps) {
   // falling back to background opacity or default.
   const overlayOpacity = settings.overlayOpacity !== undefined 
     ? settings.overlayOpacity / 100 
-    : (settings.background.type === 'image' ? (settings.background.opacity ?? 0.5) : 0);
+    : (background.type === 'image' ? (background.opacity ?? 0.5) : 0);
 
-  const textureOpacity = (settings.background.textureOpacity ?? 10) / 100;
+  const textureOpacity = (background.textureOpacity ?? 10) / 100;
 
   // Container Classes
   const containerClasses = cn(
@@ -197,6 +251,8 @@ export function CustomSectionRenderer({ section }: CustomSectionRendererProps) {
   const sectionStyle: React.CSSProperties = {
     paddingTop: settings.paddingTop,
     paddingBottom: settings.paddingBottom,
+    paddingLeft: settings.paddingLeft,
+    paddingRight: settings.paddingRight,
     color: settings.textColor,
     minHeight: settings.minHeight,
     display: settings.minHeight ? 'flex' : 'block',
@@ -243,27 +299,50 @@ interface SectionContentProps {
 }
 
 function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity, textureOpacity, containerClasses }: SectionContentProps) {
-  const { content, type, settings } = section;
+  const { content, type } = section;
+  const settings = section.settings || {} as CustomSection['settings'];
+  const background = settings.background || { type: 'color', color: 'transparent', opacity: 1 };
   const animation = settings.animation || { type: 'none', duration: 0.5, delay: 0 };
   const isAnimated = animation.type && animation.type !== 'none';
+
+  // Inject custom font if URL is provided
+  useEffect(() => {
+    if (settings.customFontUrl) {
+      const linkId = `custom-font-${section.id}`;
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link');
+        link.id = linkId;
+        link.rel = 'stylesheet';
+        link.href = settings.customFontUrl;
+        document.head.appendChild(link);
+      }
+      return () => {
+        // Optional: remove font on cleanup? 
+        // Might be better to keep it if other sections use it, 
+        // but for now we'll leave it or maybe check if others need it.
+        // Actually, removing it might cause flash of unstyled text if user navigates back and forth quickly.
+        // Let's keep it simple and just add it.
+      };
+    }
+  }, [settings.customFontUrl, section.id]);
   
   // Video Mute State
-  const [isMuted, setIsMuted] = useState(settings.background.muted !== false);
+  const [isMuted, setIsMuted] = useState(background.muted !== false);
   // Video Play State
   const [isPlaying, setIsPlaying] = useState(true);
   // Video Volume State (0-100)
   const [volume, setVolume] = useState(100);
 
   useEffect(() => {
-    setIsMuted(settings.background.muted !== false);
-  }, [settings.background.muted]);
+    setIsMuted(background.muted !== false);
+  }, [background.muted]);
 
   // Video Cover Logic
   const containerRef = useRef<HTMLElement>(null);
   const [videoDims, setVideoDims] = useState<{w: string, h: string} | null>(null);
 
   useEffect(() => {
-    if (settings.background.type !== 'video' || !settings.background.videoUrl) return;
+    if (background.type !== 'video' || !background.videoUrl) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -289,7 +368,7 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
     updateDims();
 
     return () => observer.disconnect();
-  }, [settings.background.type, settings.background.videoUrl]);
+  }, [background.type, background.videoUrl]);
 
   // Text Alignment Classes (applied to children instead of container to prevent leakage)
   const alignmentClasses = cn({
@@ -311,8 +390,12 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
       color: settings.titleDecorationColor || settings.titleColor || 'currentColor',
       paddingTop: settings.titleDecorationPaddingTop,
       paddingBottom: settings.titleDecorationPaddingBottom,
+      paddingLeft: settings.titleDecorationPaddingLeft,
+      paddingRight: settings.titleDecorationPaddingRight,
       marginTop: settings.titleDecorationMarginTop,
-      marginBottom: settings.titleDecorationMarginBottom
+      marginBottom: settings.titleDecorationMarginBottom,
+      marginLeft: settings.titleDecorationMarginLeft,
+      marginRight: settings.titleDecorationMarginRight
     };
     const Icon = decorationIcons[settings.titleDecorationIcon || 'zap'] || Zap;
 
@@ -471,9 +554,9 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
       style={sectionStyle}
     >
       {/* Background Layer */}
-      {settings.background.type === 'video' && settings.background.videoUrl ? (
+      {background.type === 'video' && background.videoUrl ? (
         <div className="absolute inset-0 overflow-hidden">
-          {getYoutubeId(settings.background.videoUrl) ? (
+          {getYoutubeId(background.videoUrl) ? (
             <YoutubeBackground settings={settings} isMuted={isMuted} isPlaying={isPlaying} volume={volume} videoDims={videoDims} />
           ) : (
             <NativeVideoBackground settings={settings} isMuted={isMuted} isPlaying={isPlaying} volume={volume} videoDims={videoDims} />
@@ -484,7 +567,7 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
       )}
       
       {/* Texture Overlay */}
-      {settings.background.textureEnabled && (
+      {background.textureEnabled && (
         <div 
           className="absolute inset-0 pointer-events-none z-0" 
           style={{ 
@@ -514,7 +597,7 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
       )}
 
       {/* Mute & Play Toggle Buttons */}
-      {settings.background.type === 'video' && settings.background.videoUrl && (
+      {background.type === 'video' && background.videoUrl && (
         <div className="absolute inset-0 z-30 pointer-events-none h-full w-full">
           <div className="sticky top-[calc(100vh-6rem)] w-full flex justify-end px-8 gap-3">
             <button
@@ -591,12 +674,17 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
                       style={{ 
                         color: settings.titleColor, 
                         ...titleFontSizeStyle,
+                        fontFamily: settings.titleFontFamily,
                         lineHeight: settings.titleLineHeight,
                         letterSpacing: settings.titleLetterSpacing,
                         paddingTop: settings.titlePaddingTop,
                         paddingBottom: settings.titlePaddingBottom,
+                        paddingLeft: settings.titlePaddingLeft,
+                        paddingRight: settings.titlePaddingRight,
                         marginTop: settings.titleMarginTop,
-                        marginBottom: settings.titleMarginBottom ?? 0
+                        marginBottom: settings.titleMarginBottom ?? 0,
+                        marginLeft: settings.titleMarginLeft,
+                        marginRight: settings.titleMarginRight
                       }}
                       dangerouslySetInnerHTML={{ __html: content.title }}
                     />
@@ -619,12 +707,17 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
                     style={{ 
                       color: settings.subtitleColor || 'hsl(var(--muted-foreground))',
                       ...subtitleFontSizeStyle,
+                      fontFamily: settings.subtitleFontFamily,
                       lineHeight: settings.subtitleLineHeight,
                       letterSpacing: settings.subtitleLetterSpacing,
                       paddingTop: settings.subtitlePaddingTop,
                       paddingBottom: settings.subtitlePaddingBottom,
+                      paddingLeft: settings.subtitlePaddingLeft,
+                      paddingRight: settings.subtitlePaddingRight,
                       marginTop: settings.subtitleMarginTop,
-                      marginBottom: settings.subtitleMarginBottom
+                      marginBottom: settings.subtitleMarginBottom,
+                      marginLeft: settings.subtitleMarginLeft,
+                      marginRight: settings.subtitleMarginRight
                     }}
                   >
                     {content.subtitle}
@@ -641,6 +734,7 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
                 style={{
                   fontSize: settings.bodyFontSize,
                   fontWeight: settings.bodyFontWeight,
+                  fontFamily: settings.bodyFontFamily,
                   lineHeight: settings.bodyLineHeight,
                   letterSpacing: settings.bodyLetterSpacing,
                   color: settings.textColor
@@ -713,6 +807,10 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
           transition={{ duration: 0.6, delay: 1.2 }}
           style={{ 
             bottom: settings.scrollIndicator.position?.bottom || '2rem',
+            paddingTop: settings.scrollIndicator.paddingTop,
+            paddingBottom: settings.scrollIndicator.paddingBottom,
+            paddingLeft: settings.scrollIndicator.paddingLeft,
+            paddingRight: settings.scrollIndicator.paddingRight,
           }}
           className={cn(
             "absolute transition-colors z-20 flex flex-col items-center gap-2",

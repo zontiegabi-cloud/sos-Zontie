@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { X, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,31 +71,14 @@ export function MediaEditModal({
     }
 
     // Check for duplicates
-    const isDuplicateSrc = media.some(m => 
-      m.id !== formData.id && // Ignore self
-      m.src === formData.src
-    );
-
-    const isDuplicateTitle = media.some(m => 
-      m.id !== formData.id && // Ignore self
-      m.title.trim().toLowerCase() === formData.title.trim().toLowerCase()
-    );
-
-    if (isDuplicateSrc) {
-      toast.error("Error: Media with this source URL already exists.");
-      return;
-    }
-
-    if (isDuplicateTitle) {
-      toast.error("Error: Media with this title already exists.");
-      return;
-    }
+    // Note: Duplicate checking is now handled by the parent component (MediaTab) 
+    // to allow for "Add Anyway" confirmation dialogs.
     
     onSave(formData);
   };
 
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -239,6 +223,7 @@ export function MediaEditModal({
           </Button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }

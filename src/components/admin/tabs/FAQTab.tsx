@@ -4,6 +4,16 @@ import { Plus, Pencil, Trash2, Search, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useContent } from "@/hooks/use-content";
 import { FAQItem } from "@/lib/content-store";
 import { toast } from "sonner";
@@ -16,6 +26,8 @@ export function FAQTab() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
 
   const filteredFAQ = faq.filter(item => 
     item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,10 +47,22 @@ export function FAQTab() {
   };
 
   const handleDeleteFAQ = (id: string) => {
-    if (confirm("Are you sure you want to delete this FAQ?")) {
-      deleteFAQItem(id);
+    setDeleteId(id);
+    setIsBatchDelete(false);
+  };
+
+  const confirmDelete = () => {
+    if (isBatchDelete) {
+      const newFAQ = faq.filter(item => !selectedIds.has(item.id));
+      updateContent({ ...content, faq: newFAQ });
+      setSelectedIds(new Set());
+      toast.success("Selected items deleted!");
+    } else if (deleteId) {
+      deleteFAQItem(deleteId);
       toast.success("FAQ deleted!");
     }
+    setDeleteId(null);
+    setIsBatchDelete(false);
   };
 
   const handleSelectAll = () => {
@@ -60,12 +84,7 @@ export function FAQTab() {
   };
 
   const handleBatchDelete = () => {
-    if (confirm(`Are you sure you want to delete ${selectedIds.size} items?`)) {
-      const newFAQ = faq.filter(item => !selectedIds.has(item.id));
-      updateContent({ ...content, faq: newFAQ });
-      setSelectedIds(new Set());
-      toast.success("Selected items deleted!");
-    }
+    setIsBatchDelete(true);
   };
 
   const createNewFAQ = () => {
@@ -192,6 +211,25 @@ export function FAQTab() {
           isCreating={isCreating}
         />
       )}
+
+      <AlertDialog open={!!deleteId || isBatchDelete} onOpenChange={(open) => !open && (setDeleteId(null), setIsBatchDelete(false))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete 
+                ? `This action cannot be undone. This will permanently delete ${selectedIds.size} selected FAQ items.`
+                : "This action cannot be undone. This will permanently delete this FAQ item."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
