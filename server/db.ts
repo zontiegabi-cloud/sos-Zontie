@@ -342,9 +342,21 @@ export async function initDB() {
         hero JSON,
         cta JSON,
         news_section JSON,
-        custom_sections JSON
+        custom_sections JSON,
+        navbar JSON
       )
     `);
+
+    // Ensure navbar column exists (migration)
+    try {
+      const navbarCol = await connection.query("SHOW COLUMNS FROM settings LIKE 'navbar'");
+      if (navbarCol.length === 0) {
+        await connection.query('ALTER TABLE settings ADD COLUMN navbar JSON');
+        console.log('Added navbar column to settings table');
+      }
+    } catch (e) {
+      console.log('Error adding navbar column:', e);
+    }
 
     // ID MIGRATION LOGIC (Convert INT to VARCHAR)
     const tablesToMigrate = [

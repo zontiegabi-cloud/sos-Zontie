@@ -7,6 +7,7 @@ interface SiteSettingsContextValue {
   updateBranding: (branding: Partial<SiteSettings['branding']>) => Promise<void>;
   updateBackground: (section: keyof SiteSettings['backgrounds'], bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>) => Promise<void>;
   updateSocialLinks: (links: SiteSettings['socialLinks']) => Promise<void>;
+  updateNavbar: (navbar: SiteSettings['navbar']) => Promise<void>;
   updateSEO: (seo: Partial<SiteSettings['seo']>) => Promise<void>;
   updateNewsSection: (newsSection: Partial<SiteSettings['newsSection']>) => Promise<void>;
   updateHomepageSections: (sections: SiteSettings['homepageSections']) => Promise<void>;
@@ -68,6 +69,11 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
 
   const updateSocialLinks = useCallback(async (links: SiteSettings['socialLinks']) => {
     const newSettings = { ...settings, socialLinks: links };
+    await saveSettings(newSettings);
+  }, [settings, saveSettings]);
+
+  const updateNavbar = useCallback(async (navbar: SiteSettings['navbar']) => {
+    const newSettings = { ...settings, navbar };
     await saveSettings(newSettings);
   }, [settings, saveSettings]);
 
@@ -233,13 +239,14 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         updateBranding,
         updateBackground,
         updateSocialLinks,
-    updateSEO,
-    updateNewsSection,
-    updateHomepageSections,
-    updateCustomSections,
-    addCustomSection,
-    removeCustomSection,
-    updateTheme,
+        updateNavbar,
+        updateSEO,
+        updateNewsSection,
+        updateHomepageSections,
+        updateCustomSections,
+        addCustomSection,
+        removeCustomSection,
+        updateTheme,
         updateThemeFonts,
         updateThemeColors,
         resetSettings,

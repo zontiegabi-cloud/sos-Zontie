@@ -16,14 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "Game Content", path: "/game-content" },
-  { name: "Media", path: "/media" },
-  { name: "News", path: "/news" },
-  { name: "FAQ", path: "/faq" },
-];
-
 // Map platform names to icons
 const PlatformIcons: Record<string, React.ElementType> = {
   facebook: Facebook,
@@ -40,7 +32,11 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { settings } = useSiteSettings();
-  const { branding, socialLinks } = settings;
+  const { branding, socialLinks, navbar } = settings;
+
+  const sortedNavItems = navbar
+    ? navbar.filter(item => item.enabled !== false).sort((a, b) => a.order - b.order)
+    : [];
 
   // Find Steam link for the CTA button
   const steamLink = socialLinks.find(link => link.platform === 'steam' && link.enabled);
@@ -70,18 +66,31 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`font-heading text-sm tracking-wide uppercase transition-all duration-300 hover:text-primary ${
-                  location.pathname === link.path
-                    ? "text-primary text-glow-primary"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {link.name}
-              </Link>
+            {sortedNavItems.map((link) => (
+              link.isExternal ? (
+                <a
+                  key={link.id}
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-heading text-sm tracking-wide uppercase transition-all duration-300 hover:text-primary text-muted-foreground flex items-center gap-1"
+                >
+                  {link.name}
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              ) : (
+                <Link
+                  key={link.id}
+                  to={link.path}
+                  className={`font-heading text-sm tracking-wide uppercase transition-all duration-300 hover:text-primary ${
+                    location.pathname === link.path
+                      ? "text-primary text-glow-primary"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              )
             ))}
           </div>
 
@@ -141,19 +150,33 @@ export function Navbar() {
             className="lg:hidden bg-surface-darker border-b border-border overflow-hidden"
           >
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`font-heading text-lg tracking-wide uppercase ${
-                    location.pathname === link.path
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
+              {sortedNavItems.map((link) => (
+                link.isExternal ? (
+                  <a
+                    key={link.id}
+                    href={link.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-heading text-lg tracking-wide uppercase text-muted-foreground flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <Link
+                    key={link.id}
+                    to={link.path}
+                    className={`font-heading text-lg tracking-wide uppercase ${
+                      location.pathname === link.path
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                )
               ))}
               
               <div className="border-t border-border pt-4 mt-2">

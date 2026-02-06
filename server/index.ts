@@ -317,7 +317,8 @@ async function fetchAllData(conn: PoolConnection) {
         hero: parse(row.hero) || {},
         cta: parse(row.cta) || {},
         newsSection: parse(row.news_section) || {},
-        customSections: parse(row.custom_sections) || {}
+        customSections: parse(row.custom_sections) || {},
+        navbar: parse(row.navbar) ?? undefined
       };
   }
 
@@ -504,8 +505,8 @@ app.post('/api/data', async (req, res) => {
           site_name, site_tagline, logo_url, favicon_url, copyright_text, powered_by_text,
           seo_title, seo_description, seo_keywords, og_image, twitter_handle,
           social_links, theme, backgrounds, homepage_sections,
-          hero, cta, news_section, custom_sections
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          hero, cta, news_section, custom_sections, navbar
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           site_name = VALUES(site_name),
           site_tagline = VALUES(site_tagline),
@@ -525,16 +526,17 @@ app.post('/api/data', async (req, res) => {
           hero = VALUES(hero),
           cta = VALUES(cta),
           news_section = VALUES(news_section),
-          custom_sections = VALUES(custom_sections)
+          custom_sections = VALUES(custom_sections),
+          navbar = VALUES(navbar)
       `, [
         'main_settings',
         b.siteName || null, b.siteTagline || null, b.logoUrl || null, b.faviconUrl || null, b.copyrightText || null, b.poweredByText || null,
         seo.defaultTitle || null, seo.defaultDescription || null, JSON.stringify(seo.defaultKeywords || []), seo.ogImage || null, seo.twitterHandle || null,
         JSON.stringify(s.socialLinks || {}), JSON.stringify(s.theme || {}), JSON.stringify(s.backgrounds || {}), JSON.stringify(s.homepageSections || {}),
         JSON.stringify(s.hero || {}), JSON.stringify(s.cta || {}), JSON.stringify(s.newsSection || {}),
-        JSON.stringify(s.customSections || {})
-      ]);
-    }
+          JSON.stringify(s.customSections || {}), s.navbar !== undefined ? JSON.stringify(s.navbar) : null
+        ]);
+     }
 
     await conn.commit();
     

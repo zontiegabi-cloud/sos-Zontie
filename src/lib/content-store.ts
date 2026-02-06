@@ -422,12 +422,22 @@ export interface DynamicContentSource {
   gridColumns?: number; // 1, 2, 3, 4
 }
 
+export interface NavbarItem {
+  id: string;
+  name: string;
+  path: string;
+  isExternal: boolean;
+  order: number;
+  enabled: boolean;
+}
+
 export interface SiteSettings {
   branding: BrandingSettings;
   hero: HeroSettings;
   cta: CTASettings;
   newsSection: NewsSectionSettings;
   backgrounds: SectionBackground;
+  navbar: NavbarItem[];
   socialLinks: SocialLink[];
   seo: SEOSettings;
   homepageSections: HomepageSection[];
@@ -1391,6 +1401,13 @@ const defaultSettings: SiteSettings = {
       textureOpacity: 3,
     },
   },
+  navbar: [
+    { id: "1", name: "Home", path: "/", isExternal: false, order: 0, enabled: true },
+    { id: "2", name: "Game Content", path: "/game-content", isExternal: false, order: 1, enabled: true },
+    { id: "3", name: "Media", path: "/media", isExternal: false, order: 2, enabled: true },
+    { id: "4", name: "News", path: "/news", isExternal: false, order: 3, enabled: true },
+    { id: "5", name: "FAQ", path: "/faq", isExternal: false, order: 4, enabled: true },
+  ],
   socialLinks: [
     { id: "1", platform: "discord", url: "https://discord.gg/shadowsofsoldiers", label: "Discord", enabled: true },
     { id: "2", platform: "steam", url: "https://store.steampowered.com/app/2713480/Shadows_of_Soldiers/", label: "Steam", enabled: true },
@@ -1573,6 +1590,7 @@ export function getContent(): SiteContent {
         seo: { ...defaultSettings.seo, ...(parsed.settings.seo || {}) },
         theme: { ...defaultSettings.theme, ...(parsed.settings.theme || {}) },
         homepageSections: parsed.settings.homepageSections || defaultSettings.homepageSections,
+        navbar: parsed.settings.navbar || defaultSettings.navbar,
       } : defaultSettings,
     };
   } catch {
@@ -1593,8 +1611,9 @@ function isDefaultContent(content: SiteContent): boolean {
   const classesMatch = content.classes.length === defaultClasses.length && content.classes[0]?.id === defaultClasses[0]?.id;
   const featuresMatch = content.features.length === defaultFeatures.length && content.features[0]?.id === defaultFeatures[0]?.id;
   const roadmapMatch = (content.roadmap || []).length === defaultRoadmap.length && (content.roadmap || [])[0]?.id === defaultRoadmap[0]?.id;
+  const navbarMatch = JSON.stringify(content.settings.navbar) === JSON.stringify(defaultSettings.navbar);
   
-  return newsMatch && classesMatch && featuresMatch && roadmapMatch;
+  return newsMatch && classesMatch && featuresMatch && roadmapMatch && navbarMatch;
 }
 
 // Async data fetching with fallback to localStorage
@@ -1625,6 +1644,13 @@ export async function getData(): Promise<SiteContent> {
       gameModes: rawServerData.gameModes ?? [],
       roadmap: rawServerData.roadmap ?? defaultRoadmap,
       pages: mergePages(rawServerData.pages || [], defaultPages, deletedSlugs),
+      // Explicitly merge settings to ensure new fields like navbar aren't lost if server is old
+      settings: {
+        ...defaultContent.settings,
+        ...(rawServerData.settings || {}),
+        // Preserve local navbar if server doesn't provide it (migration strategy)
+        navbar: rawServerData.settings?.navbar ?? getContent().settings.navbar ?? defaultContent.settings.navbar
+      },
     };
     
     // Check for "Local-First" Persistence Strategy
@@ -1684,6 +1710,11 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
 
   const cleanContent = {
     ...content,
+    settings: {
+      ...content.settings,
+      // Ensure navbar is included (critical for persistence)
+      navbar: content.settings.navbar || defaultSettings.navbar
+    },
     pages: Array.from(uniqueBySlug.values())
   };
 
@@ -1708,10 +1739,14 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
     const result = await response.json();
     if (result.success && result.data) {
       // Merge back any fields that the server might have dropped (if it's an older backend)
-      // specifically roadmap which is a new feature
+      // specifically roadmap and navbar which are new features
       const mergedData = {
         ...result.data,
-        roadmap: result.data.roadmap ?? cleanContent.roadmap
+        roadmap: result.data.roadmap ?? cleanContent.roadmap,
+        settings: {
+          ...(result.data.settings || cleanContent.settings),
+          navbar: result.data.settings?.navbar ?? cleanContent.settings.navbar
+        }
       };
 
       // Update local storage with server response (contains clean IDs)

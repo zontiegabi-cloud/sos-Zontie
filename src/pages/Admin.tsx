@@ -43,8 +43,9 @@ import { PageBuilderTab } from "@/components/admin/tabs/PageBuilderTab";
 import { FAQTab } from "@/components/admin/tabs/FAQTab";
 import { UsersTab } from "@/components/admin/tabs/UsersTab";
 import { RoadMapTab } from "@/components/admin/tabs/RoadMapTab";
+import { NavbarTab } from "@/components/admin/tabs/NavbarTab";
 
-type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap";
+type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -116,6 +117,7 @@ export default function Admin() {
     { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'moderator', 'editor'] },
     { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
     { id: "pages" as Tab, label: "Pages", icon: Layout, roles: ['admin', 'editor'] },
+    { id: "navbar" as Tab, label: "Navbar", icon: Menu, roles: ['admin'] },
     { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
     { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
     { id: "maps" as Tab, label: "Maps", icon: Map, roles: ['admin', 'moderator'] },
@@ -326,6 +328,7 @@ export default function Admin() {
             {activeTab === "dashboard" && <DashboardTab onNavigate={(tab) => handleTabChange(tab as Tab)} userRole={user?.role} />}
             {activeTab === "news" && <NewsTab />}
             {activeTab === "pages" && <PageBuilderTab />}
+            {activeTab === "navbar" && <NavbarTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}
             {activeTab === "maps" && <MapsTab />}
