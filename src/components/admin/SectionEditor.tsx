@@ -467,6 +467,15 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                   <SelectItem value="showcase">Showcase</SelectItem>
                                 </>
                               )}
+                              {source.type === 'classes' && (
+                                <>
+                                  <SelectItem value="detailed-interactive">Standard Interactive</SelectItem>
+                                  <SelectItem value="classes-hex">Elite Interactive (AAA)</SelectItem>
+                    <SelectItem value="classes-operator">Operator Interactive (Pro)</SelectItem>
+                    <SelectItem value="classes-vanguard">Vanguard Action (New)</SelectItem>
+                    <SelectItem value="classes-command">Command Center (Tactical)</SelectItem>
+                  </>
+                )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -544,6 +553,51 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               />
                               <span className="text-sm w-8 text-right">{source.gridColumns || 3}</span>
                             </div>
+                          </div>
+                        )}
+
+                        {source.type === 'classes' && (
+                          <div className="space-y-4 pt-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`show-hover-${idx}`} 
+                                checked={source.showHoverInfo !== false}
+                                onCheckedChange={(checked) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], showHoverInfo: checked === true };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              />
+                              <label 
+                                htmlFor={`show-hover-${idx}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                Show Hover Information
+                              </label>
+                            </div>
+
+                            {/* Weapon Preview Mode - Only for Interactive layouts */}
+                            {['classes-hex', 'classes-operator', 'classes-vanguard', 'classes-command', 'detailed-interactive'].includes(source.displayMode) && (
+                               <div className="space-y-2">
+                                  <Label>Weapon Preview Mode</Label>
+                                  <Select
+                                     value={source.interactivePreviewMode || 'follow'}
+                                     onValueChange={(val: 'follow' | 'fixed') => {
+                                        const newSources = [...(section.content.dynamicSources || [])];
+                                        newSources[idx] = { ...newSources[idx], interactivePreviewMode: val };
+                                        updateContent({ dynamicSources: newSources });
+                                     }}
+                                  >
+                                     <SelectTrigger>
+                                        <SelectValue />
+                                     </SelectTrigger>
+                                     <SelectContent>
+                                        <SelectItem value="follow">Follow Mouse</SelectItem>
+                                        <SelectItem value="fixed">Fixed (Right Corner)</SelectItem>
+                                     </SelectContent>
+                                  </Select>
+                               </div>
+                            )}
                           </div>
                         )}
 

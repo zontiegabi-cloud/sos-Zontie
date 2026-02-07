@@ -21,6 +21,20 @@ export interface ClassDevice {
   icon: string;
 }
 
+export interface SpecializationNode {
+  id: string;
+  label: string;
+  children?: SpecializationNode[];
+  linkedContentId?: string; // Optional: ID of linked content (e.g., weapon ID)
+  linkedContentType?: 'weapon' | 'device' | 'item'; // Optional: Type of linked content
+}
+
+export interface ClassSpecialization {
+  id: string;
+  slot: string; // The name of the slot (e.g., "PRIMARY WEAPON")
+  tree: SpecializationNode[]; // The content tree
+}
+
 export interface ClassItem {
   id: string;
   name: string;
@@ -28,10 +42,12 @@ export interface ClassItem {
   description: string;
   details: string[];
   image: string;
+  detailedImage?: string;
   icon: string;
   color: string;
   devices?: ClassDevice[];
   devicesUsedTitle?: string;
+  specializations?: ClassSpecialization[];
   createdAt?: string;
 }
 
@@ -412,7 +428,7 @@ export interface CustomSection {
 
 export interface DynamicContentSource {
   type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured';
   count: number;
   fetchAll?: boolean;
@@ -420,6 +436,8 @@ export interface DynamicContentSource {
   ids?: string[]; // For manual selection
   category?: string; // For filtering by category
   gridColumns?: number; // 1, 2, 3, 4
+  showHoverInfo?: boolean;
+  interactivePreviewMode?: 'follow' | 'fixed';
 }
 
 export interface NavbarItem {

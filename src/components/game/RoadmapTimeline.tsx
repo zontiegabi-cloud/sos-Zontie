@@ -28,14 +28,14 @@ export function RoadmapTimeline({ items }: RoadmapTimelineProps) {
                   <h3 className="text-4xl font-black uppercase tracking-wider mb-4 font-display">{item.phase}</h3>
                   <div className="flex flex-wrap gap-x-12 gap-y-4 text-sm max-w-3xl mb-4">
                      <div>
-                        <span className="block text-muted-foreground text-xs uppercase tracking-widest mb-1 font-bold">ETA</span>
+                        <span className="block text-muted-foreground text-xm uppercase tracking-widest mb-1 font-bold">ETA</span>
                         <span className="font-mono font-medium text-lg">{item.date}</span>
                      </div>
                      <div>
-                         <span className="block text-muted-foreground text-xs uppercase tracking-widest mb-1 font-bold">Status</span>
+                         <span className="block text-muted-foreground text-xm uppercase tracking-widest mb-1 font-bold">Status</span>
                          <span className={cn(
                             "font-bold uppercase text-lg",
-                            isCompleted ? "text-green-500" : isInProgress ? "text-yellow-500" : "text-muted-foreground"
+                            isCompleted ? "text-primary" : isInProgress ? "text-accent" : "text-muted-foreground"
                          )}>
                             {item.status.replace('-', ' ')}
                             {isInProgress && "..."}
@@ -48,7 +48,7 @@ export function RoadmapTimeline({ items }: RoadmapTimelineProps) {
                {/* Progress Bar */}
                <div className="h-6 bg-secondary/20 w-full relative overflow-hidden">
                   <motion.div 
-                     className={cn("h-full", isCompleted ? "bg-green-500" : isInProgress ? "bg-yellow-500" : "bg-muted-foreground")}
+                     className={cn("h-full", isCompleted ? "bg-primary" : isInProgress ? "bg-accent/70" : "bg-muted-foreground")}
                      initial={{ width: 0 }}
                      whileInView={{ width: `${progress}%` }}
                      viewport={{ once: true }}

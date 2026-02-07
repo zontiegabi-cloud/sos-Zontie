@@ -324,7 +324,7 @@ async function fetchAllData(conn: PoolConnection) {
 
   return {
     news: news.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
-    classes: classes.map((i: DbRow) => ({...i, id: i.id.toString(), details: i.details, devices: i.devices, createdAt: i.created_at})),
+    classes: classes.map((i: DbRow) => ({...i, id: i.id.toString(), details: i.details, devices: i.devices, specializations: i.specializations, detailedImage: i.detailedImage, createdAt: i.created_at})),
     media: media.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
     faq: faq.map((i: DbRow) => ({...i, id: i.id.toString(), createdAt: i.created_at})),
     features: features.map((i: DbRow) => ({...i, id: i.id.toString(), devices: i.devices, createdAt: i.created_at})),
@@ -394,9 +394,9 @@ app.post('/api/data', async (req, res) => {
     await conn.query('TRUNCATE TABLE classes');
     if (content.classes?.length) {
       const batch = content.classes.map((item: ClassItem) => [
-        item.id, item.name, item.role, item.description, JSON.stringify(item.details || []), item.image, item.icon, item.color, JSON.stringify(item.devices || []), item.devicesUsedTitle, formatDateForDb(item.createdAt)
+        item.id, item.name, item.role, item.description, JSON.stringify(item.details || []), item.image, item.icon, item.color, JSON.stringify(item.devices || []), item.devicesUsedTitle, JSON.stringify(item.specializations || []), item.detailedImage || null, formatDateForDb(item.createdAt)
       ]);
-      await conn.batch('INSERT INTO classes (id, name, role, description, details, image, icon, color, devices, devicesUsedTitle, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
+      await conn.batch('INSERT INTO classes (id, name, role, description, details, image, icon, color, devices, devicesUsedTitle, specializations, detailedImage, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 3. Media

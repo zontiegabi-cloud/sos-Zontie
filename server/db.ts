@@ -87,6 +87,8 @@ export async function initDB() {
       await connection.query('ALTER TABLE news ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
       
       await connection.query('ALTER TABLE classes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      await connection.query('ALTER TABLE classes ADD COLUMN IF NOT EXISTS specializations JSON');
+      await connection.query('ALTER TABLE classes ADD COLUMN IF NOT EXISTS detailedImage LONGTEXT');
       await connection.query('ALTER TABLE media ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
       
       await connection.query('ALTER TABLE faq ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
@@ -137,6 +139,8 @@ export async function initDB() {
         color VARCHAR(255),
         devices JSON,
         devicesUsedTitle VARCHAR(255),
+        specializations JSON,
+        detailedImage LONGTEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
