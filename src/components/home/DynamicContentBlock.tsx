@@ -617,11 +617,149 @@ const NewsContentCard = forwardRef<HTMLDivElement, {
 });
 NewsContentCard.displayName = "NewsContentCard";
 
-const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem, onView?: (item: ContentItem) => void }>(
-  ({ item, onView }, ref) => {
+const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem, onView?: (item: ContentItem) => void, cardStyle?: string }>(
+  ({ item, onView, cardStyle = 'default' }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const embedUrl = getEmbedUrl(item.src);
   const isVideo = item.type === 'video' || !!embedUrl;
+
+  // Glass Style
+  if (cardStyle === 'glass') {
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="group relative h-full min-h-[300px] overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm cursor-pointer"
+        onClick={() => onView?.(item)}
+      >
+        <div className="absolute inset-0">
+          <img 
+            src={getDisplayThumbnail(item)} 
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        </div>
+        
+        <div className="absolute inset-0 p-6 flex flex-col justify-end">
+          <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-2 py-1 bg-primary/20 text-primary border border-primary/20 rounded text-[10px] font-bold uppercase tracking-widest backdrop-blur-md">
+                {item.type === 'video' ? 'Video' : 'Image'}
+              </span>
+            </div>
+            <h3 className="font-display text-2xl text-white mb-2 leading-tight drop-shadow-md">
+              {item.title}
+            </h3>
+            <div className="flex items-center gap-2 text-white/60 text-xs font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Click to view
+            </div>
+          </div>
+        </div>
+        
+        {isVideo && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+            <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
+          </div>
+        )}
+      </motion.div>
+    );
+  }
+
+  // Tech Style
+  if (cardStyle === 'tech') {
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="group relative h-full bg-black/60 border border-primary/30 hover:border-primary transition-colors cursor-pointer"
+        onClick={() => onView?.(item)}
+      >
+        <div className="relative aspect-video overflow-hidden border-b border-primary/30">
+          <img 
+            src={getDisplayThumbnail(item)} 
+            alt={item.title}
+            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+          />
+          {isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
+              <div className="w-12 h-12 flex items-center justify-center border-2 border-primary text-primary hover:bg-primary hover:text-black transition-colors">
+                <Play className="w-5 h-5 ml-1" fill="currentColor" />
+              </div>
+            </div>
+          )}
+          
+          {/* Tech decorations */}
+          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary" />
+          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary" />
+          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary" />
+        </div>
+        
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono text-primary/70 uppercase">
+              ID: {item.id.slice(0, 8)}
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground uppercase">
+              {item.type}
+            </span>
+          </div>
+          <h3 className="font-heading text-lg text-foreground group-hover:text-primary transition-colors truncate">
+            {item.title}
+          </h3>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Overlay Style
+  if (cardStyle === 'overlay') {
+    return (
+      <motion.div
+        ref={ref}
+        layout
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="group relative aspect-[4/5] overflow-hidden rounded-lg cursor-pointer"
+        onClick={() => onView?.(item)}
+      >
+        <img 
+          src={getDisplayThumbnail(item)} 
+          alt={item.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+        
+        {isVideo && (
+          <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center">
+            <Play className="w-3 h-3 text-white ml-0.5" fill="currentColor" />
+          </div>
+        )}
+
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <h3 className="font-heading text-xl text-white mb-2 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+            {item.title}
+          </h3>
+          <div className="h-0.5 w-0 bg-primary group-hover:w-full transition-all duration-500 ease-out" />
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -772,7 +910,7 @@ const ContentCard = forwardRef<HTMLDivElement, {
   }
 
   if (type === 'media') {
-    return <MediaContentCard ref={ref} item={item as MediaItem} onView={onView} />;
+    return <MediaContentCard ref={ref} item={item as MediaItem} onView={onView} cardStyle={cardStyle} />;
   }
 
   if (type === 'weapons') {
@@ -942,6 +1080,370 @@ function CarouselView({ items, source, onView }: { items: ContentItem[], source:
   );
 }
 
+function HeroCarouselView({ items, source, onView }: { items: ContentItem[], source: DynamicContentSource, onView: (item: ContentItem) => void }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 0.5,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+      scale: 0.5,
+    }),
+  };
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prev) => (prev + newDirection + items.length) % items.length);
+  };
+
+  const getVisibleItems = () => {
+    if (items.length === 0) return [];
+    
+    const count = items.length;
+    const result = [];
+    
+    // Always show Center
+    result.push({ item: items[currentIndex], position: 'center', index: currentIndex });
+
+    // Show Left/Right if available (and distinct)
+    if (count > 1) {
+      const rightIndex = (currentIndex + 1) % count;
+      result.push({ item: items[rightIndex], position: 'right', index: rightIndex });
+      
+      const leftIndex = (currentIndex - 1 + count) % count;
+      // Only add left if it's not the same as right (i.e., count > 2)
+      if (leftIndex !== rightIndex) {
+        result.push({ item: items[leftIndex], position: 'left', index: leftIndex });
+      }
+    }
+
+    // Show FarLeft/FarRight if count >= 5
+    if (count >= 5) {
+       const farRightIndex = (currentIndex + 2) % count;
+       result.push({ item: items[farRightIndex], position: 'far-right', index: farRightIndex });
+       
+       const farLeftIndex = (currentIndex - 2 + count) % count;
+       result.push({ item: items[farLeftIndex], position: 'far-left', index: farLeftIndex });
+    }
+
+    return result;
+  };
+
+  return (
+    <div className="w-screen relative left-[calc(-50vw+50%)] h-[700px] lg:h-[40vw] min-h-[700px] overflow-hidden bg-background group">
+      {/* Background Blur */}
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={
+              'image' in items[currentIndex] ? (items[currentIndex] as any).image : 
+              'src' in items[currentIndex] ? (items[currentIndex] as any).src : 
+              '/placeholder.jpg'
+            }
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-full object-cover blur-3xl scale-110 grayscale"
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-background/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
+      </div>
+
+      {/* Content Container */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center perspective-[2000px]">
+          {items.length > 0 && getVisibleItems().map(({ item, position, index }) => {
+            const isCenter = position === 'center';
+            const isLeft = position === 'left';
+            const isRight = position === 'right';
+            const isFarLeft = position === 'far-left';
+            const isFarRight = position === 'far-right';
+            
+            // Calculate styles based on position
+            let leftPos = 50; // Center default
+            let scale = 1;
+            let opacity = 1;
+            let zIndex = 0;
+            let rotateY = 0;
+            let xOffset = "-50%";
+
+            if (isCenter) {
+              leftPos = 50;
+              scale = 1.0; 
+              opacity = 1;
+              zIndex = 50;
+              rotateY = 0;
+            } else if (isLeft) {
+              leftPos = 25; 
+              scale = 0.7;
+              opacity = 0.5;
+              zIndex = 40;
+              rotateY = 15;
+            } else if (isRight) {
+              leftPos = 75;
+              scale = 0.7;
+              opacity = 0.5;
+              zIndex = 40;
+              rotateY = -15;
+            } else if (isFarLeft) {
+              leftPos = 10; 
+              scale = 0.5;
+              opacity = 0.2;
+              zIndex = 30;
+              rotateY = 25;
+            } else if (isFarRight) {
+              leftPos = 90;
+              scale = 0.5;
+              opacity = 0.2;
+              zIndex = 30;
+              rotateY = -25;
+            }
+
+
+            const style = source.cardStyle || 'default';
+            
+            let containerClasses = "absolute top -translate-y-1/2 w-[60%] md:w-[45%] lg:w-[40%] aspect-video overflow-hidden shadow-2xl cursor-pointer bg-black transition-all duration-300";
+            
+            if (style === 'tech') {
+              containerClasses = cn(containerClasses, 
+                "rounded-none border-2 border-primary/60",
+                isCenter ? "shadow-[0_0_30px_rgba(var(--primary),0.2)]" : "grayscale opacity-60"
+              );
+            } else if (style === 'glass') {
+              containerClasses = cn(containerClasses,
+                "rounded-2xl border border-white/20",
+                isCenter ? "shadow-[0_8px_32px_rgba(0,0,0,0.4)]" : "grayscale opacity-60"
+              );
+            } else if (style === 'overlay') {
+               containerClasses = cn(containerClasses,
+                "rounded-none border-0",
+                isCenter ? "shadow-2xl" : "grayscale opacity-60"
+              );
+            } else {
+              // Default
+              containerClasses = cn(containerClasses,
+                "rounded-xl border border-white/10",
+                isCenter ? "border-primary/50 shadow-primary/20 ring-1 ring-primary/20" : "grayscale hover:grayscale-0"
+              );
+            }
+
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ 
+                  left: `${leftPos}%`,
+                  x: xOffset,
+                  scale,
+                  opacity,
+                  zIndex,
+                  rotateY
+                }}
+                animate={{ 
+                  left: `${leftPos}%`,
+                  x: xOffset,
+                  scale,
+                  opacity,
+                  zIndex,
+                  rotateY
+                }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className={containerClasses}
+                onClick={() => {
+                   if (isCenter) onView(item);
+                   else if (isLeft) paginate(-1);
+                   else if (isRight) paginate(1);
+                   else if (isFarLeft) paginate(-2);
+                   else if (isFarRight) paginate(2);
+                }}
+              >
+                {/* Image */}
+                <img 
+                  src={
+                    'image' in item ? (item as any).image : 
+                    'src' in item ? (item as any).src : 
+                    '/placeholder.jpg'
+                  } 
+                  alt={(item as any).title || ''}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Tech Style Decorations (Background) */}
+                {style === 'tech' && isCenter && (
+                  <>
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 pointer-events-none bg-[length:100%_2px,3px_100%]" />
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary z-20" />
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary z-20" />
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary z-20" />
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary z-20" />
+                  </>
+                )}
+
+                {/* Gradient Overlays for side items */}
+                {!isCenter && (
+                   <div className="absolute inset-0 bg-black/60 transition-opacity duration-300" />
+                )}
+
+                {/* Content Overlay - TECH STYLE */}
+                {style === 'tech' && (
+                  <div className={cn(
+                    "absolute inset-0 p-6 flex flex-col justify-between transition-all duration-300 font-mono z-20",
+                    isCenter ? "opacity-100" : "opacity-0"
+                  )}>
+                    <div className="flex justify-between items-start">
+                      <div className="bg-black/80 border border-primary/40 px-2 py-1 text-[10px] text-primary uppercase tracking-widest">
+                         SYS.ACTIVE
+                      </div>
+                      <div className="text-[10px] text-primary/70">
+                        {item.id.substring(0, 8).toUpperCase()}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-black/90 border border-primary/30 p-4 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-1">
+                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                       </div>
+                       <h2 className="text-xl md:text-2xl lg:text-[2vw] font-display text-primary mb-2 leading-none uppercase tracking-wider">
+                          {(item as any).title}
+                       </h2>
+                       <p className="text-primary/60 line-clamp-2 text-xs md:text-sm font-mono mb-3">
+                          {(item as any).description}
+                       </p>
+                       <Button size="sm" variant="outline" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] w-full border-primary text-primary hover:bg-primary hover:text-black uppercase tracking-widest text-xs rounded-none" onClick={(e) => { e.stopPropagation(); onView(item); }}>
+                          Initialize <ChevronRight className="w-3 h-3 ml-2" />
+                       </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content Overlay - GLASS STYLE */}
+                {style === 'glass' && (
+                  <div className={cn(
+                    "absolute inset-0 p-4 lg:p-6 flex flex-col justify-end transition-all duration-300 z-20",
+                    isCenter ? "opacity-100" : "opacity-0"
+                  )}>
+                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-4 lg:p-[1.5vw] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+                       <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] lg:text-[0.7vw] font-medium text-white uppercase tracking-wide">
+                            {'tag' in item ? (item as any).tag : source.type}
+                          </span>
+                       </div>
+                       <h2 className="text-xl md:text-2xl lg:text-[2.2vw] font-bold text-white mb-2 leading-tight">
+                          {(item as any).title}
+                       </h2>
+                       <p className="text-white/80 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] mb-4">
+                          {(item as any).description}
+                       </p>
+                       <Button size="sm" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] bg-white text-black hover:bg-white/90 rounded-lg w-full font-bold" onClick={(e) => { e.stopPropagation(); onView(item); }}>
+                          Explore
+                       </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content Overlay - OVERLAY STYLE */}
+                {style === 'overlay' && (
+                  <div className={cn(
+                    "absolute inset-0 flex flex-col items-center justify-center text-center p-8 transition-all duration-300 z-20",
+                    isCenter ? "opacity-100" : "opacity-0"
+                  )}>
+                    <div className="absolute inset-0 bg-black/60 z-[-1]" />
+                    <span className="inline-block px-3 py-1 mb-4 text-xs lg:text-[0.8vw] font-bold uppercase tracking-[0.2em] text-primary border-y border-primary/50">
+                        {'tag' in item ? (item as any).tag : source.type}
+                     </span>
+                     <h2 className="text-3xl md:text-4xl lg:text-[3.5vw] font-display text-white mb-4 drop-shadow-2xl uppercase tracking-tighter">
+                        {(item as any).title}
+                     </h2>
+                     <Button size="lg" className="rounded-full px-8 lg:px-[2vw] lg:h-[3vw] lg:text-[1vw] bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest" onClick={(e) => { e.stopPropagation(); onView(item); }}>
+                        Discover
+                     </Button>
+                  </div>
+                )}
+
+                {/* Content Overlay - DEFAULT STYLE */}
+                {(style === 'default' || !['tech', 'glass', 'overlay'].includes(style)) && (
+                  <div className={cn(
+                    "absolute inset-0 p-6 md:p-8 flex flex-col justify-end transition-all duration-300",
+                    isCenter ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                  )}>
+                    <div className="bg-gradient-to-t from-black/95 via-black/60 to-transparent absolute inset-0" />
+                    <div className="relative z-10">
+                       <span className="inline-block px-2 py-0.5 mb-2 text-[10px] lg:text-[0.7vw] lg:px-[0.5vw] lg:py-[0.1vw] font-bold uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 rounded backdrop-blur-md">
+                          {'tag' in item ? (item as any).tag : source.type}
+                       </span>
+                       <h2 className="text-2xl md:text-3xl lg:text-[2.5vw] font-display text-white mb-2 drop-shadow-xl leading-none">
+                          {(item as any).title}
+                       </h2>
+                       <p className="text-white/70 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] font-light mb-4 lg:mb-[1vw] max-w-lg lg:max-w-[80%]">
+                          {(item as any).description}
+                       </p>
+                       <Button size="sm" className="h-8 lg:h-[2.5vw] text-xs lg:text-[0.8vw] lg:px-[1.5vw] uppercase tracking-wider" onClick={(e) => { e.stopPropagation(); onView(item); }}>
+                          View Details <ArrowRight className="w-3 h-3 lg:w-[0.8vw] lg:h-[0.8vw] ml-2" />
+                       </Button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-8 z-30 pointer-events-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-16 h-16 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 pointer-events-auto transition-transform hover:scale-110"
+          onClick={() => paginate(-1)}
+        >
+          <ChevronLeft className="w-8 h-8" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-16 h-16 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 pointer-events-auto transition-transform hover:scale-110"
+          onClick={() => paginate(1)}
+        >
+          <ChevronRight className="w-8 h-8" />
+        </Button>
+      </div>
+
+      {/* Indicators */}
+      <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-2">
+        {items.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => {
+               setDirection(idx > currentIndex ? 1 : -1);
+               setCurrentIndex(idx);
+            }}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all duration-300",
+              idx === currentIndex ? "w-8 bg-primary" : "bg-white/30 hover:bg-white/50"
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AccordionView({ items, source }: { items: ContentItem[], source: DynamicContentSource }) {
   return (
     <Accordion type="single" collapsible className="space-y-4 w-full">
@@ -989,8 +1491,58 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     const key = source.type as keyof SiteContent;
     let allItems = (content[key] as ContentItem[]) || [];
     
-    // Sort by createdAt descending for news and media
-    if (['news', 'media'].includes(source.type)) {
+    
+    // Filter by Configured Type (e.g. for Media)
+    if (source.type === 'media' && source.filterType && source.filterType !== 'all') {
+      allItems = allItems.filter((item) => 'type' in item && (item as MediaItem).type === source.filterType);
+    }
+
+    // Filter by Configured Category (e.g. for Roadmap or Media)
+    if ((source.type === 'roadmap' || source.type === 'media') && source.category && source.category !== 'all') {
+      allItems = allItems.filter((item) => 'category' in item && (item as any).category === source.category);
+    }
+
+          // Sort items based on configuration
+    if (source.sortBy) {
+      allItems = [...allItems].sort((a, b) => {
+        let valA: any = '';
+        let valB: any = '';
+
+        switch (source.sortBy) {
+          case 'date':
+            valA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            valB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            break;
+          case 'title':
+            valA = 'title' in a ? (a as any).title : 'name' in a ? (a as any).name : '';
+            valB = 'title' in b ? (b as any).title : 'name' in b ? (b as any).name : '';
+            break;
+          case 'category':
+            // Prioritize explicit category, then tag (news), then role (classes), then environment (maps), then type (weapons)
+            valA = 'category' in a ? (a as any).category : 
+                   'tag' in a ? (a as any).tag : 
+                   'role' in a ? (a as any).role : 
+                   'environment' in a ? (a as any).environment : 
+                   'type' in a ? (a as any).type : ''; // Fallback to type for weapons if no category
+
+            valB = 'category' in b ? (b as any).category : 
+                   'tag' in b ? (b as any).tag : 
+                   'role' in b ? (b as any).role : 
+                   'environment' in b ? (b as any).environment : 
+                   'type' in b ? (b as any).type : '';
+            break;
+          case 'type':
+            valA = 'type' in a ? (a as any).type : '';
+            valB = 'type' in b ? (b as any).type : '';
+            break;
+        }
+
+        if (valA < valB) return source.sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return source.sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else if (['news', 'media'].includes(source.type)) {
+      // Default fallback sort for news/media
       allItems = [...allItems].sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -999,7 +1551,7 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     }
     
     return allItems;
-  }, [content, source.type]);
+  }, [content, source.type, source.sortBy, source.sortOrder, source.filterType, source.category]);
 
   // Extract Categories (for Media & News)
   const categories = useMemo(() => {
@@ -1025,11 +1577,6 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       }
     }
 
-    // Filter by Configured Category (e.g. for Roadmap sections)
-    if (source.type === 'roadmap' && source.category && source.category !== 'all') {
-      result = result.filter((item) => 'category' in item && (item as RoadmapItem).category === source.category);
-    }
-
     // Filter by specific IDs if provided
     if (source.ids && source.ids.length > 0) {
       result = result.filter((item) => source.ids?.includes(item.id));
@@ -1040,7 +1587,7 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     }
     
     return result.slice(0, source.count);
-  }, [baseItems, activeCategory, source.ids, source.fetchAll, source.count, source.type, source.category]);
+  }, [baseItems, activeCategory, source.ids, source.fetchAll, source.count, source.type]);
 
   // Handle deep linking for news
   useEffect(() => {
@@ -1118,7 +1665,11 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
             previewMode={source.interactivePreviewMode || 'follow'}
           />
         ) : source.displayMode === 'carousel' ? (
-          <CarouselView items={items} source={source} onView={setSelectedItem} />
+          (source.cardStyle === 'hero-carousel' || source.type === 'media') ? (
+             <HeroCarouselView items={items} source={source} onView={setSelectedItem} />
+          ) : (
+             <CarouselView items={items} source={source} onView={setSelectedItem} />
+          )
         ) : source.displayMode === 'accordion' ? (
           <AccordionView items={items} source={source} />
         ) : source.displayMode === 'featured' || source.displayMode === 'spotlight' ? (

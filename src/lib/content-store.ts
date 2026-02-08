@@ -429,7 +429,7 @@ export interface CustomSection {
 export interface DynamicContentSource {
   type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap';
   displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command';
-  cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured';
+  cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured' | 'hero-carousel';
   count: number;
   fetchAll?: boolean;
   title?: string;
@@ -438,6 +438,9 @@ export interface DynamicContentSource {
   gridColumns?: number; // 1, 2, 3, 4
   showHoverInfo?: boolean;
   interactivePreviewMode?: 'follow' | 'fixed';
+  sortBy?: 'date' | 'title' | 'category' | 'type';
+  sortOrder?: 'asc' | 'desc';
+  filterType?: string; // For filtering by specific item type (e.g. image/video/gif)
 }
 
 export interface NavbarItem {

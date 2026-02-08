@@ -480,6 +480,46 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           </Select>
                         </div>
 
+                        {/* Sorting Configuration */}
+                        <div className="grid grid-cols-2 gap-2">
+                           <div className="space-y-2">
+                             <Label>Sort By</Label>
+                             <Select
+                                value={source.sortBy || 'date'}
+                                onValueChange={(val) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], sortBy: val as any };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                             >
+                               <SelectTrigger><SelectValue /></SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="date">Date</SelectItem>
+                                 <SelectItem value="title">Title</SelectItem>
+                                 <SelectItem value="category">Category</SelectItem>
+                                 <SelectItem value="type">Type</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                           <div className="space-y-2">
+                             <Label>Order</Label>
+                             <Select
+                                value={source.sortOrder || 'desc'}
+                                onValueChange={(val) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], sortOrder: val as any };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                             >
+                               <SelectTrigger><SelectValue /></SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="asc">Ascending</SelectItem>
+                                 <SelectItem value="desc">Descending</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                        </div>
+
                         {['news', 'features', 'media'].includes(source.type) && (
                           <div className="space-y-2">
                             <Label>Card Style</Label>
@@ -495,17 +535,79 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="default">Default</SelectItem>
-                                <SelectItem value="minimal">Minimal</SelectItem>
-                                <SelectItem value="overlay">Overlay</SelectItem>
-                                <SelectItem value="magazine">Magazine</SelectItem>
-                                <SelectItem value="compact">Compact</SelectItem>
-                                <SelectItem value="tech">Tech</SelectItem>
-                                <SelectItem value="corporate">Corporate</SelectItem>
-                                <SelectItem value="glass">Glass</SelectItem>
-                                <SelectItem value="featured">Featured (Hero)</SelectItem>
+                                {source.displayMode === 'carousel' ? (
+                                  <>
+                                    <SelectItem value="default">Default</SelectItem>
+                                    <SelectItem value="overlay">Overlay</SelectItem>
+                                    <SelectItem value="glass">Glass</SelectItem>
+                                    <SelectItem value="tech">Tech</SelectItem>
+                                    <SelectItem value="hero-carousel">Hero Carousel (Full Width)</SelectItem>
+                                  </>
+                                ) : (
+                                  <>
+                                    <SelectItem value="default">Default</SelectItem>
+                                    <SelectItem value="minimal">Minimal</SelectItem>
+                                    <SelectItem value="overlay">Overlay</SelectItem>
+                                    <SelectItem value="magazine">Magazine</SelectItem>
+                                    <SelectItem value="compact">Compact</SelectItem>
+                                    <SelectItem value="tech">Tech</SelectItem>
+                                    <SelectItem value="corporate">Corporate</SelectItem>
+                                    <SelectItem value="glass">Glass</SelectItem>
+                                    <SelectItem value="featured">Featured (Hero)</SelectItem>
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
+                          </div>
+                        )}
+
+                        {source.type === 'media' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                              <Label>Filter by Type</Label>
+                              <Select
+                                value={source.filterType || 'all'}
+                                onValueChange={(val) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], filterType: val === 'all' ? undefined : val };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="All Types" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Types</SelectItem>
+                                  <SelectItem value="image">Image</SelectItem>
+                                  <SelectItem value="video">Video</SelectItem>
+                                  <SelectItem value="gif">GIF</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Filter by Category</Label>
+                              <Select
+                                value={source.category || 'all'}
+                                onValueChange={(val) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], category: val === 'all' ? undefined : val };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="All Categories" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Categories</SelectItem>
+                                  {Array.from(new Set(media?.map(i => i.category).filter(Boolean))).map(cat => (
+                                    <SelectItem key={cat as string} value={cat as string}>
+                                      {cat as string}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         )}
 

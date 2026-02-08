@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useContent } from "@/hooks/use-content";
 import { Layout } from "@/components/layout/Layout";
 import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
+import NotFound from "./NotFound";
 
 export default function CustomPage() {
   const { slug } = useParams();
@@ -33,7 +34,7 @@ export default function CustomPage() {
   }
   
   if (!page) {
-    return <Navigate to="/404" replace />;
+    return <NotFound />;
   }
   
   // Allow draft pages to be viewed if we assume the user might be admin, 

@@ -15,8 +15,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { 
   Plus, Trash2, Save, ArrowLeft, Eye, 
-  Pencil, Copy
+  Pencil, Copy, LayoutGrid, List
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 import { generateId } from "@/lib/utils";
 import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
@@ -53,6 +61,20 @@ export function PageBuilderTab() {
   
   // State for section editing
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+
+  // View mode state with persistence
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pageBuilderViewMode');
+      return (saved === 'grid' || saved === 'list') ? saved : 'grid';
+    }
+    return 'grid';
+  });
+
+  // Persist view mode changes
+  useEffect(() => {
+    localStorage.setItem('pageBuilderViewMode', viewMode);
+  }, [viewMode]);
 
   const selectedSection = localPage?.sections.find(s => s.id === selectedSectionId);
 
@@ -438,16 +460,78 @@ export function PageBuilderTab() {
     <div className="h-full space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Pages</h2>
-        <Button onClick={handleCreatePage}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Page
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border rounded-md p-1 bg-muted/20">
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
+          <Button onClick={handleCreatePage}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Page
+          </Button>
+        </div>
       </div>
 
       {pages.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground border rounded-lg border-dashed">
           <p className="text-lg font-medium">No pages found</p>
           <p className="text-sm mt-1">Create a new page to get started</p>
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Slug</TableHead>
+                <TableHead>Sections</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pages.map((page) => (
+                <TableRow 
+                  key={page.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSelectPage(page)}
+                >
+                  <TableCell className="font-medium">{page.title}</TableCell>
+                  <TableCell className="text-muted-foreground">/{page.slug}</TableCell>
+                  <TableCell>{page.sections.length}</TableCell>
+                  <TableCell>
+                    <Badge variant={page.status === 'published' ? 'default' : 'secondary'}>
+                      {page.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDeletePage(page.id, e)}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
