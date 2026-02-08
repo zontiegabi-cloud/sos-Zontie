@@ -1,15 +1,9 @@
 import { useState, useEffect } from "react";
 import { 
-  Palette, 
+  Palette,
   Image, 
   Link2, 
   Search, 
-  LayoutGrid,
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  Eye,
-  EyeOff,
   Plus,
   Trash2,
   RotateCcw,
@@ -32,7 +26,6 @@ import { ServerFilePicker } from "./server-file-picker";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { SiteSettings, BackgroundSettings, SocialLink, ThemeSettings, HeroButton } from "@/lib/content-store";
 import { toast } from "sonner";
-import { BackgroundEditor } from "./BackgroundEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -167,19 +160,6 @@ export function SettingsPanel() {
     }));
   };
 
-  const updateBackground = (
-    section: keyof SiteSettings['backgrounds'],
-    bg: Partial<SiteSettings['backgrounds'][keyof SiteSettings['backgrounds']]>
-  ) => {
-    setLocalSettings(prev => ({
-      ...prev,
-      backgrounds: {
-        ...prev.backgrounds,
-        [section]: { ...prev.backgrounds[section], ...bg }
-      }
-    }));
-  };
-
   const updateThemeFonts = (fonts: Partial<ThemeSettings['fonts']>) => {
     setLocalSettings(prev => ({
       ...prev,
@@ -207,35 +187,8 @@ export function SettingsPanel() {
     }));
   };
 
-  const updateHomepageSections = (sections: SiteSettings['homepageSections']) => {
-    setLocalSettings(prev => ({ ...prev, homepageSections: sections }));
-  };
-
   const updateSocialLinks = (links: SiteSettings['socialLinks']) => {
     setLocalSettings(prev => ({ ...prev, socialLinks: links }));
-  };
-
-  const moveSectionUp = (index: number) => {
-    if (index === 0) return;
-    const sections = [...localSettings.homepageSections];
-    [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
-    sections.forEach((s, i) => (s.order = i));
-    updateHomepageSections(sections);
-  };
-
-  const moveSectionDown = (index: number) => {
-    if (index === localSettings.homepageSections.length - 1) return;
-    const sections = [...localSettings.homepageSections];
-    [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
-    sections.forEach((s, i) => (s.order = i));
-    updateHomepageSections(sections);
-  };
-
-  const toggleSection = (id: string) => {
-    const sections = localSettings.homepageSections.map((s) =>
-      s.id === id ? { ...s, enabled: !s.enabled } : s
-    );
-    updateHomepageSections(sections);
   };
 
   const updateSocialLink = (id: string, updates: Partial<SocialLink>) => {
@@ -311,10 +264,6 @@ export function SettingsPanel() {
             <Paintbrush className="w-4 h-4" />
             <span className="hidden sm:inline">Theme</span>
           </TabsTrigger>
-          <TabsTrigger value="backgrounds" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            <span className="hidden sm:inline">Backgrounds</span>
-          </TabsTrigger>
           <TabsTrigger value="social" className="flex items-center gap-2">
             <Link2 className="w-4 h-4" />
             <span className="hidden sm:inline">Social</span>
@@ -322,10 +271,6 @@ export function SettingsPanel() {
           <TabsTrigger value="seo" className="flex items-center gap-2">
             <Search className="w-4 h-4" />
             <span className="hidden sm:inline">SEO</span>
-          </TabsTrigger>
-          <TabsTrigger value="layout" className="flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline">Layout</span>
           </TabsTrigger>
         </TabsList>
 
@@ -731,44 +676,6 @@ export function SettingsPanel() {
           </div>
         </TabsContent>
 
-        {/* Backgrounds Tab */}
-        <TabsContent value="backgrounds" className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Customize the background for each section. Changes apply after saving.
-          </p>
-          {/* Hero background is managed in the Hero Editor tab */}
-          <BackgroundEditor
-            section="news"
-            label="News Section"
-            background={localSettings.backgrounds.news}
-            onChange={(bg) => updateBackground('news', bg)}
-          />
-          <BackgroundEditor
-            section="features"
-            label="Features Section"
-            background={localSettings.backgrounds.features}
-            onChange={(bg) => updateBackground('features', bg)}
-          />
-          <BackgroundEditor
-            section="classes"
-            label="Classes Section"
-            background={localSettings.backgrounds.classes}
-            onChange={(bg) => updateBackground('classes', bg)}
-          />
-          <BackgroundEditor
-            section="cta"
-            label="CTA Section"
-            background={localSettings.backgrounds.cta}
-            onChange={(bg) => updateBackground('cta', bg)}
-          />
-          <BackgroundEditor
-            section="footer"
-            label="Footer"
-            background={localSettings.backgrounds.footer}
-            onChange={(bg) => updateBackground('footer', bg)}
-          />
-        </TabsContent>
-
         {/* Social Links Tab */}
         <TabsContent value="social" className="space-y-4">
           <div className="flex items-center justify-between mb-4">
@@ -921,55 +828,6 @@ export function SettingsPanel() {
           </div>
         </TabsContent>
 
-        {/* Homepage Layout Tab */}
-        <TabsContent value="layout" className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Reorder and toggle visibility of homepage sections. Changes apply after saving.
-          </p>
-
-          <div className="space-y-2">
-            {localSettings.homepageSections
-              .sort((a, b) => a.order - b.order)
-              .map((section, index) => (
-                <div
-                  key={section.id}
-                  className={`flex items-center gap-3 p-3 bg-card border border-border rounded-lg ${!section.enabled ? 'opacity-50' : ''}`}
-                >
-                  <GripVertical className="w-4 h-4 text-muted-foreground" />
-                  <span className="flex-1 font-medium">{section.name}</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => moveSectionUp(index)}
-                      disabled={index === 0}
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => moveSectionDown(index)}
-                      disabled={index === localSettings.homepageSections.length - 1}
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleSection(section.id)}
-                    >
-                      {section.enabled ? (
-                        <Eye className="w-4 h-4" />
-                      ) : (
-                        <EyeOff className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

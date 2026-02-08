@@ -18,8 +18,8 @@ const WeaponPreviewPanel = ({ weapon, mousePos, previewMode }: { weapon: WeaponI
    const style = previewMode === 'fixed' 
       ? { bottom: '40px', right: '40px' } 
       : { 
-          left: Math.min(mousePos.x + 20, window.innerWidth - 540), 
-          top: Math.min(mousePos.y + 20, window.innerHeight - 750) 
+          left: Math.min(mousePos.x + 20, window.innerWidth - 820), 
+          top: Math.min(mousePos.y + 20, window.innerHeight - 850) 
         };
 
    return (
@@ -28,30 +28,30 @@ const WeaponPreviewPanel = ({ weapon, mousePos, previewMode }: { weapon: WeaponI
          animate={{ opacity: 1, scale: 1, pointerEvents: 'auto' }}
          exit={{ opacity: 0, scale: 0.95, pointerEvents: 'none' }}
          transition={{ duration: 0.2, ease: "circOut" }}
-         className="fixed z-[100] w-[520px] bg-background/95 border border-primary/20 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden pointer-events-none"
+         className="fixed z-[100] w-[400px] bg-background/95 border border-primary/20 backdrop-blur-xl rounded-xl shadow-2xl overflow-hidden pointer-events-none"
          style={style}
       >
             <div className="grid grid-cols-1 gap-0">
                {/* Top: Image */}
-               <div className="relative h-[240px] bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center p-8 border-b border-border/50">
+               <div className="relative h-[210px] bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center p-12 border-b border-border/50">
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50" />
                   <img 
                      src={weapon.image} 
                      alt={weapon.name} 
-                     className="relative z-10 max-w-full max-h-[220px] object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+                     className="relative z-10 max-w-full max-h-[210px] object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
                   />
-                  <div className="absolute bottom-4 left-4">
-                     <Badge variant="outline" className="bg-background/50 backdrop-blur border-primary/30 text-primary px-2 py-0.5 text-xs">
+                  <div className="absolute bottom-6 left-6">
+                     <Badge variant="outline" className="bg-background/50 backdrop-blur border-primary/30 text-primary px-3 py-1 text-sm">
                         {weapon.category}
                      </Badge>
                   </div>
                </div>
                
                {/* Bottom: Info */}
-               <div className="p-6 space-y-5">
+               <div className="p-8 space-y-8">
                   <div>
-                     <h2 className="text-5xl font-black uppercase tracking-tighter mb-2 leading-none">{weapon.name}</h2>
-                     <p className="text-lg text-muted-foreground leading-relaxed line-clamp-3">{weapon.description}</p>
+                     <h2 className="text-7xl font-black uppercase tracking-tighter mb-4 leading-none">{weapon.name}</h2>
+                     <p className="text-2xl text-muted-foreground leading-relaxed line-clamp-3">{weapon.description}</p>
                   </div>
                   
                   {/* Stats Grid */}
@@ -412,10 +412,15 @@ const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                         const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
                         let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                        let slotLabel = spec.slot;
+
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                           if (linkedWeapon) firstItemLabel = linkedWeapon.name;
+                           if (linkedWeapon) {
+                              firstItemLabel = linkedWeapon.name;
+                              slotLabel = slotLabel;
+                           }
                         }
 
                         const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -432,7 +437,7 @@ const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                                        <span className={`font-bold uppercase text-primary/90 text-sm tracking-wide transition-colors block ${
                                           hasMultipleItems ? 'group-hover:text-primary' : ''
                                        }`}>
-                                          {spec.slot}
+                                          {slotLabel}
                                        </span>
                                     </div>
                                     <div className="w-2/3 flex items-start justify-between gap-4">
@@ -599,10 +604,15 @@ const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHover
                         const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
                         let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                        let slotLabel = spec.slot;
+
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                           if (linkedWeapon) firstItemLabel = linkedWeapon.name;
+                           if (linkedWeapon) {
+                              firstItemLabel = linkedWeapon.name;
+                              slotLabel = slotLabel;
+                           }
                         }
 
                         const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -618,7 +628,7 @@ const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHover
                                        <span className="text-xs font-bold">{idx + 1}</span>
                                     </div>
                                     <div>
-                                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{spec.slot}</div>
+                                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{slotLabel}</div>
                                        <div className={`text-sm font-medium font-mono ${expandedSlotId === uniqueId ? 'text-primary' : 'text-white'}`}>
                                           {firstItemLabel || "EMPTY"}
                                        </div>
@@ -744,10 +754,15 @@ const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                            const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                            
                            let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                           let slotLabel = spec.slot;
+
                            // Overwrite label if linked to a weapon
                            if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                               const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                              if (linkedWeapon) firstItemLabel = linkedWeapon.name;
+                              if (linkedWeapon) {
+                                 firstItemLabel = linkedWeapon.name;
+                                 slotLabel = slotLabel;
+                              }
                            }
 
                            const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -758,7 +773,7 @@ const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                                     onClick={() => hasMultipleItems && setExpandedSlotId(expandedSlotId === uniqueId ? null : uniqueId)}
                                     className={`w-full flex items-center p-3 hover:bg-primary/5 transition-colors text-left font-mono ${hasMultipleItems ? 'cursor-pointer' : 'cursor-default'}`}
                                  >
-                                    <div className="w-32 text-xs font-bold text-muted-foreground uppercase shrink-0">{spec.slot}</div>
+                                    <div className="w-32 text-xs font-bold text-muted-foreground uppercase shrink-0">{slotLabel}</div>
                                     <div className={`flex-1 text-sm ${expandedSlotId === uniqueId ? 'text-transparent' : 'text-foreground/80'}`}>
                                        {firstItemLabel || "N/A"}
                                     </div>
@@ -911,10 +926,15 @@ const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                       const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                       
                       let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                      let slotLabel = spec.slot;
+
                       // Overwrite label if linked to a weapon
                       if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                          const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                         if (linkedWeapon) firstItemLabel = linkedWeapon.name;
+                         if (linkedWeapon) {
+                            firstItemLabel = linkedWeapon.name;
+                            slotLabel = slotLabel;
+                         }
                       }
 
                       const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -931,7 +951,7 @@ const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                                   <div className="flex items-center gap-6">
                                      <span className="text-2xl font-black text-muted-foreground/30 italic group-hover:text-primary/50 transition-colors">0{idx + 1}</span>
                                      <div>
-                                        <div className="text-xs font-bold text-primary uppercase tracking-wider mb-0.5">{spec.slot}</div>
+                                        <div className="text-xs font-bold text-primary uppercase tracking-wider mb-0.5">{slotLabel}</div>
                                         <div className={`text-lg font-bold uppercase ${expandedSlotId === uniqueId ? 'text-primary' : 'text-foreground'}`}>
                                            {firstItemLabel || "N/A"}
                                         </div>
@@ -1096,10 +1116,15 @@ const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHov
                         const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
                         let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                        let slotLabel = spec.slot;
+
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                           if (linkedWeapon) firstItemLabel = linkedWeapon.name;
+                           if (linkedWeapon) {
+                              firstItemLabel = linkedWeapon.name;
+                              slotLabel = slotLabel;
+                           }
                         }
 
                         const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -1114,7 +1139,7 @@ const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHov
                                     <Target className="w-5 h-5" />
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] font-bold text-muted-foreground uppercase truncate">{spec.slot}</div>
+                                    <div className="text-[10px] font-bold text-muted-foreground uppercase truncate">{slotLabel}</div>
                                     <div className="font-bold text-sm truncate">{firstItemLabel || "Empty"}</div>
                                  </div>
                                  {hasMultipleItems && (
