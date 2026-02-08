@@ -9,6 +9,8 @@ First you need MariaDB instaled!!
 Secound you need to clone the project in to you IDE
 Third Use this comand to start the serverDB : npm run server   and for the wepsite :npm run dev
 
+Simple way to start both servers is to use : npm run dev:full
+
 ## How to link/conect your database with this project !
 If you run it on your localmachine . 
 1 : go in .env and change your auth informations and that it.
