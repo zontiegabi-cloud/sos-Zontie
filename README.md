@@ -8,6 +8,7 @@ This project is a website made for a game. only for testing porposes so this mea
 First you need MariaDB instaled!!
 Secound you need to clone the project in to you IDE
 Third Use this comand to start the serverDB : npm run server   and for the wepsite :npm run dev
+
 Simple way to start both servers is to use : npm run dev:full
 
 ## How to link/conect your database with this project !
