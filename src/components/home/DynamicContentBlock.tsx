@@ -1,1483 +1,50 @@
-import React, { useState, useRef, useEffect, forwardRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Crosshair, 
-  Shield, 
-  Wrench, 
-  Target, 
-  Users, 
-  Eye, 
-  Heart, 
-  ThumbsUp,
-  ThumbsDown,
-  Zap,
-  ArrowRight,
-  Play,
-  Calendar
-} from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   DynamicContentSource, 
-  NewsItem, 
-  ClassItem, 
-  MediaItem, 
-  FeatureItem, 
-  WeaponItem, 
-  MapItem, 
+  SiteContent,
+  MediaItem,
+  RoadmapItem,
+  NewsItem,
+  WeaponItem,
+  MapItem,
   GameDeviceItem,
   GameModeItem,
-  SiteContent,
-  Device,
-  FAQItem,
-  PageContent,
-  RoadmapItem
+  FeatureItem
 } from '@/lib/content-store';
 import { useContent } from '@/hooks/use-content';
-import { iconMap } from '@/lib/icon-map';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-
 import { cn } from "@/lib/utils";
 import { NewsDetailDialog } from '@/components/news/NewsDetailDialog';
 import { MediaDetailDialog } from '@/components/home/MediaDetailDialog';
 import { 
-  WeaponCard, 
-  MapCard, 
-  DeviceCard, 
-  GameModeCard, 
   WeaponDetail, 
   MapDetail, 
   DeviceDetail, 
   GameModeDetail,
-  InteractiveClassList
+  FeatureDetail
 } from '@/components/game';
-import { RoadmapCard } from '@/components/game/RoadmapCard';
 import { RoadmapTimeline } from '@/components/game/RoadmapTimeline';
 import { RoadmapShowcase } from '@/components/game/RoadmapShowcase';
-import { ClassesContentCard } from '@/components/game/ClassesContentCard';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 
-// Define a union type for all content items
-type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem | FAQItem | GameModeItem | RoadmapItem;
-
-// Helper to format date strings that might be non-standard (e.g. "Coming Soon")
-const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  // Check if date is valid
-  if (!isNaN(date.getTime())) {
-    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-  }
-  return dateString;
-};
-
-// Helper to convert YouTube/Vimeo URLs to embed format
-const getEmbedUrl = (url: string) => {
-  if (!url) return null;
-  // YouTube
-  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) {
-    return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  }
-  // Vimeo
-  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  }
-  return null;
-};
-
-// Get YouTube thumbnail
-function getYouTubeThumbnail(url: string): string | null {
-  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) {
-    return `https://img.youtube.com/vi/${ytMatch[1]}/maxresdefault.jpg`;
-  }
-  return null;
-}
-
-// Get display thumbnail for media item
-const getDisplayThumbnail = (item: MediaItem): string => {
-  if (item.thumbnail) return item.thumbnail;
-  if (item.type === "video" || getEmbedUrl(item.src)) {
-    const ytThumb = getYouTubeThumbnail(item.src);
-    if (ytThumb) return ytThumb;
-  }
-  return item.src;
-};
-
-
-const FeaturesContentCard = forwardRef<HTMLDivElement, { item: FeatureItem, index: number, onView: (item: ContentItem) => void }>(
-  ({ item, index, onView }, ref) => {
-  const IconComponent = iconMap[item.icon] || Crosshair;
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: false }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="group relative bg-card border border-border rounded overflow-hidden hover:border-primary/50 transition-all duration-500 h-full min-h-[280px] lg:min-h-[320px] cursor-pointer flex flex-col"
-      onClick={() => onView(item)}
-    >
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-full object-cover opacity-100 group-hover:opacity-30 transition-opacity duration-500"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-card via-card/80 to-transparent" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 p-10 lg:p-14 flex flex-col h-full">
-        <div className="flex items-start gap-8 flex-1">
-          <div className="flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 rounded bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:glow-primary transition-all duration-300">
-            <IconComponent className="w-10 h-10 lg:w-12 lg:h-12 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-heading text-2xl lg:text-3xl uppercase text-foreground mb-4 group-hover:text-primary transition-colors">
-              {item.title}
-            </h3>
-            <p className="text-muted-foreground leading-relaxed text-base lg:text-lg opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 ease-out">
-              {item.description}
-            </p>
-          </div>
-        </div>
-        
-        <div className="mt-auto pt-6 border-t border-border/50">
-          <div className="flex items-center gap-2 text-primary group-hover:gap-3 transition-all duration-300 font-heading uppercase text-sm">
-            <span>Read More</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-});
-FeaturesContentCard.displayName = "FeaturesContentCard";
-
-
-
-const NewsContentCard = forwardRef<HTMLDivElement, { 
-  item: NewsItem, 
-  index: number, 
-  onView: (item: ContentItem) => void,
-  cardStyle?: string
-}>(
-  ({ item, index, onView, cardStyle = 'default' }, ref) => {
-  
-  // Minimal Style (Image + Title + Date)
-  if (cardStyle === 'minimal') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group relative bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="flex flex-col h-full">
-          <div className="aspect-[4/3] overflow-hidden relative">
-            <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
-              alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-            {item.tag && (
-              <span className="absolute top-3 left-3 px-2 py-0.5 bg-primary/90 text-primary-foreground text-[10px] font-heading uppercase tracking-wider rounded-sm">
-                {item.tag}
-              </span>
-            )}
-          </div>
-          <div className="p-4 flex flex-col flex-1">
-             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-2">
-              <Calendar className="w-3 h-3" />
-              <span>{formatDate(item.date)}</span>
-            </div>
-            <h3 className="font-heading text-lg leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
-              {item.title}
-            </h3>
-            <div className="mt-auto pt-3 flex justify-end">
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20 bg-primary/5 hover:bg-primary hover:text-primary-foreground px-2 py-1 rounded transition-colors">
-                Read More <ArrowRight className="w-3 h-3" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Overlay Style (Full Image Background)
-  if (cardStyle === 'overlay') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group relative h-full min-h-[300px] rounded-xl overflow-hidden border border-border/50 hover:border-primary/50 transition-all cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="block w-full h-full relative">
-          <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
-            alt={item.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-          
-          <div className="absolute inset-0 p-6 flex flex-col justify-end">
-            <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-              {item.tag && (
-                <span className="inline-block px-2 py-1 bg-primary text-primary-foreground text-xs font-heading uppercase tracking-wider rounded mb-3">
-                  {item.tag}
-                </span>
-              )}
-              <h3 className="font-display text-2xl text-white mb-2 leading-tight">
-                {item.title}
-              </h3>
-              <div className="flex justify-between items-end mt-2">
-                <span className="text-gray-300 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                  {formatDate(item.date)}
-                </span>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider hover:bg-primary/90 transition-colors shadow-lg transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 duration-300 delay-75">
-                  Read More <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Magazine Style (Big typography, bold)
-  if (cardStyle === 'magazine') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group h-full flex flex-col border-b border-border/50 pb-6 last:border-0 cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="grid grid-cols-1 gap-4 h-full">
-          <div className="aspect-video overflow-hidden rounded-md relative">
-            <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
-              alt={item.title}
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-            />
-             {item.tag && (
-              <div className="absolute top-0 left-0 bg-foreground text-background px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                {item.tag}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col h-full">
-            <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground mb-3 font-heading">
-              <span>{formatDate(item.date)}</span>
-              <div className="h-px w-8 bg-primary/50" />
-            </div>
-            <h3 className="font-display text-3xl uppercase leading-none mb-3 group-hover:text-primary transition-colors">
-              {item.title}
-            </h3>
-            <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed mb-4">
-              {item.description}
-            </p>
-            <div className="mt-auto flex justify-end">
-              <span className="inline-flex items-center gap-2 px-4 py-2 border border-primary text-primary font-bold uppercase text-xs tracking-widest hover:bg-primary hover:text-primary-foreground transition-all duration-300">
-                Read More <ArrowRight className="w-3 h-3" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Compact Style (Horizontal)
-  if (cardStyle === 'compact') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group bg-card/50 hover:bg-card border border-border/50 hover:border-primary/30 rounded-lg p-3 transition-all h-full cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="flex gap-4 h-full">
-          <div className="w-1/3 aspect-square max-w-[120px] rounded overflow-hidden flex-shrink-0">
-            <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
-              alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          </div>
-          <div className="flex-1 flex flex-col justify-center py-1">
-            {item.tag && (
-              <span className="text-[10px] text-primary font-heading uppercase tracking-wide mb-1">
-                {item.tag}
-              </span>
-            )}
-            <h3 className="font-heading text-base leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
-              {item.title}
-            </h3>
-            <div className="mt-auto flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                {formatDate(item.date)}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase hover:bg-primary hover:text-primary-foreground transition-colors">
-                Read <ArrowRight className="w-3 h-3" />
-              </span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Tech / Cyberpunk Style
-  if (cardStyle === 'tech') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group relative bg-black/40 border border-primary/20 hover:border-primary/60 transition-colors h-full flex flex-col cursor-pointer"
-        style={{ clipPath: 'polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%)' }}
-        onClick={() => onView(item)}
-      >
-        <div className="flex flex-col h-full">
-           {/* Tech decorations */}
-           <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-primary/50" />
-           <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-primary/50" />
-           
-           <div className="aspect-video relative overflow-hidden border-b border-primary/10">
-             <img 
-               src={item.thumbnail || item.image || '/placeholder.jpg'} 
-               alt={item.title}
-               className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-300"
-             />
-             <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
-             <div className="absolute bottom-2 right-2 px-1 bg-black/80 border border-primary/30 text-[10px] font-mono text-primary">
-               ID: {item.id.substring(0, 4).toUpperCase()}
-             </div>
-           </div>
-           
-           <div className="p-5 flex-1 flex flex-col">
-             <div className="flex justify-between items-center mb-2 font-mono text-xs text-primary/70">
-               <span>[{formatDate(item.date)}]</span>
-               <span>{item.tag}</span>
-             </div>
-             <h3 className="font-display text-xl text-foreground uppercase tracking-wider mb-3 group-hover:text-primary group-hover:glow-primary transition-all">
-               {item.title}
-             </h3>
-             <p className="text-muted-foreground text-sm font-mono leading-relaxed line-clamp-3 mb-4">
-               {item.description}
-             </p>
-             <div className="mt-auto pt-3 border-t border-primary/10 flex justify-end">
-               <span className="inline-flex items-center gap-2 px-3 py-1 bg-black border border-primary text-primary text-xs font-mono uppercase tracking-wider hover:bg-primary hover:text-black transition-all duration-300 shadow-[0_0_10px_rgba(var(--primary),0.3)] hover:shadow-[0_0_15px_rgba(var(--primary),0.6)]">
-                 Access Data <ArrowRight className="w-3 h-3" />
-               </span>
-             </div>
-           </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Corporate Style (Clean, Structured, Professional)
-  if (cardStyle === 'corporate') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group bg-card border-l-4 border-l-primary/70 border-y border-r border-border hover:border-l-primary hover:shadow-md transition-all h-full cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="flex flex-col h-full">
-          <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-primary">
-                {item.tag || 'News'}
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                {formatDate(item.date)}
-              </span>
-            </div>
-            
-            <h3 className="font-heading text-xl text-foreground mb-3 group-hover:text-primary transition-colors leading-snug">
-              {item.title}
-            </h3>
-            
-            <p className="text-muted-foreground text-sm leading-relaxed mb-6 line-clamp-3 flex-1">
-              {item.description}
-            </p>
-            
-            <div className="flex items-center text-sm font-bold text-foreground group-hover:text-primary transition-colors mt-auto">
-              Read Full Story <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Glass Style (Modern, Blur, Sleek)
-  if (cardStyle === 'glass') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.05 }}
-        className="group relative rounded-xl overflow-hidden h-full cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="absolute inset-0">
-          <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-500" />
-        </div>
-
-        <div className="relative h-full flex flex-col justify-end p-6">
-          <div className="bg-background/10 backdrop-blur-md border border-white/10 rounded-xl p-5 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-background/20 hover:border-white/20">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-2 py-0.5 rounded-full bg-primary/80 text-primary-foreground text-[10px] font-bold uppercase">
-                {item.tag}
-              </span>
-              <span className="text-xs text-white/80 font-medium">
-                {formatDate(item.date)}
-              </span>
-            </div>
-            
-            <h3 className="font-display text-lg text-white mb-2 leading-tight text-shadow-sm">
-              {item.title}
-            </h3>
-            
-            <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100">
-               <p className="text-white/80 text-xs line-clamp-2 mb-3">
-                 {item.description}
-               </p>
-               <span className="inline-flex items-center text-primary-foreground text-xs font-bold uppercase tracking-wide">
-                 Read Article <ArrowRight className="w-3 h-3 ml-1" />
-               </span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Featured Style (Big Impact)
-  if (cardStyle === 'featured') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-        className="group relative h-full min-h-[400px] rounded-2xl overflow-hidden shadow-2xl cursor-pointer"
-        onClick={() => onView(item)}
-      >
-        <div className="block w-full h-full">
-          <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
-            alt={item.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
-          
-          <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end items-start">
-            <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <span className="inline-block px-4 py-1.5 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-widest rounded mb-4 shadow-lg shadow-primary/20">
-                {item.tag || 'Featured'}
-              </span>
-              
-              <h3 className="font-display text-4xl md:text-5xl text-white mb-4 leading-none uppercase drop-shadow-lg">
-                {item.title}
-              </h3>
-              
-              <p className="text-gray-200 text-lg md:text-xl max-w-2xl line-clamp-3 mb-6 font-light leading-relaxed drop-shadow-md">
-                {item.description}
-              </p>
-              
-              <div className="flex items-center gap-4">
-                <span className="px-6 py-3 bg-white text-black text-sm font-bold uppercase tracking-widest rounded hover:bg-gray-200 transition-colors flex items-center gap-2 group-hover:gap-3">
-                  Read Story <ArrowRight className="w-4 h-4" />
-                </span>
-                <span className="text-white/60 text-sm font-mono">
-                  {formatDate(item.date)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Default Style
-  return (
-    <motion.div
-      ref={ref}
-      layout
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      exit={{ opacity: 0 }}
-      className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col cursor-pointer"
-      onClick={() => onView(item)}
-    >
-      <div className="flex flex-col h-full w-full">
-        <div className="aspect-video overflow-hidden relative">
-          <img 
-            src={item.thumbnail || item.image || '/placeholder.jpg'} 
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-          {item.tag && (
-            <div className="absolute top-4 left-4 px-3 py-1 bg-accent text-accent-foreground text-xs font-heading uppercase tracking-wide rounded">
-              {item.tag}
-            </div>
-          )}
-        </div>
-        
-        <div className="p-6 flex flex-col flex-1">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm mb-3">
-            <Calendar className="w-4 h-4" />
-            <span>{formatDate(item.date)}</span>
-          </div>
-          
-          <h3 className="font-heading text-xl uppercase text-foreground mb-3 group-hover:text-primary transition-colors">
-            {item.title}
-          </h3>
-          
-          <p className="text-muted-foreground text-sm leading-relaxed mb-4 flex-1">
-            {item.description}
-          </p>
-          
-          <div className="mt-auto pt-4 flex justify-end">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wide rounded hover:bg-primary/90 transition-colors shadow-sm">
-              Read More <ArrowRight className="w-4 h-4" />
-            </span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-});
-NewsContentCard.displayName = "NewsContentCard";
-
-const MediaContentCard = forwardRef<HTMLDivElement, { item: MediaItem, onView?: (item: ContentItem) => void, cardStyle?: string }>(
-  ({ item, onView, cardStyle = 'default' }, ref) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const embedUrl = getEmbedUrl(item.src);
-  const isVideo = item.type === 'video' || !!embedUrl;
-
-  // Glass Style
-  if (cardStyle === 'glass') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="group relative h-full min-h-[300px] overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm cursor-pointer"
-        onClick={() => onView?.(item)}
-      >
-        <div className="absolute inset-0">
-          <img 
-            src={getDisplayThumbnail(item)} 
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-        </div>
-        
-        <div className="absolute inset-0 p-6 flex flex-col justify-end">
-          <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-2 py-1 bg-primary/20 text-primary border border-primary/20 rounded text-[10px] font-bold uppercase tracking-widest backdrop-blur-md">
-                {item.type === 'video' ? 'Video' : 'Image'}
-              </span>
-            </div>
-            <h3 className="font-display text-2xl text-white mb-2 leading-tight drop-shadow-md">
-              {item.title}
-            </h3>
-            <div className="flex items-center gap-2 text-white/60 text-xs font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Click to view
-            </div>
-          </div>
-        </div>
-        
-        {isVideo && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-            <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
-          </div>
-        )}
-      </motion.div>
-    );
-  }
-
-  // Tech Style
-  if (cardStyle === 'tech') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="group relative h-full bg-black/60 border border-primary/30 hover:border-primary transition-colors cursor-pointer"
-        onClick={() => onView?.(item)}
-      >
-        <div className="relative aspect-video overflow-hidden border-b border-primary/30">
-          <img 
-            src={getDisplayThumbnail(item)} 
-            alt={item.title}
-            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-          />
-          {isVideo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors">
-              <div className="w-12 h-12 flex items-center justify-center border-2 border-primary text-primary hover:bg-primary hover:text-black transition-colors">
-                <Play className="w-5 h-5 ml-1" fill="currentColor" />
-              </div>
-            </div>
-          )}
-          
-          {/* Tech decorations */}
-          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary" />
-          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary" />
-          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary" />
-        </div>
-        
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono text-primary/70 uppercase">
-              ID: {item.id.slice(0, 8)}
-            </span>
-            <span className="text-[10px] font-mono text-muted-foreground uppercase">
-              {item.type}
-            </span>
-          </div>
-          <h3 className="font-heading text-lg text-foreground group-hover:text-primary transition-colors truncate">
-            {item.title}
-          </h3>
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Overlay Style
-  if (cardStyle === 'overlay') {
-    return (
-      <motion.div
-        ref={ref}
-        layout
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="group relative aspect-[4/5] overflow-hidden rounded-lg cursor-pointer"
-        onClick={() => onView?.(item)}
-      >
-        <img 
-          src={getDisplayThumbnail(item)} 
-          alt={item.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-        
-        {isVideo && (
-          <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center">
-            <Play className="w-3 h-3 text-white ml-0.5" fill="currentColor" />
-          </div>
-        )}
-
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <h3 className="font-heading text-xl text-white mb-2 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-            {item.title}
-          </h3>
-          <div className="h-0.5 w-0 bg-primary group-hover:w-full transition-all duration-500 ease-out" />
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      layout
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="group relative aspect-video bg-muted rounded-lg overflow-hidden border border-border hover:border-primary/50"
-    >
-      {isVideo ? (
-        isPlaying ? (
-           embedUrl ? (
-            <iframe
-              src={`${embedUrl}?autoplay=1`}
-              title={item.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            />
-           ) : (
-            <video 
-              src={item.src} 
-              controls 
-              autoPlay
-              className="w-full h-full"
-              poster={item.thumbnail}
-            />
-           )
-        ) : (
-          <div 
-              className="w-full h-full relative cursor-pointer"
-              onClick={() => setIsPlaying(true)}
-          >
-            <img 
-              src={getDisplayThumbnail(item)} 
-              alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-              <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center pl-1 shadow-lg transform group-hover:scale-110 transition-transform">
-                <Play className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-              </div>
-            </div>
-          </div>
-        )
-      ) : (
-        <div 
-          className="w-full h-full relative cursor-pointer"
-          onClick={() => onView?.(item)}
-        >
-          <img 
-            src={item.src} 
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors opacity-0 group-hover:opacity-100">
-             <div className="p-2 rounded-full bg-black/50 text-white backdrop-blur-sm">
-                <Eye className="w-6 h-6" />
-             </div>
-          </div>
-        </div>
-      )}
-      
-      {!isPlaying && (
-          <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-          <p className="text-white font-medium truncate">{item.title}</p>
-          </div>
-      )}
-    </motion.div>
-  );
-});
-MediaContentCard.displayName = "MediaContentCard";
-
-const DefaultContentCard = forwardRef<HTMLDivElement, { item: ContentItem }>(
-  ({ item }, ref) => {
-  // Use type assertion for optional properties that might not exist on all types
-  const title = 'title' in item ? (item as { title: string }).title : 'name' in item ? (item as { name: string }).name : undefined;
-  const image = 'image' in item ? (item as { image: string }).image : ('src' in item ? (item as MediaItem).src : '/placeholder.jpg');
-  const description = 'description' in item ? (item as { description: string }).description : '';
-  const date = 'date' in item ? (item as { date: string }).date : undefined;
-  const tag = 'tag' in item ? (item as { tag: string }).tag : undefined;
-
-  return (
-    <motion.div
-      ref={ref}
-      layout
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      exit={{ opacity: 0 }}
-      className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all h-full flex flex-col"
-    >
-      {image && (
-        <div className="aspect-video overflow-hidden relative">
-          <img 
-            src={image} 
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          {tag && (
-            <div className="absolute top-2 right-2 px-2 py-1 bg-background/80 backdrop-blur text-xs font-bold rounded uppercase">
-              {tag}
-            </div>
-          )}
-        </div>
-      )}
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-heading text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
-          {title}
-        </h3>
-        {description && (
-          <p className="text-sm text-muted-foreground line-clamp-3 mb-4 flex-1">
-            {description}
-          </p>
-        )}
-        {date && (
-          <div className="text-xs text-muted-foreground mt-auto">
-            {formatDate(date)}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-});
-DefaultContentCard.displayName = "DefaultContentCard";
-
-const ContentCard = forwardRef<HTMLDivElement, { 
-  item: ContentItem, 
-  type: DynamicContentSource['type'], 
-  displayMode: string, 
-  cardStyle?: string,
-  index: number,
-  onView: (item: ContentItem) => void
-}>(({ item, type, displayMode, cardStyle, index, onView }, ref) => {
-  if (type === 'features') {
-    return <FeaturesContentCard ref={ref} item={item as FeatureItem} index={index} onView={onView} />;
-  }
-
-  if (type === 'news') {
-    return <NewsContentCard ref={ref} item={item as NewsItem} index={index} onView={onView} cardStyle={cardStyle} />;
-  }
-
-  if (type === 'classes') {
-    return <ClassesContentCard ref={ref} item={item as ClassItem} index={index} />;
-  }
-
-  if (type === 'media') {
-    return <MediaContentCard ref={ref} item={item as MediaItem} onView={onView} cardStyle={cardStyle} />;
-  }
-
-  if (type === 'weapons') {
-    return (
-      <div ref={ref} className="h-full w-full">
-        <WeaponCard item={item as unknown as WeaponItem} index={index} onClick={() => onView(item)} />
-      </div>
-    );
-  }
-
-  if (type === 'maps') {
-    return (
-      <div ref={ref} className="h-full w-full">
-        <MapCard item={item as unknown as MapItem} index={index} onClick={() => onView(item)} />
-      </div>
-    );
-  }
-
-  if (type === 'roadmap') {
-    return (
-      <div ref={ref} className="h-full w-full">
-        <RoadmapCard item={item as unknown as RoadmapItem} className="h-full" />
-      </div>
-    );
-  }
-
-  if (type === 'gameDevices') {
-    return (
-      <div ref={ref} className="h-full w-full">
-        <DeviceCard item={item as unknown as GameDeviceItem} index={index} onClick={() => onView(item)} />
-      </div>
-    );
-  }
-
-  if (type === 'gameModes' || type === 'gamemodetab') {
-    return (
-      <div ref={ref} className="h-full w-full">
-        <GameModeCard item={item as unknown as GameModeItem} index={index} onClick={() => onView(item)} />
-      </div>
-    );
-  }
-
-  return <DefaultContentCard ref={ref} item={item} />;
-});
-ContentCard.displayName = "ContentCard";
-
-function CarouselView({ items, source, onView }: { items: ContentItem[], source: DynamicContentSource, onView: (item: ContentItem) => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [progress, setProgress] = useState(0);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 10);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-      
-      const maxScroll = scrollWidth - clientWidth;
-      if (maxScroll > 0) {
-        setProgress((scrollLeft / maxScroll) * 100);
-      } else {
-        setProgress(100);
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [items]);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current;
-      const scrollAmount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      setTimeout(checkScroll, 300);
-    }
-  };
-
-  // Determine card sizing based on type and style
-  // We use fixed widths for standard card styles to prevent them from becoming too large/tall
-  const isStandardCard = source.type === 'news' && 
-    ['minimal', 'default', 'compact', 'tech'].includes(source.cardStyle || 'default');
-  
-  const isClassCard = source.type === 'classes';
-
-  return (
-    <div className="relative group/carousel py-4">
-      {/* Professional Navigation Controls */}
-      <div className="absolute top-1/2 -translate-y-1/2 left-0 z-40 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300 -translate-x-2 group-hover/carousel:translate-x-0 pointer-events-none group-hover/carousel:pointer-events-auto">
-        <AnimatePresence>
-          {canScrollLeft && (
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              onClick={() => scroll('left')}
-              className="w-10 h-20 bg-background/80 backdrop-blur-md border-y border-r border-primary/20 rounded-r-xl flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-lg hover:shadow-primary/20"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="absolute top-1/2 -translate-y-1/2 right-0 z-40 opacity-0 group-hover/carousel:opacity-100 transition-all duration-300 translate-x-2 group-hover/carousel:translate-x-0 pointer-events-none group-hover/carousel:pointer-events-auto">
-        <AnimatePresence>
-          {canScrollRight && (
-            <motion.button
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              onClick={() => scroll('right')}
-              className="w-10 h-20 bg-background/80 backdrop-blur-md border-y border-l border-primary/20 rounded-l-xl flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-lg hover:shadow-primary/20"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div 
-        ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex gap-4 md:gap-6 overflow-x-auto pb-8 pt-2 snap-x snap-mandatory scrollbar-hide px-4 md:px-8"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        {items.map((item, idx) => (
-          <div 
-            key={item.id} 
-            className={cn(
-              "snap-center shrink-0 h-auto flex",
-              isClassCard 
-                ? "w-[280px] md:w-[340px] lg:w-[380px]" 
-                : isStandardCard
-                  ? "w-[280px] md:w-[320px] lg:w-[360px]" // Optimized width for minimal/default cards
-                  : "min-w-[85vw] md:min-w-[60vw] lg:min-w-[40vw]" // Wide format for others
-            )}
-          >
-             <div className="w-full h-full">
-               <ContentCard 
-                 item={item} 
-                 type={source.type} 
-                 displayMode="carousel"
-                 cardStyle={source.cardStyle}
-                 index={idx}
-                 onView={onView}
-               />
-             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Progress Indicator */}
-      <div className="absolute bottom-0 left-8 right-8 h-0.5 bg-primary/10 rounded-full overflow-hidden">
-        <motion.div 
-          className="h-full bg-primary/50"
-          initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
-          transition={{ type: "spring", stiffness: 100, damping: 30 }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function HeroCarouselView({ items, source, onView }: { items: ContentItem[], source: DynamicContentSource, onView: (item: ContentItem) => void }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.5,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.5,
-    }),
-  };
-
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    setCurrentIndex((prev) => (prev + newDirection + items.length) % items.length);
-  };
-
-  const getVisibleItems = () => {
-    if (items.length === 0) return [];
-    
-    const count = items.length;
-    const result = [];
-    
-    // Always show Center
-    result.push({ item: items[currentIndex], position: 'center', index: currentIndex });
-
-    // Show Left/Right if available (and distinct)
-    if (count > 1) {
-      const rightIndex = (currentIndex + 1) % count;
-      result.push({ item: items[rightIndex], position: 'right', index: rightIndex });
-      
-      const leftIndex = (currentIndex - 1 + count) % count;
-      // Only add left if it's not the same as right (i.e., count > 2)
-      if (leftIndex !== rightIndex) {
-        result.push({ item: items[leftIndex], position: 'left', index: leftIndex });
-      }
-    }
-
-    // Show FarLeft/FarRight if count >= 5
-    if (count >= 5) {
-       const farRightIndex = (currentIndex + 2) % count;
-       result.push({ item: items[farRightIndex], position: 'far-right', index: farRightIndex });
-       
-       const farLeftIndex = (currentIndex - 2 + count) % count;
-       result.push({ item: items[farLeftIndex], position: 'far-left', index: farLeftIndex });
-    }
-
-    return result;
-  };
-
-  return (
-    <div className="w-screen relative left-[calc(-50vw+50%)] h-[700px] lg:h-[40vw] min-h-[700px] overflow-hidden bg-background group">
-      {/* Background Blur */}
-      <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentIndex}
-            src={
-              'image' in items[currentIndex] ? (items[currentIndex] as any).image : 
-              'src' in items[currentIndex] ? (items[currentIndex] as any).src : 
-              '/placeholder.jpg'
-            }
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.2 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="w-full h-full object-cover blur-3xl scale-110 grayscale"
-          />
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-background/80" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/50" />
-      </div>
-
-      {/* Content Container */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center">
-        <div className="relative w-full h-full flex items-center justify-center perspective-[2000px]">
-          {items.length > 0 && getVisibleItems().map(({ item, position, index }) => {
-            const isCenter = position === 'center';
-            const isLeft = position === 'left';
-            const isRight = position === 'right';
-            const isFarLeft = position === 'far-left';
-            const isFarRight = position === 'far-right';
-            
-            // Calculate styles based on position
-            let leftPos = 50; // Center default
-            let scale = 1;
-            let opacity = 1;
-            let zIndex = 0;
-            let rotateY = 0;
-            let xOffset = "-50%";
-
-            if (isCenter) {
-              leftPos = 50;
-              scale = 1.0; 
-              opacity = 1;
-              zIndex = 50;
-              rotateY = 0;
-            } else if (isLeft) {
-              leftPos = 25; 
-              scale = 0.7;
-              opacity = 0.5;
-              zIndex = 40;
-              rotateY = 15;
-            } else if (isRight) {
-              leftPos = 75;
-              scale = 0.7;
-              opacity = 0.5;
-              zIndex = 40;
-              rotateY = -15;
-            } else if (isFarLeft) {
-              leftPos = 10; 
-              scale = 0.5;
-              opacity = 0.2;
-              zIndex = 30;
-              rotateY = 25;
-            } else if (isFarRight) {
-              leftPos = 90;
-              scale = 0.5;
-              opacity = 0.2;
-              zIndex = 30;
-              rotateY = -25;
-            }
-
-
-            const style = source.cardStyle || 'default';
-            
-            let containerClasses = "absolute top -translate-y-1/2 w-[60%] md:w-[45%] lg:w-[40%] aspect-video overflow-hidden shadow-2xl cursor-pointer bg-black transition-all duration-300";
-            
-            if (style === 'tech') {
-              containerClasses = cn(containerClasses, 
-                "rounded-none border-2 border-primary/60",
-                isCenter ? "shadow-[0_0_30px_rgba(var(--primary),0.2)]" : "grayscale opacity-60"
-              );
-            } else if (style === 'glass') {
-              containerClasses = cn(containerClasses,
-                "rounded-2xl border border-white/20",
-                isCenter ? "shadow-[0_8px_32px_rgba(0,0,0,0.4)]" : "grayscale opacity-60"
-              );
-            } else if (style === 'overlay') {
-               containerClasses = cn(containerClasses,
-                "rounded-none border-0",
-                isCenter ? "shadow-2xl" : "grayscale opacity-60"
-              );
-            } else {
-              // Default
-              containerClasses = cn(containerClasses,
-                "rounded-xl border border-white/10",
-                isCenter ? "border-primary/50 shadow-primary/20 ring-1 ring-primary/20" : "grayscale hover:grayscale-0"
-              );
-            }
-
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ 
-                  left: `${leftPos}%`,
-                  x: xOffset,
-                  scale,
-                  opacity,
-                  zIndex,
-                  rotateY
-                }}
-                animate={{ 
-                  left: `${leftPos}%`,
-                  x: xOffset,
-                  scale,
-                  opacity,
-                  zIndex,
-                  rotateY
-                }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className={containerClasses}
-                onClick={() => {
-                   if (isCenter) onView(item);
-                   else if (isLeft) paginate(-1);
-                   else if (isRight) paginate(1);
-                   else if (isFarLeft) paginate(-2);
-                   else if (isFarRight) paginate(2);
-                }}
-              >
-                {/* Image */}
-                <img 
-                  src={
-                    'image' in item ? (item as any).image : 
-                    'src' in item ? (item as any).src : 
-                    '/placeholder.jpg'
-                  } 
-                  alt={(item as any).title || ''}
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Tech Style Decorations (Background) */}
-                {style === 'tech' && isCenter && (
-                  <>
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-10 pointer-events-none bg-[length:100%_2px,3px_100%]" />
-                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-primary z-20" />
-                    <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-primary z-20" />
-                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-primary z-20" />
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-primary z-20" />
-                  </>
-                )}
-
-                {/* Gradient Overlays for side items */}
-                {!isCenter && (
-                   <div className="absolute inset-0 bg-black/60 transition-opacity duration-300" />
-                )}
-
-                {/* Content Overlay - TECH STYLE */}
-                {style === 'tech' && (
-                  <div className={cn(
-                    "absolute inset-0 p-6 flex flex-col justify-between transition-all duration-300 font-mono z-20",
-                    isCenter ? "opacity-100" : "opacity-0"
-                  )}>
-                    <div className="flex justify-between items-start">
-                      <div className="bg-black/80 border border-primary/40 px-2 py-1 text-[10px] text-primary uppercase tracking-widest">
-                         SYS.ACTIVE
-                      </div>
-                      <div className="text-[10px] text-primary/70">
-                        {item.id.substring(0, 8).toUpperCase()}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-black/90 border border-primary/30 p-4 relative overflow-hidden">
-                       <div className="absolute top-0 right-0 p-1">
-                          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                       </div>
-                       <h2 className="text-xl md:text-2xl lg:text-[2vw] font-display text-primary mb-2 leading-none uppercase tracking-wider">
-                          {(item as any).title}
-                       </h2>
-                       <p className="text-primary/60 line-clamp-2 text-xs md:text-sm font-mono mb-3">
-                          {(item as any).description}
-                       </p>
-                       <Button size="sm" variant="outline" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] w-full border-primary text-primary hover:bg-primary hover:text-black uppercase tracking-widest text-xs rounded-none" onClick={(e) => { e.stopPropagation(); onView(item); }}>
-                          Initialize <ChevronRight className="w-3 h-3 ml-2" />
-                       </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Content Overlay - GLASS STYLE */}
-                {style === 'glass' && (
-                  <div className={cn(
-                    "absolute inset-0 p-4 lg:p-6 flex flex-col justify-end transition-all duration-300 z-20",
-                    isCenter ? "opacity-100" : "opacity-0"
-                  )}>
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-4 lg:p-[1.5vw] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
-                       <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] lg:text-[0.7vw] font-medium text-white uppercase tracking-wide">
-                            {'tag' in item ? (item as any).tag : source.type}
-                          </span>
-                       </div>
-                       <h2 className="text-xl md:text-2xl lg:text-[2.2vw] font-bold text-white mb-2 leading-tight">
-                          {(item as any).title}
-                       </h2>
-                       <p className="text-white/80 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] mb-4">
-                          {(item as any).description}
-                       </p>
-                       <Button size="sm" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] bg-white text-black hover:bg-white/90 rounded-lg w-full font-bold" onClick={(e) => { e.stopPropagation(); onView(item); }}>
-                          Explore
-                       </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Content Overlay - OVERLAY STYLE */}
-                {style === 'overlay' && (
-                  <div className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center text-center p-8 transition-all duration-300 z-20",
-                    isCenter ? "opacity-100" : "opacity-0"
-                  )}>
-                    <div className="absolute inset-0 bg-black/60 z-[-1]" />
-                    <span className="inline-block px-3 py-1 mb-4 text-xs lg:text-[0.8vw] font-bold uppercase tracking-[0.2em] text-primary border-y border-primary/50">
-                        {'tag' in item ? (item as any).tag : source.type}
-                     </span>
-                     <h2 className="text-3xl md:text-4xl lg:text-[3.5vw] font-display text-white mb-4 drop-shadow-2xl uppercase tracking-tighter">
-                        {(item as any).title}
-                     </h2>
-                     <Button size="lg" className="rounded-full px-8 lg:px-[2vw] lg:h-[3vw] lg:text-[1vw] bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest" onClick={(e) => { e.stopPropagation(); onView(item); }}>
-                        Discover
-                     </Button>
-                  </div>
-                )}
-
-                {/* Content Overlay - DEFAULT STYLE */}
-                {(style === 'default' || !['tech', 'glass', 'overlay'].includes(style)) && (
-                  <div className={cn(
-                    "absolute inset-0 p-6 md:p-8 flex flex-col justify-end transition-all duration-300",
-                    isCenter ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-                  )}>
-                    <div className="bg-gradient-to-t from-black/95 via-black/60 to-transparent absolute inset-0" />
-                    <div className="relative z-10">
-                       <span className="inline-block px-2 py-0.5 mb-2 text-[10px] lg:text-[0.7vw] lg:px-[0.5vw] lg:py-[0.1vw] font-bold uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 rounded backdrop-blur-md">
-                          {'tag' in item ? (item as any).tag : source.type}
-                       </span>
-                       <h2 className="text-2xl md:text-3xl lg:text-[2.5vw] font-display text-white mb-2 drop-shadow-xl leading-none">
-                          {(item as any).title}
-                       </h2>
-                       <p className="text-white/70 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] font-light mb-4 lg:mb-[1vw] max-w-lg lg:max-w-[80%]">
-                          {(item as any).description}
-                       </p>
-                       <Button size="sm" className="h-8 lg:h-[2.5vw] text-xs lg:text-[0.8vw] lg:px-[1.5vw] uppercase tracking-wider" onClick={(e) => { e.stopPropagation(); onView(item); }}>
-                          View Details <ArrowRight className="w-3 h-3 lg:w-[0.8vw] lg:h-[0.8vw] ml-2" />
-                       </Button>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-8 z-30 pointer-events-none">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="w-16 h-16 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 pointer-events-auto transition-transform hover:scale-110"
-          onClick={() => paginate(-1)}
-        >
-          <ChevronLeft className="w-8 h-8" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="w-16 h-16 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 pointer-events-auto transition-transform hover:scale-110"
-          onClick={() => paginate(1)}
-        >
-          <ChevronRight className="w-8 h-8" />
-        </Button>
-      </div>
-
-      {/* Indicators */}
-      <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-center gap-2">
-        {items.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => {
-               setDirection(idx > currentIndex ? 1 : -1);
-               setCurrentIndex(idx);
-            }}
-            className={cn(
-              "w-2 h-2 rounded-full transition-all duration-300",
-              idx === currentIndex ? "w-8 bg-primary" : "bg-white/30 hover:bg-white/50"
-            )}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function AccordionView({ items, source }: { items: ContentItem[], source: DynamicContentSource }) {
-  return (
-    <Accordion type="single" collapsible className="space-y-4 w-full">
-      {items.map((item, index) => {
-        // Safe access for FAQ items or fallback properties
-        const question = 'question' in item ? (item as FAQItem).question : 'title' in item ? (item as { title: string }).title : 'name' in item ? (item as { name: string }).name : 'Item';
-        const answer = 'answer' in item ? (item as FAQItem).answer : 'description' in item ? (item as { description: string }).description : '';
-
-        return (
-          <AccordionItem
-            key={item.id}
-            value={`item-${index}`}
-            className="bg-card border border-border rounded px-6 data-[state=open]:border-primary/50 transition-colors"
-          >
-            <AccordionTrigger className="font-heading text-lg uppercase text-foreground hover:text-primary py-6 text-left">
-              {question}
-            </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground leading-relaxed pb-6">
-              <div className="prose prose-sm prose-invert max-w-none whitespace-pre-line">
-                {answer}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
-    </Accordion>
-  );
-}
+import { ContentItem } from './dynamic-content/types';
+import { ContentCard } from './dynamic-content/ContentCard';
+import { CarouselView } from './dynamic-content/CarouselView';
+import { HeroCarouselView } from './dynamic-content/HeroCarouselView';
+import { AccordionView } from './dynamic-content/AccordionView';
+import { MasonryView } from './dynamic-content/MasonryView';
+import { SpotlightView } from './dynamic-content/SpotlightView';
+import { FeaturedView } from './dynamic-content/FeaturedView';
+import { InteractiveClassList } from '@/components/game/InteractiveClassList';
+import { ClassItem } from '@/lib/content-store';
 
 export function DynamicContentBlock({ source, alignment = 'left' }: { source: DynamicContentSource, alignment?: 'left' | 'center' | 'right' }) {
   const { content } = useContent();
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeSortBy, setActiveSortBy] = useState<string | null>(null);
 
   // Get items based on type
   const baseItems = useMemo(() => {
@@ -1502,13 +69,14 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       allItems = allItems.filter((item) => 'category' in item && (item as any).category === source.category);
     }
 
-          // Sort items based on configuration
-    if (source.sortBy) {
+    // Sort items based on configuration or local override
+    const currentSortBy = activeSortBy || source.sortBy;
+    if (currentSortBy) {
       allItems = [...allItems].sort((a, b) => {
         let valA: any = '';
         let valB: any = '';
 
-        switch (source.sortBy) {
+        switch (currentSortBy) {
           case 'date':
             valA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             valB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -1544,332 +112,248 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     } else if (['news', 'media'].includes(source.type)) {
       // Default fallback sort for news/media
       allItems = [...allItems].sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const dateA = 'date' in a ? new Date((a as any).date).getTime() : 0;
+        const dateB = 'date' in b ? new Date((b as any).date).getTime() : 0;
         return dateB - dateA;
       });
     }
-    
+
+    // Limit items
+    if (source.count && !source.fetchAll) {
+      allItems = allItems.slice(0, source.count);
+    }
+
     return allItems;
-  }, [content, source.type, source.sortBy, source.sortOrder, source.filterType, source.category]);
+  }, [content, source, activeSortBy]);
 
-  // Extract Categories (for Media & News)
+  // Derive unique categories from items if filtering is enabled
   const categories = useMemo(() => {
-    if (source.type !== 'media' && source.type !== 'news') return [];
-    const cats = new Set<string>();
-    baseItems.forEach((item) => {
-      if (source.type === 'media' && 'category' in item) cats.add((item as MediaItem).category);
-      if (source.type === 'news' && 'tag' in item) cats.add((item as NewsItem).tag);
+    if (!source.enableFiltering && !source.showSortButtons) return [];
+    const cats = new Set<string>(["All"]);
+    
+    baseItems.forEach(item => {
+      if ('category' in item && item.category) cats.add(item.category);
+      else if ('tag' in item && item.tag) cats.add(item.tag);
+      else if ('role' in item && item.role) cats.add(item.role);
+      else if ('type' in item && (item as any).type) cats.add((item as any).type);
     });
-    return Array.from(cats).sort();
-  }, [baseItems, source.type]);
-
-  // Filter & Slice
-  const items = useMemo(() => {
-    let result = baseItems;
     
-    // Filter by Category/Tag (Client-side interactive filter)
-    if (activeCategory !== 'All') {
-      if (source.type === 'media') {
-        result = result.filter((item) => 'category' in item && (item as MediaItem).category === activeCategory);
-      } else if (source.type === 'news') {
-        result = result.filter((item) => 'tag' in item && (item as NewsItem).tag === activeCategory);
-      }
-    }
+    return Array.from(cats);
+  }, [baseItems, source.enableFiltering, source.showSortButtons]);
 
-    // Filter by specific IDs if provided
-    if (source.ids && source.ids.length > 0) {
-      result = result.filter((item) => source.ids?.includes(item.id));
-    }
+  // Filter items based on active category
+  const filteredItems = useMemo(() => {
+    if (activeCategory === "All") return baseItems;
     
-    if (source.fetchAll) {
-      return result;
-    }
-    
-    return result.slice(0, source.count);
-  }, [baseItems, activeCategory, source.ids, source.fetchAll, source.count, source.type]);
+    return baseItems.filter(item => {
+      const cat = 'category' in item ? item.category : 
+                  'tag' in item ? item.tag : 
+                  'role' in item ? item.role : 
+                  'type' in item ? (item as any).type : null;
+      return cat === activeCategory;
+    });
+  }, [baseItems, activeCategory]);
 
-  // Handle deep linking for news
-  useEffect(() => {
-    if (source.type === 'news') {
-      const articleId = searchParams.get("articleId");
-      if (articleId && items.length > 0) {
-        const item = items.find(i => i.id === articleId);
-        if (item) setSelectedItem(item);
-      }
-    }
-  }, [searchParams, items, source.type]);
-
-  if (!items.length && !source.title) return null;
-
-  const getGridCols = (cols?: number) => {
-    switch(cols) {
-      case 1: return "grid-cols-1";
-      case 2: return "grid-cols-1 md:grid-cols-2";
-      case 4: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
-      default: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3";
-    }
+  const gridCols = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 md:grid-cols-2',
+    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
+
+  if (!baseItems.length) return null;
 
   return (
     <div className="w-full">
-      {source.title && (
-        <h3 className={cn("text-2xl font-display mb-6", {
-          "text-left": alignment === 'left',
-          "text-center": alignment === 'center',
-          "text-right": alignment === 'right',
-        })}>{source.title}</h3>
+      {/* Sort Buttons */}
+      {source.showSortButtons && (source.type === 'news' || source.type === 'media' || source.type === 'weapons') && (
+        <div className={cn(
+          "flex flex-wrap gap-2 mb-4",
+          alignment === 'center' ? 'justify-center' : alignment === 'right' ? 'justify-end' : 'justify-start'
+        )}>
+          <span className="text-sm text-muted-foreground mr-2 self-center">Sort by:</span>
+          
+          {source.type === 'news' && (
+            <>
+              {/* Date Button (Resets Filter) */}
+              <Button
+                variant={activeCategory === 'All' && (activeSortBy || source.sortBy) === 'date' ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setActiveCategory('All');
+                  setActiveSortBy('date');
+                }}
+                className="font-heading uppercase text-xs tracking-wider"
+              >
+                Date
+              </Button>
+              
+              {/* Tag Buttons */}
+              {categories.filter(cat => cat !== 'All').map(cat => (
+                <Button
+                  key={cat}
+                  variant={activeCategory === cat ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveCategory(cat)}
+                  className="font-heading uppercase text-xs tracking-wider"
+                >
+                  {cat}
+                </Button>
+              ))}
+            </>
+          )}
+
+          {(source.type === 'media' || source.type === 'weapons') && (
+             <>
+               {/* Category Buttons (including All) */}
+               {categories.map(cat => (
+                 <Button
+                   key={cat}
+                   variant={activeCategory === cat ? "default" : "outline"}
+                   size="sm"
+                   onClick={() => setActiveCategory(cat)}
+                   className="font-heading uppercase text-xs tracking-wider"
+                 >
+                   {cat}
+                 </Button>
+               ))}
+             </>
+          )}
+        </div>
       )}
 
-      {/* Media & News Category Filter */}
-      {(source.type === 'media' || source.type === 'news') && categories.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          <Button
-            variant={activeCategory === 'All' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveCategory('All')}
-            className="uppercase tracking-wide"
-          >
-            All
-          </Button>
-          {categories.map((category) => (
+      {/* Category Filter - Only show if explicit filtering enabled AND NOT showing sort buttons (to avoid duplication) */}
+      {source.enableFiltering && !source.showSortButtons && categories.length > 1 && (
+        <div className={cn(
+          "flex flex-wrap gap-2 mb-8",
+          alignment === 'center' ? 'justify-center' : alignment === 'right' ? 'justify-end' : 'justify-start'
+        )}>
+          {categories.map(cat => (
             <Button
-              key={category}
-              variant={activeCategory === category ? 'default' : 'outline'}
+              key={cat}
+              variant={activeCategory === cat ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveCategory(category)}
-              className="uppercase tracking-wide"
+              onClick={() => setActiveCategory(cat)}
+              className="font-heading uppercase text-xs tracking-wider"
             >
-              {category}
+              {cat}
             </Button>
           ))}
         </div>
       )}
 
-      {items.length > 0 && (
-        source.displayMode === 'timeline' && source.type === 'roadmap' ? (
-          <RoadmapTimeline items={items as unknown as RoadmapItem[]} />
-        ) : source.displayMode === 'showcase' && source.type === 'roadmap' ? (
-          <RoadmapShowcase items={items as unknown as RoadmapItem[]} />
-        ) : (source.displayMode === 'detailed-interactive' || source.displayMode === 'classes-hex' || source.displayMode === 'classes-operator' || source.displayMode === 'classes-vanguard' || source.displayMode === 'classes-command') && source.type === 'classes' ? (
-          <InteractiveClassList 
-            classes={items as unknown as ClassItem[]} 
-            variant={
-              source.displayMode === 'classes-hex' ? 'hex-tech' : 
-              source.displayMode === 'classes-operator' ? 'operator' : 
-              source.displayMode === 'classes-vanguard' ? 'vanguard' : 
-              source.displayMode === 'classes-command' ? 'command' : 
-              'default'
-            }
-            showHoverInfo={source.showHoverInfo}
-            previewMode={source.interactivePreviewMode || 'follow'}
-          />
-        ) : source.displayMode === 'carousel' ? (
-          (source.cardStyle === 'hero-carousel' || source.type === 'media') ? (
-             <HeroCarouselView items={items} source={source} onView={setSelectedItem} />
-          ) : (
-             <CarouselView items={items} source={source} onView={setSelectedItem} />
-          )
-        ) : source.displayMode === 'accordion' ? (
-          <AccordionView items={items} source={source} />
-        ) : source.displayMode === 'featured' || source.displayMode === 'spotlight' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* Featured Item (First one) */}
-            <div className="lg:col-span-2 h-full min-h-[400px]">
-              <ContentCard 
-                item={items[0]} 
-                type={source.type} 
-                displayMode="featured"
-                cardStyle="featured" // Force featured style for the spotlight item
-                index={0}
-                onView={setSelectedItem}
-              />
-            </div>
-            {/* List Items (Rest) */}
-            <div className="flex flex-col gap-4 h-full">
-              {items.slice(1, 5).map((item, idx) => (
-                <div key={item.id} className="h-28 lg:h-auto flex-shrink-0">
-                   <ContentCard 
-                     item={item} 
-                     type={source.type} 
-                     displayMode="list"
-                     cardStyle="compact" // Force compact style for side items
-                     index={idx + 1}
-                     onView={setSelectedItem}
-                   />
-                </div>
-              ))}
-              {items.length > 5 && (
-                <div className="mt-auto pt-2 text-center">
-                  <Link to="/news" className="text-xs font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors">
-                    View All News
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : source.displayMode === 'masonry' ? (
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-             {items.map((item, idx) => (
-               <div key={item.id} className="break-inside-avoid">
-                  <ContentCard 
-                    item={item} 
-                    type={source.type} 
-                    displayMode="grid"
-                    cardStyle={source.cardStyle}
-                    index={idx}
-                    onView={setSelectedItem}
-                  />
-               </div>
-             ))}
-          </div>
+      {source.displayMode === 'carousel' ? (
+        source.cardStyle === 'hero-carousel' ? (
+          <HeroCarouselView items={filteredItems} source={source} onView={setSelectedItem} />
         ) : (
-          <div className={`grid ${source.displayMode === 'list' ? 'grid-cols-1' : getGridCols(source.gridColumns)} gap-6`}>
-            <AnimatePresence mode="popLayout">
-              {items.map((item, idx) => (
-                <ContentCard 
-                  key={item.id} 
-                  item={item} 
-                  type={source.type} 
-                  displayMode={source.displayMode} 
-                  cardStyle={source.cardStyle}
-                  index={idx}
-                  onView={setSelectedItem}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
+          <CarouselView items={filteredItems} source={source} onView={setSelectedItem} />
         )
-      )}
-
-      {/* News Dialog */}
-      {source.type === 'news' && (
-        <NewsDetailDialog 
-          item={selectedItem as NewsItem} 
-          open={!!selectedItem} 
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedItem(null);
-              setSearchParams(params => {
-                params.delete("articleId");
-                return params;
-              });
-            }
-          }} 
+      
+      ) : source.displayMode === 'accordion' ? (
+        <AccordionView items={filteredItems} source={source} />
+      ) : source.displayMode === 'timeline' && source.type === 'roadmap' ? (
+         <RoadmapTimeline items={filteredItems as RoadmapItem[]} />
+      ) : source.displayMode === 'showcase' && source.type === 'roadmap' ? (
+         <RoadmapShowcase items={filteredItems as RoadmapItem[]} />
+      ) : source.displayMode === 'masonry' || source.displayMode === 'mansory' ? (
+        <MasonryView items={filteredItems} source={source} onView={setSelectedItem} />
+      ) : source.displayMode === 'spotlight' || source.displayMode === 'spotlight-hero-list' || source.displayMode === 'Spotlight(hero+list)' ? (
+        <SpotlightView items={filteredItems} source={source} onView={setSelectedItem} />
+      ) : source.displayMode === 'featured' || source.displayMode === 'features' || source.displayMode === 'Feautures' ? (
+        <FeaturedView items={filteredItems} source={source} onView={setSelectedItem} />
+      ) : ['detailed-interactive', 'classes-hex', 'classes-operator', 'classes-vanguard', 'classes-command'].includes(source.displayMode) && source.type === 'classes' ? (
+        <InteractiveClassList 
+          classes={filteredItems as ClassItem[]} 
+          variant={
+            source.displayMode === 'classes-hex' ? 'hex-tech' :
+            source.displayMode === 'classes-operator' ? 'operator' :
+            source.displayMode === 'classes-vanguard' ? 'vanguard' :
+            source.displayMode === 'classes-command' ? 'command' : 'default'
+          }
+          showHoverInfo={source.showHoverInfo}
+          previewMode={source.interactivePreviewMode || 'follow'}
         />
+      ) : (
+        <div className={cn(
+          "grid gap-6",
+          gridCols[source.gridColumns as keyof typeof gridCols] || gridCols[3]
+        )}>
+          {filteredItems.map((item, index) => (
+             <ContentCard 
+               key={item.id}
+               item={item} 
+               type={source.type} 
+               displayMode={source.displayMode}
+               cardStyle={source.cardStyle}
+               index={index}
+               onView={source.type === 'classes' ? undefined : setSelectedItem}
+             />
+          ))}
+        </div>
       )}
 
-      {/* Game Content Detail Modals */}
-      {selectedItem && source.type === 'weapons' && (
-        <AnimatePresence>
-          <WeaponDetail 
-            weapon={selectedItem as unknown as WeaponItem} 
-            onClose={() => setSelectedItem(null)} 
-          />
-        </AnimatePresence>
-      )}
-
-      {selectedItem && source.type === 'maps' && (
-        <AnimatePresence>
-          <MapDetail 
-            map={selectedItem as unknown as MapItem} 
-            onClose={() => setSelectedItem(null)} 
-          />
-        </AnimatePresence>
-      )}
-
-      {selectedItem && source.type === 'gameDevices' && (
-        <AnimatePresence>
-          <DeviceDetail 
-            device={selectedItem as unknown as GameDeviceItem} 
-            onClose={() => setSelectedItem(null)} 
-          />
-        </AnimatePresence>
-      )}
-
-      {selectedItem && (source.type === 'gameModes' || source.type === 'gamemodetab') && (
-        <AnimatePresence>
-          <GameModeDetail 
-            mode={selectedItem as unknown as GameModeItem} 
-            onClose={() => setSelectedItem(null)} 
-          />
-        </AnimatePresence>
-      )}
-
-      {/* Media Detail Dialog */}
-      {source.type === 'media' && (
-        <MediaDetailDialog
-          item={selectedItem as MediaItem}
-          open={!!selectedItem}
-          onOpenChange={(open) => !open && setSelectedItem(null)}
-        />
-      )}
-
-      {/* Detail Dialog for Features/Classes */}
-      {source.type !== 'news' && 
-       source.type !== 'weapons' && 
-       source.type !== 'maps' && 
-       source.type !== 'gameDevices' && 
-       source.type !== 'gameModes' && 
-       source.type !== 'gamemodetab' && 
-       source.type !== 'media' && (
-        <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-          <DialogContent className={cn(
-            "max-h-[90vh] overflow-y-auto border-primary/20",
-            "max-w-3xl bg-card"
-          )}>
-            <DialogHeader>
-              <div className="flex items-center gap-4 mb-4">
-                 {/* Icon logic for dialog header */}
-                 {selectedItem && 'icon' in selectedItem && iconMap[(selectedItem as { icon: string }).icon] && (
-                   <div className="w-16 h-16 rounded bg-primary/10 border border-primary/30 flex items-center justify-center">
-                     {React.createElement(iconMap[(selectedItem as { icon: string }).icon], { className: "w-8 h-8 text-primary" })}
-                   </div>
-                 )}
-                <div>
-                  <DialogTitle className="font-display text-3xl lg:text-4xl uppercase text-foreground">
-                    {selectedItem && ('title' in selectedItem ? (selectedItem as { title: string }).title : 'name' in selectedItem ? (selectedItem as { name: string }).name : '')}
-                  </DialogTitle>
-                  <DialogDescription className="text-muted-foreground mt-2 text-base">
-                    {selectedItem && 'description' in selectedItem ? (selectedItem as { description: string }).description : ''}
-                  </DialogDescription>
+      {/* Detail Modals */}
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        {selectedItem && (
+          source.type === 'news' ? (
+            <NewsDetailDialog item={selectedItem as NewsItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
+          ) : source.type === 'media' ? (
+            <MediaDetailDialog item={selectedItem as MediaItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
+          ) : source.type === 'weapons' ? (
+             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
+               <WeaponDetail weapon={selectedItem as WeaponItem} onClose={() => setSelectedItem(null)} />
+             </DialogContent>
+          ) : source.type === 'maps' ? (
+             <DialogContent className="max-w-5xl p-0 bg-transparent border-none">
+               <MapDetail map={selectedItem as MapItem} onClose={() => setSelectedItem(null)} />
+             </DialogContent>
+          ) : source.type === 'gameDevices' ? (
+             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
+               <DeviceDetail device={selectedItem as GameDeviceItem} onClose={() => setSelectedItem(null)} />
+             </DialogContent>
+          ) : source.type === 'gameModes' || source.type === 'gamemodetab' ? (
+             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
+               <GameModeDetail mode={selectedItem as GameModeItem} onClose={() => setSelectedItem(null)} />
+             </DialogContent>
+          ) : source.type === 'features' ? (
+             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
+               <FeatureDetail feature={selectedItem as FeatureItem} onClose={() => setSelectedItem(null)} />
+             </DialogContent>
+          ) : (
+             // Default Fallback Modal
+            <DialogContent className="max-w-2xl bg-card border-border">
+              <DialogHeader>
+                <DialogTitle className="font-heading text-2xl uppercase">
+                  {'title' in selectedItem ? (selectedItem as any).title : 'name' in selectedItem ? (selectedItem as any).name : 'Details'}
+                </DialogTitle>
+                <DialogDescription>
+                  {'date' in selectedItem && (
+                    <span className="block mb-2 text-primary">
+                      {new Date((selectedItem as any).date).toLocaleDateString()}
+                    </span>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                {('image' in selectedItem || 'src' in selectedItem) && (
+                  <div className="aspect-video rounded-lg overflow-hidden mb-6">
+                    <img 
+                      src={'image' in selectedItem ? (selectedItem as any).image : (selectedItem as any).src} 
+                      alt="Content" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="prose prose-invert max-w-none">
+                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+                    {'description' in selectedItem ? (selectedItem as any).description : ''}
+                  </p>
                 </div>
               </div>
-            </DialogHeader>
-
-            {selectedItem && (
-               <div className="mt-6 space-y-6">
-                  {/* Features Specific: Devices Grid in Dialog */}
-                  {source.type === 'features' && (selectedItem as FeatureItem).devices && (
-                    <div>
-                      <h3 className="font-heading text-xl uppercase text-foreground mb-4 flex items-center gap-2">
-                        <span className="text-primary">{(selectedItem as FeatureItem).devices.length}</span>
-                        <span>{(selectedItem as FeatureItem).devicesSectionTitle || "Devices & Features"}</span>
-                      </h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(selectedItem as FeatureItem).devices.map((device: Device, index: number) => {
-                           const DeviceIcon = device.icon && iconMap[device.icon] ? iconMap[device.icon] : Shield;
-                           return (
-                              <div key={index} className="flex items-start gap-3 p-3 rounded bg-muted/50 border border-border">
-                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                                  <DeviceIcon className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                  <h4 className="font-heading text-sm uppercase text-foreground">{device.name}</h4>
-                                  <p className="text-xs text-muted-foreground mt-1">{device.details}</p>
-                                </div>
-                              </div>
-                           );
-                        })}
-                      </div>
-                    </div>
-                  )}
-               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+            </DialogContent>
+          )
+        )}
+      </Dialog>
     </div>
   );
 }

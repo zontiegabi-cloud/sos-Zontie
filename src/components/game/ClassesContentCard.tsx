@@ -2,13 +2,77 @@ import React, { forwardRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ClassItem } from '@/lib/content-store';
 import { iconMap } from '@/lib/icon-map';
-import { Shield } from 'lucide-react';
+import { Shield, ChevronRight } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
-export const ClassesContentCard = forwardRef<HTMLDivElement, { item: ClassItem, index: number, onClick?: () => void, isSelected?: boolean, showHoverInfo?: boolean }>(
-  ({ item, index, onClick, isSelected, showHoverInfo = true }, ref) => {
+export const ClassesContentCard = forwardRef<HTMLDivElement, { 
+  item: ClassItem, 
+  index: number, 
+  onClick?: () => void, 
+  isSelected?: boolean, 
+  showHoverInfo?: boolean,
+  cardStyle?: string 
+}>(
+  ({ item, index, onClick, isSelected, showHoverInfo = true, cardStyle = 'default' }, ref) => {
   const [isHovered, setIsHovered] = useState(false);
   const IconComponent = iconMap[item.icon] || Shield;
-  
+
+  // Overlay / Hero Style (for Spotlight/Featured views)
+  if (cardStyle === 'overlay' || cardStyle === 'hero-carousel') {
+    return (
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className={cn(
+          "group relative w-full h-full overflow-hidden rounded-xl cursor-pointer border border-border/50 hover:border-primary/50 transition-all",
+          isSelected && "ring-2 ring-primary"
+        )}
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="absolute inset-0">
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+        </div>
+
+        <div className="absolute inset-0 p-8 flex flex-col justify-end">
+          <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-heading uppercase tracking-wider rounded shadow-lg">
+                {item.role}
+              </span>
+              <div className="w-8 h-8 rounded bg-primary/20 backdrop-blur-md flex items-center justify-center border border-primary/30">
+                <IconComponent className="w-4 h-4 text-primary" />
+              </div>
+            </div>
+
+            <h3 className="font-display text-4xl lg:text-5xl text-white mb-2 leading-none drop-shadow-xl">
+              {item.name}
+            </h3>
+
+            <p className="text-gray-300 text-sm lg:text-base line-clamp-2 max-w-xl mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+              {item.description}
+            </p>
+
+            <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-200">
+              <span>View Class Details</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Default Vertical Card Style
   return (
     <motion.div
       ref={ref}
@@ -45,7 +109,7 @@ export const ClassesContentCard = forwardRef<HTMLDivElement, { item: ClassItem, 
         </div>
       </div>
 
-      {/* Hover Overlay */}
+      {/* Hover Overlay - Only for default style */}
       <AnimatePresence>
         {isHovered && showHoverInfo && (
           <motion.div

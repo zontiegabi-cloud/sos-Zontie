@@ -428,7 +428,7 @@ export interface CustomSection {
 
 export interface DynamicContentSource {
   type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured' | 'hero-carousel';
   count: number;
   fetchAll?: boolean;
@@ -440,7 +440,9 @@ export interface DynamicContentSource {
   interactivePreviewMode?: 'follow' | 'fixed';
   sortBy?: 'date' | 'title' | 'category' | 'type';
   sortOrder?: 'asc' | 'desc';
+  showSortButtons?: boolean;
   filterType?: string; // For filtering by specific item type (e.g. image/video/gif)
+  enableFiltering?: boolean;
 }
 
 export interface NavbarItem {

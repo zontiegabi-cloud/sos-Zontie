@@ -8,3 +8,4 @@ export * from './GameContentCards';
 export * from './RoadmapCard';
 export * from './InteractiveClassList';
 export * from './ClassesContentCard';
+export * from './FeatureDetail';

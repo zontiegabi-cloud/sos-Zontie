@@ -520,6 +520,26 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                            </div>
                         </div>
 
+                        {['news', 'media', 'weapons'].includes(source.type) && (
+                          <div className="flex items-center space-x-2 pt-2">
+                            <Checkbox 
+                              id={`show-sort-buttons-${idx}`} 
+                              checked={source.showSortButtons || false}
+                              onCheckedChange={(checked) => {
+                                const newSources = [...(section.content.dynamicSources || [])];
+                                newSources[idx] = { ...newSources[idx], showSortButtons: checked === true };
+                                updateContent({ dynamicSources: newSources });
+                              }}
+                            />
+                            <label 
+                              htmlFor={`show-sort-buttons-${idx}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              Show Sort Buttons
+                            </label>
+                          </div>
+                        )}
+
                         {['news', 'features', 'media'].includes(source.type) && (
                           <div className="space-y-2">
                             <Label>Card Style</Label>
