@@ -11,7 +11,8 @@ import {
   Paintbrush,
   Save,
   X,
-  Megaphone
+  Megaphone,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,123 @@ function ColorInput({ label, value, onChange, description }: ColorInputProps) {
   );
 }
 
+function DatabaseSettings() {
+  const [config, setConfig] = useState({
+    DB_HOST: '',
+    DB_USER: '',
+    DB_PASSWORD: '',
+    DB_NAME: '',
+    DB_PORT: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/env')
+      .then(res => res.json())
+      .then(data => {
+        setConfig(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error('Failed to load database settings');
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/env', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.error || 'Failed to save settings');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading database configuration...</div>;
+
+  return (
+    <div className="space-y-6">
+       <div className="flex items-center gap-2 pb-2 border-b border-border">
+         <Database className="w-5 h-5 text-primary" />
+         <h3 className="text-lg font-heading uppercase">Database Connection</h3>
+       </div>
+       
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="space-y-2">
+           <Label>Host</Label>
+           <Input 
+             value={config.DB_HOST || ''} 
+             onChange={e => setConfig({...config, DB_HOST: e.target.value})} 
+             placeholder="localhost"
+           />
+         </div>
+         <div className="space-y-2">
+           <Label>Port</Label>
+           <Input 
+             value={config.DB_PORT || ''} 
+             onChange={e => setConfig({...config, DB_PORT: e.target.value})} 
+             placeholder="3306"
+           />
+         </div>
+         <div className="space-y-2">
+           <Label>Database Name</Label>
+           <Input 
+             value={config.DB_NAME || ''} 
+             onChange={e => setConfig({...config, DB_NAME: e.target.value})} 
+             placeholder="sos_zontie"
+           />
+         </div>
+         <div className="space-y-2">
+           <Label>User</Label>
+           <Input 
+             value={config.DB_USER || ''} 
+             onChange={e => setConfig({...config, DB_USER: e.target.value})} 
+             placeholder="root"
+           />
+         </div>
+         <div className="space-y-2">
+           <Label>Password</Label>
+           <Input 
+             type="password"
+             value={config.DB_PASSWORD || ''} 
+             onChange={e => setConfig({...config, DB_PASSWORD: e.target.value})} 
+             placeholder="••••••"
+           />
+         </div>
+       </div>
+
+       <div className="pt-4 flex justify-end">
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            <Save className="w-4 h-4" />
+            {saving ? 'Saving...' : 'Save Configuration'}
+          </Button>
+       </div>
+       
+       <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
+          <p className="text-sm text-yellow-500 flex items-center gap-2">
+             <Megaphone className="w-4 h-4" />
+             Note: Changing database settings requires a server restart to take effect.
+          </p>
+       </div>
+    </div>
+  );
+}
+
 export function SettingsPanel() {
   const {
     settings,
@@ -115,7 +233,7 @@ export function SettingsPanel() {
   } = useSiteSettings();
 
   const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
-  const [activeSubTab, setActiveSubTab] = useState("cta");
+  const [activeSubTab, setActiveSubTab] = useState("branding");
   const [isResetting, setIsResetting] = useState(false);
   
   // Keep local settings in sync if they are updated externally (e.g. reset)
@@ -150,13 +268,6 @@ export function SettingsPanel() {
     setLocalSettings(prev => ({
       ...prev,
       branding: { ...prev.branding, ...branding }
-    }));
-  };
-
-  const updateCTA = (cta: Partial<SiteSettings['cta']>) => {
-    setLocalSettings(prev => ({
-      ...prev,
-      cta: { ...prev.cta, ...cta }
     }));
   };
 
@@ -256,9 +367,9 @@ export function SettingsPanel() {
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="grid grid-cols-3 sm:grid-cols-6 mb-6 h-auto gap-2">
-          <TabsTrigger value="cta" className="flex items-center gap-2">
-            <Megaphone className="w-4 h-4" />
-            <span className="hidden sm:inline">CTA & Branding</span>
+          <TabsTrigger value="branding" className="flex items-center gap-2">
+            <Image className="w-4 h-4" />
+            <span className="hidden sm:inline">Branding</span>
           </TabsTrigger>
           <TabsTrigger value="theme" className="flex items-center gap-2">
             <Paintbrush className="w-4 h-4" />
@@ -272,10 +383,14 @@ export function SettingsPanel() {
             <Search className="w-4 h-4" />
             <span className="hidden sm:inline">SEO</span>
           </TabsTrigger>
+          <TabsTrigger value="database" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            <span className="hidden sm:inline">Database</span>
+          </TabsTrigger>
         </TabsList>
 
-        {/* CTA & Branding Tab */}
-        <TabsContent value="cta" className="space-y-8">
+        {/* Branding Tab */}
+        <TabsContent value="branding" className="space-y-8">
           {/* Branding Section */}
           <div className="space-y-6">
             <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -363,121 +478,6 @@ export function SettingsPanel() {
                 />
               </div>
             )}
-          </div>
-
-          {/* CTA Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 pb-2 border-b border-border">
-              <Megaphone className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-heading uppercase">Call to Action (CTA)</h3>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={localSettings.cta?.title || ''}
-                  onChange={(e) => updateCTA({ title: e.target.value })}
-                  placeholder="Ready to Join?"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={localSettings.cta?.description || ''}
-                  onChange={(e) => updateCTA({ description: e.target.value })}
-                  placeholder="Join our community today..."
-                  rows={3}
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Buttons</Label>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const currentButtons = localSettings.cta?.buttons || [];
-                      updateCTA({
-                        buttons: [
-                          ...currentButtons,
-                          { text: "New Button", url: "#", variant: "primary" }
-                        ]
-                      });
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Button
-                  </Button>
-                </div>
-                
-                <div className="space-y-3">
-                  {(localSettings.cta?.buttons || []).map((button, index) => (
-                    <div key={index} className="flex flex-col gap-3 p-4 bg-card border border-border rounded-lg">
-                      <div className="flex gap-2">
-                        <Input
-                          value={button.text}
-                          onChange={(e) => {
-                            const newButtons = [...(localSettings.cta?.buttons || [])];
-                            newButtons[index] = { ...button, text: e.target.value };
-                            updateCTA({ buttons: newButtons });
-                          }}
-                          placeholder="Button Text"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const newButtons = (localSettings.cta?.buttons || []).filter((_, i) => i !== index);
-                            updateCTA({ buttons: newButtons });
-                          }}
-                          className="text-destructive shrink-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          value={button.url}
-                          onChange={(e) => {
-                            const newButtons = [...(localSettings.cta?.buttons || [])];
-                            newButtons[index] = { ...button, url: e.target.value };
-                            updateCTA({ buttons: newButtons });
-                          }}
-                          placeholder="Button URL (e.g., /register)"
-                        />
-                        <Select
-                      value={button.variant}
-                      onValueChange={(v: HeroButton['variant']) => {
-                        const newButtons = [...(localSettings.cta?.buttons || [])];
-                        newButtons[index] = { ...button, variant: v };
-                        updateCTA({ buttons: newButtons });
-                      }}
-                    >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="primary">Primary</SelectItem>
-                            <SelectItem value="secondary">Secondary</SelectItem>
-                            <SelectItem value="outline">Outline</SelectItem>
-                            <SelectItem value="ghost">Ghost</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  ))}
-                  {(localSettings.cta?.buttons || []).length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
-                      No buttons added. Click "Add Button" to create one.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
         </TabsContent>
 
@@ -826,6 +826,11 @@ export function SettingsPanel() {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        {/* Database Tab */}
+        <TabsContent value="database">
+          <DatabaseSettings />
         </TabsContent>
 
       </Tabs>

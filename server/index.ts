@@ -243,6 +243,73 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
+// GET /api/env - Get database configuration
+app.get('/api/env', (req, res) => {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (!fs.existsSync(envPath)) {
+      return res.status(404).json({ error: '.env file not found' });
+    }
+    
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const config: Record<string, string> = {};
+    
+    // Parse the file manually
+    envContent.split('\n').forEach(line => {
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim();
+        if (['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT'].includes(key)) {
+          config[key] = value;
+        }
+      }
+    });
+    
+    res.json(config);
+  } catch (error) {
+    console.error('Error reading .env:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/env - Update database configuration
+app.post('/api/env', (req, res) => {
+  try {
+    const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT } = req.body;
+    const envPath = path.resolve(process.cwd(), '.env');
+    
+    let envContent = '';
+    if (fs.existsSync(envPath)) {
+      envContent = fs.readFileSync(envPath, 'utf8');
+    }
+    
+    const updates: Record<string, string> = {
+      DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+    };
+    
+    let newContent = envContent;
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined) return;
+      
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (regex.test(newContent)) {
+        newContent = newContent.replace(regex, `${key}=${value}`);
+      } else {
+        newContent += `\n${key}=${value}`;
+      }
+    });
+    
+    fs.writeFileSync(envPath, newContent);
+    
+    res.json({ message: 'Configuration saved. Please restart the server for changes to take effect.' });
+  } catch (error) {
+    console.error('Error updating .env:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DbRow = Record<string, any>;
@@ -551,6 +618,74 @@ app.post('/api/data', async (req, res) => {
     res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) });
   } finally {
     if (conn) conn.release();
+  }
+});
+
+
+// GET /api/env - Get database configuration
+app.get('/api/env', (req, res) => {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (!fs.existsSync(envPath)) {
+      return res.status(404).json({ error: '.env file not found' });
+    }
+    
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const config: Record<string, string> = {};
+    
+    // Parse the file manually
+    envContent.split('\n').forEach(line => {
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim();
+        if (['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT'].includes(key)) {
+          config[key] = value;
+        }
+      }
+    });
+    
+    res.json(config);
+  } catch (error) {
+    console.error('Error reading .env:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/env - Update database configuration
+app.post('/api/env', (req, res) => {
+  try {
+    const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT } = req.body;
+    const envPath = path.resolve(process.cwd(), '.env');
+    
+    let envContent = '';
+    if (fs.existsSync(envPath)) {
+      envContent = fs.readFileSync(envPath, 'utf8');
+    }
+    
+    const updates: Record<string, string> = {
+      DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+    };
+    
+    let newContent = envContent;
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined) return;
+      
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (regex.test(newContent)) {
+        newContent = newContent.replace(regex, `${key}=${value}`);
+      } else {
+        newContent += `\n${key}=${value}`;
+      }
+    });
+    
+    fs.writeFileSync(envPath, newContent);
+    
+    res.json({ message: 'Configuration saved. Please restart the server for changes to take effect.' });
+  } catch (error) {
+    console.error('Error updating .env:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
