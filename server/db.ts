@@ -294,6 +294,21 @@ export async function initDB() {
       console.log('Error during roadmap schema migration:', e);
     }
 
+    // 12. Patch Notes Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS patchnotes (
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
+        version VARCHAR(50),
+        title VARCHAR(255),
+        subtitle VARCHAR(255),
+        date VARCHAR(100),
+        image LONGTEXT,
+        content JSON,
+        category VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS pages (
         id VARCHAR(36) NOT NULL PRIMARY KEY,
@@ -347,7 +362,8 @@ export async function initDB() {
         cta JSON,
         news_section JSON,
         custom_sections JSON,
-        navbar JSON
+        navbar JSON,
+        discord JSON
       )
     `);
 
@@ -358,8 +374,14 @@ export async function initDB() {
         await connection.query('ALTER TABLE settings ADD COLUMN navbar JSON');
         console.log('Added navbar column to settings table');
       }
+      
+      const discordCol = await connection.query("SHOW COLUMNS FROM settings LIKE 'discord'");
+      if (discordCol.length === 0) {
+        await connection.query('ALTER TABLE settings ADD COLUMN discord JSON');
+        console.log('Added discord column to settings table');
+      }
     } catch (e) {
-      console.log('Error adding navbar column:', e);
+      console.log('Error migrating settings columns:', e);
     }
 
     // ID MIGRATION LOGIC (Convert INT to VARCHAR)

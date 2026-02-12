@@ -177,12 +177,35 @@ export interface RoadmapItem {
   phase: string;
   title: string;
   date: string;
-  status: 'planned' | 'in-progress' | 'completed' | 'delayed';
+  status: 'planned' | 'in-progress' | 'completed' | 'delayed' | 'released';
   description?: string;
   image?: string;
   category?: string;
   tasks: RoadmapTask[];
   order: number;
+  createdAt?: string;
+}
+
+export interface PatchNoteBlock {
+  id: string;
+  type: 'text' | 'list' | 'tree' | 'checkbox' | 'image' | 'header' | 'subheader' | 'divider';
+  content?: string; // Text content, image URL, or header text
+  items?: PatchNoteBlock[]; // Nested items for lists/trees
+  checked?: boolean; // For checkbox items
+  label?: string; // Label for checkbox/tree items
+  expanded?: boolean; // For tree items initial state
+}
+
+export interface PatchNoteItem {
+  id: string;
+  version: string;
+  title: string;
+  subtitle?: string;
+  date: string;
+  image?: string;
+  content: PatchNoteBlock[]; // JSON structure for rich content
+  category?: string; // e.g. "Update", "Hotfix", "Major Release"
+  tag?: string;
   createdAt?: string;
 }
 
@@ -427,8 +450,8 @@ export interface CustomSection {
 }
 
 export interface DynamicContentSource {
-  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures';
+  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap' | 'patchnotes' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures' | 'patch-notes' | 'ticker' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'bug-report-form';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured' | 'hero-carousel';
   count: number;
   fetchAll?: boolean;
@@ -443,6 +466,30 @@ export interface DynamicContentSource {
   showSortButtons?: boolean;
   filterType?: string; // For filtering by specific item type (e.g. image/video/gif)
   enableFiltering?: boolean;
+  includePatchNotes?: boolean;
+  detailStyle?: 'default' | 'side-panel' | 'full-screen' | 'minimal';
+  viewAllSettings?: {
+    enabled: boolean;
+    label?: string;
+    url?: string;
+    alignment?: 'left' | 'center' | 'right';
+  };
+  // Inline content fields for static widgets
+  alertText?: string;
+  alertLink?: string;
+  alertType?: 'info' | 'warning' | 'success' | 'error';
+  popupImage?: string;
+  targetDate?: string;
+  releaseStatus?: 'planned' | 'in-progress' | 'completed' | 'delayed' | 'released';
+  // Additional settings for Release Status
+  primaryButtonLabel?: string;
+  primaryButtonLink?: string;
+  secondaryButtonLabel?: string;
+  secondaryButtonLink?: string;
+  forceFullWidth?: boolean;
+  // Discord Integration
+  discordServerId?: string;
+  discordWebhookUrl?: string;
 }
 
 export interface NavbarItem {
@@ -467,6 +514,9 @@ export interface SiteSettings {
   customSections: Record<string, CustomSection>;
   theme: ThemeSettings;
   deletedPageSlugs?: string[];
+  discord?: {
+    patchNotesWebhookUrl?: string;
+  };
 }
 
 export interface SiteContent {
@@ -481,6 +531,7 @@ export interface SiteContent {
   gameDevices: GameDeviceItem[];
   gameModes?: GameModeItem[];
   roadmap?: RoadmapItem[];
+  patchnotes?: PatchNoteItem[];
   pages: Page[];
   // Site settings
   settings: SiteSettings;
@@ -1475,6 +1526,9 @@ const defaultSettings: SiteSettings = {
     },
   },
   deletedPageSlugs: [],
+  discord: {
+    patchNotesWebhookUrl: "",
+  },
 };
 
 const LOCAL_LAST_SAVED_KEY = 'zontie_local_last_saved';
@@ -1614,6 +1668,7 @@ export function getContent(): SiteContent {
         theme: { ...defaultSettings.theme, ...(parsed.settings.theme || {}) },
         homepageSections: parsed.settings.homepageSections || defaultSettings.homepageSections,
         navbar: parsed.settings.navbar || defaultSettings.navbar,
+        discord: parsed.settings.discord || defaultSettings.discord,
       } : defaultSettings,
     };
   } catch {
@@ -1672,7 +1727,8 @@ export async function getData(): Promise<SiteContent> {
         ...defaultContent.settings,
         ...(rawServerData.settings || {}),
         // Preserve local navbar if server doesn't provide it (migration strategy)
-        navbar: rawServerData.settings?.navbar ?? getContent().settings.navbar ?? defaultContent.settings.navbar
+        navbar: rawServerData.settings?.navbar ?? getContent().settings.navbar ?? defaultContent.settings.navbar,
+        discord: rawServerData.settings?.discord ?? getContent().settings.discord ?? defaultContent.settings.discord
       },
     };
     
@@ -1768,7 +1824,8 @@ export async function saveData(content: SiteContent): Promise<SiteContent | unde
         roadmap: result.data.roadmap ?? cleanContent.roadmap,
         settings: {
           ...(result.data.settings || cleanContent.settings),
-          navbar: result.data.settings?.navbar ?? cleanContent.settings.navbar
+          navbar: result.data.settings?.navbar ?? cleanContent.settings.navbar,
+          discord: result.data.settings?.discord ?? cleanContent.settings.discord
         }
       };
 

@@ -324,6 +324,13 @@ export function SettingsPanel() {
     updateSocialLinks(localSettings.socialLinks.filter((l) => l.id !== id));
   };
 
+  const updateDiscordSettings = (discord: Partial<NonNullable<SiteSettings['discord']>>) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      discord: { ...prev.discord, ...discord }
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-10 py-4 border-b border-border">
@@ -677,63 +684,91 @@ export function SettingsPanel() {
         </TabsContent>
 
         {/* Social Links Tab */}
-        <TabsContent value="social" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">
-              Manage your social media links displayed in the footer and CTA sections.
-            </p>
-            <Button size="sm" onClick={addSocialLink}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Link
-            </Button>
+        <TabsContent value="social" className="space-y-8">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Link2 className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Social Links</h3>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Manage your social media links displayed in the footer and CTA sections.
+              </p>
+              <Button size="sm" onClick={addSocialLink}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Link
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {localSettings.socialLinks.map((link) => (
+                <div key={link.id} className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={link.enabled}
+                      onCheckedChange={(v) => updateSocialLink(link.id, { enabled: v })}
+                    />
+                  </div>
+                  <Select
+                    value={link.platform}
+                    onValueChange={(v) => updateSocialLink(link.id, { platform: v as SocialLink['platform'] })}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {socialPlatforms.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.icon} {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={link.label}
+                    onChange={(e) => updateSocialLink(link.id, { label: e.target.value })}
+                    placeholder="Label"
+                    className="w-24"
+                  />
+                  <Input
+                    value={link.url}
+                    onChange={(e) => updateSocialLink(link.id, { url: e.target.value })}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeSocialLink(link.id)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {localSettings.socialLinks.map((link) => (
-              <div key={link.id} className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={link.enabled}
-                    onCheckedChange={(v) => updateSocialLink(link.id, { enabled: v })}
-                  />
-                </div>
-                <Select
-                  value={link.platform}
-                  onValueChange={(v) => updateSocialLink(link.id, { platform: v as SocialLink['platform'] })}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {socialPlatforms.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.icon} {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="space-y-6 pt-6 border-t border-border">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Megaphone className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-heading uppercase">Discord Automation</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Patch Notes Webhook URL</Label>
                 <Input
-                  value={link.label}
-                  onChange={(e) => updateSocialLink(link.id, { label: e.target.value })}
-                  placeholder="Label"
-                  className="w-24"
+                  value={localSettings.discord?.patchNotesWebhookUrl || ''}
+                  onChange={(e) => updateDiscordSettings({ patchNotesWebhookUrl: e.target.value })}
+                  placeholder="https://discord.com/api/webhooks/..."
                 />
-                <Input
-                  value={link.url}
-                  onChange={(e) => updateSocialLink(link.id, { url: e.target.value })}
-                  placeholder="https://..."
-                  className="flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeSocialLink(link.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  When you create a new Patch Note, it will be automatically sent to this Discord channel via webhook.
+                </p>
               </div>
-            ))}
+            </div>
           </div>
         </TabsContent>
 

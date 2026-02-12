@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { ChevronRight } from "lucide-react";
 import { 
   DynamicContentSource, 
   SiteContent,
@@ -10,7 +11,8 @@ import {
   MapItem,
   GameDeviceItem,
   GameModeItem,
-  FeatureItem
+  FeatureItem,
+  PatchNoteItem
 } from '@/lib/content-store';
 import { useContent } from '@/hooks/use-content';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -22,7 +24,8 @@ import {
   MapDetail, 
   DeviceDetail, 
   GameModeDetail,
-  FeatureDetail
+  FeatureDetail,
+  PatchNoteDetail
 } from '@/components/game';
 import { RoadmapTimeline } from '@/components/game/RoadmapTimeline';
 import { RoadmapShowcase } from '@/components/game/RoadmapShowcase';
@@ -30,12 +33,18 @@ import { Button } from "@/components/ui/button";
 
 import { ContentItem } from './dynamic-content/types';
 import { ContentCard } from './dynamic-content/ContentCard';
+import { ListView } from './dynamic-content/ListView';
 import { CarouselView } from './dynamic-content/CarouselView';
 import { HeroCarouselView } from './dynamic-content/HeroCarouselView';
 import { AccordionView } from './dynamic-content/AccordionView';
 import { MasonryView } from './dynamic-content/MasonryView';
 import { SpotlightView } from './dynamic-content/SpotlightView';
 import { FeaturedView } from './dynamic-content/FeaturedView';
+import { NewsTicker } from './dynamic-content/NewsTicker';
+import { AlertBar } from './dynamic-content/AlertBar';
+import { ReleaseStatus, CountdownTimer } from './dynamic-content/ReleaseStatus';
+import { DiscordWidget } from './dynamic-content/DiscordWidget';
+import { BugReportForm } from './dynamic-content/BugReportForm';
 import { InteractiveClassList } from '@/components/game/InteractiveClassList';
 import { ClassItem } from '@/lib/content-store';
 
@@ -55,8 +64,75 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       return content.gameModes || [];
     }
 
+    // Handle new separated source types with inline content
+    if (['alert-bar', 'popup', 'release-status', 'countdown'].includes(source.type)) {
+      if (source.type === 'alert-bar') {
+        return [{
+          id: `inline-alert-${source.alertText}`,
+          title: source.alertText || 'System Alert',
+          description: source.alertText || '',
+          tag: source.alertType === 'warning' ? 'Alert' : source.alertType === 'success' ? 'Success' : source.alertType === 'error' ? 'Error' : 'Info',
+          date: new Date().toISOString(),
+          image: '',
+          link: source.alertLink,
+          category: 'System',
+          author: 'System'
+        } as unknown as NewsItem];
+      }
+      if (source.type === 'popup') {
+         return [{
+          id: `inline-popup-${source.alertText}`,
+          title: source.alertText || 'Announcement',
+          description: source.alertText || '',
+          tag: 'Announcement',
+          date: new Date().toISOString(),
+          image: source.popupImage || '',
+          category: 'System',
+          author: 'System'
+        } as unknown as NewsItem];
+      }
+      if (source.type === 'release-status') {
+        return [{
+          id: 'inline-release',
+          title: 'Release Status',
+          status: source.releaseStatus || 'planned',
+          date: source.targetDate || new Date().toISOString(),
+          category: 'General',
+          description: 'Current Release Status'
+        } as unknown as RoadmapItem];
+      }
+      if (source.type === 'countdown') {
+        return [{
+          id: 'inline-countdown',
+          title: source.alertText || 'Event',
+          date: source.targetDate || new Date().toISOString(),
+          status: 'planned',
+          category: 'Event',
+          description: 'Upcoming Event'
+        } as unknown as RoadmapItem];
+      }
+      return [];
+    }
+
     const key = source.type as keyof SiteContent;
     let allItems = (content[key] as ContentItem[]) || [];
+    
+    // Mix in Patch Notes if enabled for News
+    if (source.type === 'news' && source.includePatchNotes) {
+      const patchNotes = content.patchnotes || [];
+      const mappedPatchNotes = patchNotes.map(pn => ({
+        ...pn,
+        title: pn.title || `Patch Notes v${pn.version}`,
+        date: pn.date,
+        description: pn.subtitle || '',
+        image: pn.image || '',
+        tag: pn.category || 'Patch Notes', // Use category if available, fallback to 'Patch Notes'
+        createdAt: pn.createdAt || pn.date,
+        _isPatchNote: true 
+      }));
+      
+      allItems = [...allItems, ...mappedPatchNotes] as ContentItem[];
+    }
     
     
     // Filter by Configured Type (e.g. for Media)
@@ -67,6 +143,11 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     // Filter by Configured Category (e.g. for Roadmap or Media)
     if ((source.type === 'roadmap' || source.type === 'media') && source.category && source.category !== 'all') {
       allItems = allItems.filter((item) => 'category' in item && (item as any).category === source.category);
+    }
+
+    // Filter by Specific IDs (Manual Selection)
+    if (source.ids && source.ids.length > 0) {
+      allItems = allItems.filter(item => source.ids?.includes(item.id));
     }
 
     // Sort items based on configuration or local override
@@ -114,7 +195,7 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       allItems = [...allItems].sort((a, b) => {
         const dateA = 'date' in a ? new Date((a as any).date).getTime() : 0;
         const dateB = 'date' in b ? new Date((b as any).date).getTime() : 0;
-        return dateB - dateA;
+        return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
       });
     }
 
@@ -161,7 +242,15 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
 
-  if (!baseItems.length) return null;
+  if (!baseItems.length && source.type !== 'discord-widget') return null;
+
+  // Determine grid class
+  let currentGridClass = gridCols[source.gridColumns as keyof typeof gridCols] || gridCols[3];
+  
+  // Force 1 column for patchnotes if not explicitly set to something else
+  if (source.type === 'patchnotes' && !source.gridColumns) {
+    currentGridClass = gridCols[1];
+  }
 
   return (
     <div className="w-full">
@@ -261,6 +350,27 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         <SpotlightView items={filteredItems} source={source} onView={setSelectedItem} />
       ) : source.displayMode === 'featured' || source.displayMode === 'features' || source.displayMode === 'Feautures' ? (
         <FeaturedView items={filteredItems} source={source} onView={setSelectedItem} />
+      ) : source.displayMode === 'list' ? (
+        <ListView items={filteredItems} source={source} onView={setSelectedItem} />
+      ) : source.displayMode === 'ticker' && source.type === 'news' ? (
+        <NewsTicker items={filteredItems as (NewsItem | PatchNoteItem)[]} onView={setSelectedItem} />
+      ) : (source.displayMode === 'alert-bar' || source.type === 'alert-bar') ? (
+        <AlertBar items={filteredItems as (NewsItem | PatchNoteItem)[]} onView={setSelectedItem} />
+      ) : (source.displayMode === 'popup' || source.type === 'popup') ? (
+        <AlertBar items={filteredItems as (NewsItem | PatchNoteItem)[]} onView={setSelectedItem} variant="popup" />
+      ) : (source.displayMode === 'release-status' || source.type === 'release-status') ? (
+        <ReleaseStatus items={filteredItems as RoadmapItem[]} source={source} onView={setSelectedItem} />
+      ) : (source.displayMode === 'countdown' || source.type === 'countdown') ? (
+        <CountdownTimer 
+          targetDate={source.type === 'countdown' ? (source.targetDate || new Date().toISOString()) : (filteredItems[0] ? (filteredItems[0] as RoadmapItem).date : new Date().toISOString())} 
+          title={source.type === 'countdown' ? source.alertText : (filteredItems[0] ? (filteredItems[0] as RoadmapItem).title : undefined)}
+        />
+      ) : source.type === 'discord-widget' ? (
+        source.displayMode === 'bug-report-form' ? (
+          <BugReportForm webhookUrl={source.discordWebhookUrl} />
+        ) : (
+          <DiscordWidget serverId={source.discordServerId} />
+        )
       ) : ['detailed-interactive', 'classes-hex', 'classes-operator', 'classes-vanguard', 'classes-command'].includes(source.displayMode) && source.type === 'classes' ? (
         <InteractiveClassList 
           classes={filteredItems as ClassItem[]} 
@@ -276,10 +386,10 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       ) : (
         <div className={cn(
           "grid gap-6",
-          gridCols[source.gridColumns as keyof typeof gridCols] || gridCols[3]
+          currentGridClass
         )}>
           {filteredItems.map((item, index) => (
-             <ContentCard 
+            <ContentCard 
                key={item.id}
                item={item} 
                type={source.type} 
@@ -292,68 +402,97 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         </div>
       )}
 
-      {/* Detail Modals */}
-      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        {selectedItem && (
-          source.type === 'news' ? (
-            <NewsDetailDialog item={selectedItem as NewsItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
-          ) : source.type === 'media' ? (
-            <MediaDetailDialog item={selectedItem as MediaItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
-          ) : source.type === 'weapons' ? (
-             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-               <WeaponDetail weapon={selectedItem as WeaponItem} onClose={() => setSelectedItem(null)} />
-             </DialogContent>
-          ) : source.type === 'maps' ? (
-             <DialogContent className="max-w-5xl p-0 bg-transparent border-none">
-               <MapDetail map={selectedItem as MapItem} onClose={() => setSelectedItem(null)} />
-             </DialogContent>
-          ) : source.type === 'gameDevices' ? (
-             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-               <DeviceDetail device={selectedItem as GameDeviceItem} onClose={() => setSelectedItem(null)} />
-             </DialogContent>
-          ) : source.type === 'gameModes' || source.type === 'gamemodetab' ? (
-             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-               <GameModeDetail mode={selectedItem as GameModeItem} onClose={() => setSelectedItem(null)} />
-             </DialogContent>
-          ) : source.type === 'features' ? (
-             <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-               <FeatureDetail feature={selectedItem as FeatureItem} onClose={() => setSelectedItem(null)} />
-             </DialogContent>
-          ) : (
-             // Default Fallback Modal
-            <DialogContent className="max-w-2xl bg-card border-border">
-              <DialogHeader>
-                <DialogTitle className="font-heading text-2xl uppercase">
-                  {'title' in selectedItem ? (selectedItem as any).title : 'name' in selectedItem ? (selectedItem as any).name : 'Details'}
-                </DialogTitle>
-                <DialogDescription>
-                  {'date' in selectedItem && (
-                    <span className="block mb-2 text-primary">
-                      {new Date((selectedItem as any).date).toLocaleDateString()}
-                    </span>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="mt-4">
-                {('image' in selectedItem || 'src' in selectedItem) && (
-                  <div className="aspect-video rounded-lg overflow-hidden mb-6">
-                    <img 
-                      src={'image' in selectedItem ? (selectedItem as any).image : (selectedItem as any).src} 
-                      alt="Content" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
-                    {'description' in selectedItem ? (selectedItem as any).description : ''}
-                  </p>
+      {/* Custom Dialogs (Self-contained) */}
+      {selectedItem && source.type === 'news' && !('_isPatchNote' in selectedItem) && (
+        <NewsDetailDialog item={selectedItem as NewsItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
+      )}
+
+      {selectedItem && source.type === 'media' && (
+        <MediaDetailDialog item={selectedItem as MediaItem} open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)} />
+      )}
+
+      {/* Default Fallback Modal for generic types (Not Portal, Not Custom Dialog) */}
+      <Dialog 
+        open={!!selectedItem && !['news', 'media', 'weapons', 'maps', 'gameDevices', 'gameModes', 'gamemodetab', 'features', 'patchnotes'].includes(source.type)} 
+        onOpenChange={(open) => !open && setSelectedItem(null)}
+      >
+        <DialogContent className="max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-2xl uppercase">
+              {selectedItem && ('title' in selectedItem ? (selectedItem as any).title : 'name' in selectedItem ? (selectedItem as any).name : 'Details')}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedItem && 'date' in selectedItem && (
+                <span className="block mb-2 text-primary">
+                  {new Date((selectedItem as any).date).toLocaleDateString()}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedItem && (
+            <div className="mt-4">
+              {('image' in selectedItem || 'src' in selectedItem) && (
+                <div className="aspect-video rounded-lg overflow-hidden mb-6">
+                  <img 
+                    src={'image' in selectedItem ? (selectedItem as any).image : (selectedItem as any).src} 
+                    alt="Content" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
+              )}
+              <div className="prose prose-invert max-w-none">
+                <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {'description' in selectedItem ? (selectedItem as any).description : ''}
+                </p>
               </div>
-            </DialogContent>
-          )
-        )}
+            </div>
+          )}
+        </DialogContent>
       </Dialog>
+
+      {/* Portal-based Details (rendered outside Dialog to avoid double-wrapping) */}
+      {selectedItem && source.type === 'weapons' && (
+         <WeaponDetail weapon={selectedItem as WeaponItem} onClose={() => setSelectedItem(null)} />
+      )}
+      {selectedItem && source.type === 'maps' && (
+         <MapDetail map={selectedItem as MapItem} onClose={() => setSelectedItem(null)} />
+      )}
+      {selectedItem && source.type === 'gameDevices' && (
+         <DeviceDetail device={selectedItem as GameDeviceItem} onClose={() => setSelectedItem(null)} />
+      )}
+      {selectedItem && (source.type === 'gameModes' || source.type === 'gamemodetab') && (
+         <GameModeDetail mode={selectedItem as GameModeItem} onClose={() => setSelectedItem(null)} />
+      )}
+      {selectedItem && source.type === 'features' && (
+         <FeatureDetail feature={selectedItem as FeatureItem} onClose={() => setSelectedItem(null)} />
+      )}
+      {selectedItem && (source.type === 'patchnotes' || (source.type === 'news' && '_isPatchNote' in selectedItem)) && (
+         <PatchNoteDetail 
+           item={selectedItem as PatchNoteItem} 
+           onClose={() => setSelectedItem(null)} 
+           variant={source.detailStyle || (source.includePatchNotes ? 'side-panel' : 'default')}
+         />
+      )}
+
+      {/* View All Button for Patch Notes */}
+      {source.type === 'patchnotes' && source.viewAllSettings?.enabled && (
+        <div className={cn(
+          "mt-8 flex",
+          source.viewAllSettings.alignment === 'center' ? 'justify-center' : 
+          source.viewAllSettings.alignment === 'right' ? 'justify-end' : 'justify-start'
+        )}>
+          <Button 
+            variant="outline" 
+            asChild 
+            className="group uppercase tracking-wider font-heading border-primary/50 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+          >
+            <a href={source.viewAllSettings.url || '#'}>
+              {source.viewAllSettings.label || 'View All Patch Notes'}
+              <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </a>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

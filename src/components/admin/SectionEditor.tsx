@@ -33,14 +33,15 @@ import {
   FeatureItem, 
   WeaponItem, 
   MapItem, 
-  GameDeviceItem 
+  GameDeviceItem,
+  PatchNoteItem
 } from "@/lib/content-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MediaPickerModal } from "@/components/admin/modals/MediaPickerModal";
 import { ServerFilePicker } from "@/components/admin/server-file-picker";
 
-type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem;
+type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem | PatchNoteItem;
 
 interface SectionEditorProps {
   section: CustomSection;
@@ -49,7 +50,7 @@ interface SectionEditorProps {
 }
 
 export function SectionEditor({ section, onChange, headerActions }: SectionEditorProps) {
-  const { news, classes, media, features, weapons, maps, gameDevices, roadmap } = useContent();
+  const { news, classes, media, features, weapons, maps, gameDevices, roadmap, patchnotes } = useContent();
   const [activeTab, setActiveTab] = useState("content");
   
   // Measurement ref for button width calculation
@@ -410,6 +411,12 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 case 'faq': defaultMode = 'accordion'; defaultCount = 10; break;
                                 case 'gamemodetab': defaultMode = 'grid'; defaultCount = 8; break;
                                 case 'roadmap': defaultMode = 'grid'; defaultCount = 4; break;
+                                case 'patchnotes': defaultMode = 'list'; defaultCount = 5; break;
+                                case 'alert-bar': defaultMode = 'alert-bar'; defaultCount = 1; break;
+                                case 'popup': defaultMode = 'popup'; defaultCount = 1; break;
+                                case 'release-status': defaultMode = 'release-status'; defaultCount = 1; break;
+                                case 'countdown': defaultMode = 'countdown'; defaultCount = 1; break;
+                                case 'discord-widget': defaultMode = 'discord-widget'; defaultCount = 1; break;
                               }
 
                               newSources[idx] = { 
@@ -436,6 +443,12 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               <SelectItem value="faq">FAQ</SelectItem>
                               <SelectItem value="gamemodetab">Game Modes</SelectItem>
                               <SelectItem value="roadmap">Roadmap</SelectItem>
+                              <SelectItem value="patchnotes">Patch Notes</SelectItem>
+                              <SelectItem value="alert-bar">Alert Bar</SelectItem>
+                              <SelectItem value="popup">Announcement Popup</SelectItem>
+                              <SelectItem value="release-status">Release Status</SelectItem>
+                              <SelectItem value="countdown">Countdown Timer</SelectItem>
+                              <SelectItem value="discord-widget">Discord Integration</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -461,10 +474,25 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               <SelectItem value="spotlight">Spotlight (Hero + List)</SelectItem>
                               <SelectItem value="masonry">Masonry</SelectItem>
                               <SelectItem value="featured">Featured</SelectItem>
+                              {source.type === 'news' && (
+                                <>
+                                  <SelectItem value="ticker">News Ticker</SelectItem>
+                                </>
+                              )}
                               {source.type === 'roadmap' && (
                                 <>
                                   <SelectItem value="timeline">Timeline</SelectItem>
                                   <SelectItem value="showcase">Showcase</SelectItem>
+                                </>
+                              )}
+                              {source.type === 'alert-bar' && <SelectItem value="alert-bar">Alert Bar</SelectItem>}
+                              {source.type === 'popup' && <SelectItem value="popup">Announcement Popup</SelectItem>}
+                              {source.type === 'release-status' && <SelectItem value="release-status">Release Status</SelectItem>}
+                              {source.type === 'countdown' && <SelectItem value="countdown">Countdown Timer</SelectItem>}
+                              {source.type === 'discord-widget' && (
+                                <>
+                                  <SelectItem value="discord-widget">Server Widget</SelectItem>
+                                  <SelectItem value="bug-report-form">Bug Report Form</SelectItem>
                                 </>
                               )}
                               {source.type === 'classes' && (
@@ -578,6 +606,127 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 )}
                               </SelectContent>
                             </Select>
+                          </div>
+                        )}
+
+                        {source.type === 'news' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`include-patch-notes-${idx}`} 
+                                checked={source.includePatchNotes || false}
+                                onCheckedChange={(checked) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], includePatchNotes: checked === true };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              />
+                              <label 
+                                htmlFor={`include-patch-notes-${idx}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                Include Patch Notes
+                              </label>
+                            </div>
+
+                            {source.includePatchNotes && (
+                              <div className="pl-6 space-y-2">
+                                <Label>Patch Note Popup Style</Label>
+                                <Select
+                                  value={source.detailStyle || 'side-panel'}
+                                  onValueChange={(val: any) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], detailStyle: val };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="default">Standard Modal</SelectItem>
+                                    <SelectItem value="side-panel">Side Panel</SelectItem>
+                                    <SelectItem value="full-screen">Full Screen</SelectItem>
+                                    <SelectItem value="minimal">Minimal</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {source.type === 'patchnotes' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             <div className="space-y-2">
+                                <Label>Popup Style</Label>
+                                <Select
+                                  value={source.detailStyle || 'default'}
+                                  onValueChange={(val: any) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], detailStyle: val };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="default">Standard Modal</SelectItem>
+                                    <SelectItem value="side-panel">Side Panel</SelectItem>
+                                    <SelectItem value="full-screen">Full Screen</SelectItem>
+                                    <SelectItem value="minimal">Minimal</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                             <div className="flex items-center space-x-2">
+                               <Checkbox 
+                                 id={`view-all-enabled-${idx}`}
+                                 checked={source.viewAllSettings?.enabled || false}
+                                 onCheckedChange={(checked) => {
+                                   const newSources = [...(section.content.dynamicSources || [])];
+                                   const defaultSettings = { label: 'View All', url: '#', alignment: 'center' };
+                                   newSources[idx] = { 
+                                     ...newSources[idx], 
+                                     viewAllSettings: { 
+                                       ...(newSources[idx].viewAllSettings || defaultSettings),
+                                       enabled: checked === true 
+                                     } 
+                                   };
+                                   updateContent({ dynamicSources: newSources });
+                                 }}
+                               />
+                               <Label htmlFor={`view-all-enabled-${idx}`} className="cursor-pointer">Enable "View All" Button</Label>
+                             </div>
+                             
+                             {source.viewAllSettings?.enabled && (
+                               <div className="grid grid-cols-2 gap-2 pl-6">
+                                 <div className="space-y-2">
+                                   <Label className="text-xs">Label</Label>
+                                   <Input 
+                                     value={source.viewAllSettings.label || 'View All'} 
+                                     onChange={(e) => {
+                                       const newSources = [...(section.content.dynamicSources || [])];
+                                       if (newSources[idx].viewAllSettings) {
+                                         newSources[idx].viewAllSettings!.label = e.target.value;
+                                         updateContent({ dynamicSources: newSources });
+                                       }
+                                     }}
+                                     className="h-8"
+                                   />
+                                 </div>
+                                 <div className="space-y-2">
+                                   <Label className="text-xs">URL</Label>
+                                   <Input 
+                                     value={source.viewAllSettings.url || '#'} 
+                                     onChange={(e) => {
+                                       const newSources = [...(section.content.dynamicSources || [])];
+                                       if (newSources[idx].viewAllSettings) {
+                                         newSources[idx].viewAllSettings!.url = e.target.value;
+                                         updateContent({ dynamicSources: newSources });
+                                       }
+                                     }}
+                                     className="h-8"
+                                   />
+                                 </div>
+                               </div>
+                             )}
                           </div>
                         )}
 
@@ -723,6 +872,270 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           </div>
                         )}
 
+                        {source.type === 'alert-bar' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             <div className="space-y-2">
+                                <Label>Alert Text</Label>
+                                <Input 
+                                  value={source.alertText || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], alertText: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Alert Link (Optional)</Label>
+                                <Input 
+                                  value={source.alertLink || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], alertLink: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Alert Type</Label>
+                                <Select
+                                   value={source.alertType || 'info'}
+                                   onValueChange={(val: any) => {
+                                      const newSources = [...(section.content.dynamicSources || [])];
+                                      newSources[idx] = { ...newSources[idx], alertType: val };
+                                      updateContent({ dynamicSources: newSources });
+                                   }}
+                                >
+                                   <SelectTrigger><SelectValue /></SelectTrigger>
+                                   <SelectContent>
+                                      <SelectItem value="info">Info (Blue)</SelectItem>
+                                      <SelectItem value="warning">Warning (Orange)</SelectItem>
+                                      <SelectItem value="success">Success (Green)</SelectItem>
+                                      <SelectItem value="error">Error (Red)</SelectItem>
+                                   </SelectContent>
+                                </Select>
+                             </div>
+                          </div>
+                        )}
+
+                        {source.type === 'popup' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             <div className="space-y-2">
+                                <Label>Popup Text</Label>
+                                <Input 
+                                  value={source.alertText || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], alertText: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Popup Image URL (Optional)</Label>
+                                <Input 
+                                  value={source.popupImage || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], popupImage: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                          </div>
+                        )}
+
+                        {source.type === 'release-status' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             <div className="space-y-2">
+                                <Label>Status</Label>
+                                <Select
+                                   value={source.releaseStatus || 'planned'}
+                                   onValueChange={(val: any) => {
+                                      const newSources = [...(section.content.dynamicSources || [])];
+                                      newSources[idx] = { ...newSources[idx], releaseStatus: val };
+                                      updateContent({ dynamicSources: newSources });
+                                   }}
+                                >
+                                   <SelectTrigger><SelectValue /></SelectTrigger>
+                                   <SelectContent>
+                                      <SelectItem value="planned">Planned</SelectItem>
+                                      <SelectItem value="in-progress">In Progress</SelectItem>
+                                      <SelectItem value="completed">Completed</SelectItem>
+                                      <SelectItem value="delayed">Delayed</SelectItem>
+                                      <SelectItem value="released">Released</SelectItem>
+                                   </SelectContent>
+                                </Select>
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Target Date (YYYY-MM-DD)</Label>
+                                <Input 
+                                  type="date"
+                                  value={source.targetDate || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], targetDate: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+
+                             <div className="space-y-2">
+                                <Label>Description</Label>
+                                <Textarea 
+                                  value={source.alertText || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], alertText: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                  placeholder="Brief description of the release status..."
+                                  className="min-h-[80px]"
+                                />
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                   <Label>Primary Button Label</Label>
+                                   <Input 
+                                      value={source.primaryButtonLabel || ''}
+                                      onChange={(e) => {
+                                         const newSources = [...(section.content.dynamicSources || [])];
+                                         newSources[idx] = { ...newSources[idx], primaryButtonLabel: e.target.value };
+                                         updateContent({ dynamicSources: newSources });
+                                      }}
+                                      placeholder="e.g. View Details"
+                                   />
+                                </div>
+                                <div className="space-y-2">
+                                   <Label>Primary Button Link</Label>
+                                   <Input 
+                                      value={source.primaryButtonLink || ''}
+                                      onChange={(e) => {
+                                         const newSources = [...(section.content.dynamicSources || [])];
+                                         newSources[idx] = { ...newSources[idx], primaryButtonLink: e.target.value };
+                                         updateContent({ dynamicSources: newSources });
+                                      }}
+                                      placeholder="https://..."
+                                   />
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                   <Label>Secondary Button Label</Label>
+                                   <Input 
+                                      value={source.secondaryButtonLabel || ''}
+                                      onChange={(e) => {
+                                         const newSources = [...(section.content.dynamicSources || [])];
+                                         newSources[idx] = { ...newSources[idx], secondaryButtonLabel: e.target.value };
+                                         updateContent({ dynamicSources: newSources });
+                                      }}
+                                      placeholder="e.g. Learn More"
+                                   />
+                                </div>
+                                <div className="space-y-2">
+                                   <Label>Secondary Button Link</Label>
+                                   <Input 
+                                      value={source.secondaryButtonLink || ''}
+                                      onChange={(e) => {
+                                         const newSources = [...(section.content.dynamicSources || [])];
+                                         newSources[idx] = { ...newSources[idx], secondaryButtonLink: e.target.value };
+                                         updateContent({ dynamicSources: newSources });
+                                      }}
+                                      placeholder="https://..."
+                                   />
+                                </div>
+                             </div>
+
+                             <div className="flex items-center space-x-2 pt-2">
+                                <Checkbox 
+                                  id={`full-width-${idx}`} 
+                                  checked={source.forceFullWidth || false}
+                                  onCheckedChange={(checked) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], forceFullWidth: checked === true };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                                <label 
+                                  htmlFor={`full-width-${idx}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  Force Full Screen Width
+                                </label>
+                             </div>
+                          </div>
+                        )}
+
+                        {source.type === 'countdown' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             <div className="space-y-2">
+                                <Label>Target Date & Time</Label>
+                                <Input 
+                                  type="datetime-local"
+                                  value={source.targetDate || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], targetDate: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Event Name</Label>
+                                <Input 
+                                  value={source.alertText || ''} 
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], alertText: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                             </div>
+                          </div>
+                        )}
+
+                        {source.type === 'discord-widget' && (
+                          <div className="space-y-4 pt-2 border-t mt-2">
+                             {source.displayMode === 'discord-widget' && (
+                               <div className="space-y-2">
+                                  <Label>Discord Server ID</Label>
+                                  <Input 
+                                    value={source.discordServerId || ''} 
+                                    onChange={(e) => {
+                                      const newSources = [...(section.content.dynamicSources || [])];
+                                      newSources[idx] = { ...newSources[idx], discordServerId: e.target.value };
+                                      updateContent({ dynamicSources: newSources });
+                                    }}
+                                    placeholder="e.g. 123456789012345678"
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Enable "Widget" in your Discord Server Settings to get this ID.
+                                  </p>
+                               </div>
+                             )}
+
+                             {source.displayMode === 'bug-report-form' && (
+                               <div className="space-y-2">
+                                  <Label>Discord Webhook URL</Label>
+                                  <Input 
+                                    value={source.discordWebhookUrl || ''} 
+                                    onChange={(e) => {
+                                      const newSources = [...(section.content.dynamicSources || [])];
+                                      newSources[idx] = { ...newSources[idx], discordWebhookUrl: e.target.value };
+                                      updateContent({ dynamicSources: newSources });
+                                    }}
+                                    placeholder="https://discord.com/api/webhooks/..."
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Create a Webhook in your Discord Channel Integrations.
+                                  </p>
+                               </div>
+                             )}
+                          </div>
+                        )}
+
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <Label>Max Items</Label>
@@ -746,20 +1159,29 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               </div>
                             )}
                           </div>
-                          <div className={cn("flex items-center gap-2", { "opacity-50 pointer-events-none": source.fetchAll })}>
+                          <div className={cn("flex items-center gap-2")}>
                             <Slider
-                              value={[source.count || 3]}
+                              value={[source.fetchAll ? 20 : (source.count || 3)]}
                               min={1}
                               max={20}
                               step={1}
                               onValueChange={(vals) => {
                                 const newSources = [...(section.content.dynamicSources || [])];
-                                newSources[idx] = { ...newSources[idx], count: vals[0] };
+                                const newVal = vals[0];
+                                const isAll = newVal === 20;
+                                
+                                newSources[idx] = { 
+                                  ...newSources[idx], 
+                                  count: newVal,
+                                  fetchAll: isAll
+                                };
                                 updateContent({ dynamicSources: newSources });
                               }}
                               className="flex-1"
                             />
-                            <span className="text-sm w-8 text-right">{source.count || 3}</span>
+                            <span className="text-sm w-8 text-right">
+                              {source.fetchAll || (source.count === 20) ? "All" : source.count || 3}
+                            </span>
                           </div>
                         </div>
 
@@ -777,12 +1199,15 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                   case 'weapons': items = weapons; break;
                                   case 'maps': items = maps; break;
                                   case 'gameDevices': items = gameDevices; break;
+                                  case 'patchnotes': items = patchnotes || []; break;
                                 }
                                 
                                 if (items.length === 0) return <div className="text-xs text-muted-foreground text-center py-4">No items found for this type.</div>;
 
                                 return items.map((item: ContentItem) => {
-                                   const label = 'title' in item ? item.title : 'name' in item ? item.name : "Untitled";
+                                   const label = 'title' in item && item.title ? item.title : 
+                                                 'version' in item ? `v${(item as any).version}` : 
+                                                 'name' in item ? item.name : "Untitled";
                                    return (
                                    <div key={item.id} className="flex items-center space-x-2">
                                      <Checkbox 

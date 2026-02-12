@@ -329,6 +329,7 @@ async function fetchAllData(conn: PoolConnection) {
     gameDevices,
     gameModes,
     roadmap,
+    patchnotes,
     settingsRows
   ] = await Promise.all([
     conn.query('SELECT * FROM news'),
@@ -343,6 +344,7 @@ async function fetchAllData(conn: PoolConnection) {
     conn.query('SELECT * FROM game_devices'),
     conn.query('SELECT * FROM game_modes'),
     conn.query('SELECT * FROM roadmap'),
+    conn.query('SELECT * FROM patchnotes'),
     conn.query('SELECT * FROM settings WHERE id = ?', ['main_settings'])
   ]);
 
@@ -385,7 +387,8 @@ async function fetchAllData(conn: PoolConnection) {
         cta: parse(row.cta) || {},
         newsSection: parse(row.news_section) || {},
         customSections: parse(row.custom_sections) || {},
-        navbar: parse(row.navbar) ?? undefined
+        navbar: parse(row.navbar) ?? undefined,
+        discord: parse(row.discord) || {}
       };
   }
 
@@ -416,6 +419,12 @@ async function fetchAllData(conn: PoolConnection) {
       id: i.id.toString(), 
       tasks: i.tasks, 
       order: i.sort_order, // Map DB sort_order to interface order
+      createdAt: i.created_at
+    })),
+    patchnotes: patchnotes.map((i: DbRow) => ({
+      ...i,
+      id: i.id.toString(),
+      content: i.content,
       createdAt: i.created_at
     })),
     settings: settings
@@ -545,7 +554,16 @@ app.post('/api/data', async (req, res) => {
       await conn.batch('INSERT INTO roadmap (id, phase, title, date, status, description, image, category, tasks, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
-    // 12. Pages
+    // 12. Patch Notes
+    await conn.query('TRUNCATE TABLE patchnotes');
+    if (content.patchnotes?.length) {
+      const batch = content.patchnotes.map((item: any) => [
+        item.id, item.version, item.title, item.subtitle, item.date, item.image, JSON.stringify(item.content), item.category, formatDateForDb(item.createdAt)
+      ]);
+      await conn.batch('INSERT INTO patchnotes (id, version, title, subtitle, date, image, content, category, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
+    }
+
+    // 13. Pages
     if (content.pages && content.pages.length > 0) {
       await conn.query('DELETE FROM pages'); // Full sync approach for simplicity, or use upsert
       const batch = content.pages.map((p: any) => [
@@ -572,8 +590,8 @@ app.post('/api/data', async (req, res) => {
           site_name, site_tagline, logo_url, favicon_url, copyright_text, powered_by_text,
           seo_title, seo_description, seo_keywords, og_image, twitter_handle,
           social_links, theme, backgrounds, homepage_sections,
-          hero, cta, news_section, custom_sections, navbar
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          hero, cta, news_section, custom_sections, navbar, discord
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           site_name = VALUES(site_name),
           site_tagline = VALUES(site_tagline),
@@ -594,14 +612,16 @@ app.post('/api/data', async (req, res) => {
           cta = VALUES(cta),
           news_section = VALUES(news_section),
           custom_sections = VALUES(custom_sections),
-          navbar = VALUES(navbar)
+          navbar = VALUES(navbar),
+          discord = VALUES(discord)
       `, [
         'main_settings',
         b.siteName || null, b.siteTagline || null, b.logoUrl || null, b.faviconUrl || null, b.copyrightText || null, b.poweredByText || null,
         seo.defaultTitle || null, seo.defaultDescription || null, JSON.stringify(seo.defaultKeywords || []), seo.ogImage || null, seo.twitterHandle || null,
         JSON.stringify(s.socialLinks || {}), JSON.stringify(s.theme || {}), JSON.stringify(s.backgrounds || {}), JSON.stringify(s.homepageSections || {}),
         JSON.stringify(s.hero || {}), JSON.stringify(s.cta || {}), JSON.stringify(s.newsSection || {}),
-          JSON.stringify(s.customSections || {}), s.navbar !== undefined ? JSON.stringify(s.navbar) : null
+        JSON.stringify(s.customSections || {}), s.navbar !== undefined ? JSON.stringify(s.navbar) : null,
+        JSON.stringify(s.discord || {})
         ]);
      }
 
@@ -685,6 +705,41 @@ app.post('/api/env', (req, res) => {
     res.json({ message: 'Configuration saved. Please restart the server for changes to take effect.' });
   } catch (error) {
     console.error('Error updating .env:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/discord-proxy - Proxy Discord webhook requests to avoid CORS
+app.post('/api/discord-proxy', async (req, res) => {
+  try {
+    const { webhookUrl, payload } = req.body;
+
+    if (!webhookUrl || !payload) {
+      return res.status(400).json({ error: 'Missing webhookUrl or payload' });
+    }
+
+    // Basic validation to ensure we're only proxying to Discord
+    if (!webhookUrl.startsWith('https://discord.com/api/webhooks/') && !webhookUrl.startsWith('https://discordapp.com/api/webhooks/')) {
+      return res.status(400).json({ error: 'Invalid Discord webhook URL' });
+    }
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok || response.status === 204) {
+      res.json({ success: true });
+    } else {
+      const errorText = await response.text();
+      console.error('Discord API Error:', response.status, errorText);
+      res.status(response.status).json({ error: 'Discord API Error', details: errorText });
+    }
+  } catch (error) {
+    console.error('Error proxying to Discord:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

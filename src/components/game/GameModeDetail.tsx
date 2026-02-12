@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, ChevronRight } from "lucide-react";
 import { GameModeItem, MapMediaItem } from "@/lib/content-store";
 import { MediaLightbox } from "./MediaLightbox";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 
 export function GameModeDetail({ mode, onClose }: { mode: GameModeItem; onClose: () => void }) {
+  useLockBodyScroll();
   const [selectedMedia, setSelectedMedia] = useState<MapMediaItem | null>(null);
 
   return createPortal(

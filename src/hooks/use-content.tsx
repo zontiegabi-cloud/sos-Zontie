@@ -13,6 +13,7 @@ import {
   GameDeviceItem,
   GameModeItem,
   RoadmapItem,
+  PatchNoteItem,
   getContent, 
   getData,
   saveData, 
@@ -287,6 +288,26 @@ export function useContent() {
     updateContent({ ...content, roadmap: newRoadmap });
   }, [content, updateContent]);
 
+  // Patch Notes
+  const addPatchNoteItem = useCallback((item: Omit<PatchNoteItem, 'id'>) => {
+    const newItem = { ...item, id: generateId(), createdAt: new Date().toISOString() };
+    const newContent = { ...content, patchnotes: [newItem, ...(content.patchnotes || [])] };
+    updateContent(newContent);
+    return newItem;
+  }, [content, updateContent]);
+
+  const updatePatchNoteItem = useCallback((id: string, updates: Partial<PatchNoteItem>) => {
+    const newPatchNotes = (content.patchnotes || []).map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    updateContent({ ...content, patchnotes: newPatchNotes });
+  }, [content, updateContent]);
+
+  const deletePatchNoteItem = useCallback((id: string) => {
+    const newPatchNotes = (content.patchnotes || []).filter(item => item.id !== id);
+    updateContent({ ...content, patchnotes: newPatchNotes });
+  }, [content, updateContent]);
+
   // Pages
   const addPage = useCallback((item: Omit<Page, 'id'>) => {
     const currentPages = content.pages || [];
@@ -349,6 +370,7 @@ export function useContent() {
     gameDevices: content.gameDevices,
     gameModes: content.gameModes,
     roadmap: content.roadmap,
+    patchnotes: content.patchnotes,
     addNewsItem,
     updateNewsItem,
     deleteNewsItem,
@@ -381,6 +403,9 @@ export function useContent() {
     addRoadmapItem,
     updateRoadmapItem,
     deleteRoadmapItem,
+    addPatchNoteItem,
+    updatePatchNoteItem,
+    deletePatchNoteItem,
     addPage,
     updatePage,
     deletePage,

@@ -3,8 +3,10 @@ import { X } from "lucide-react";
 import { WeaponItem } from "@/lib/content-store";
 import { StatBar } from "./StatBar";
 import { createPortal } from "react-dom";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 
 export function WeaponDetail({ weapon, onClose }: { weapon: WeaponItem; onClose: () => void }) {
+  useLockBodyScroll();
   const categoryLabels: Record<string, string> = {
     assault: "Assault Rifle",
     smg: "SMG",

@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { DynamicContentSource, NewsItem, ClassItem, MediaItem, WeaponItem, MapItem, GameDeviceItem, GameModeItem, RoadmapItem } from '@/lib/content-store';
+import { DynamicContentSource, NewsItem, ClassItem, MediaItem, WeaponItem, MapItem, GameDeviceItem, GameModeItem, RoadmapItem, PatchNoteItem } from '@/lib/content-store';
 import { ContentItem } from './types';
 import { FeaturesContentCard } from './FeaturesContentCard';
 import { NewsContentCard } from './NewsContentCard';
@@ -8,6 +8,7 @@ import { DefaultContentCard } from './DefaultContentCard';
 import { ClassesContentCard } from '@/components/game/ClassesContentCard';
 import { WeaponCard, MapCard, DeviceCard, GameModeCard } from '@/components/game/GameContentCards';
 import { RoadmapCard } from '@/components/game/RoadmapCard';
+import { PatchNoteCard } from '@/components/game/PatchNoteCard';
 
 export const ContentCard = forwardRef<HTMLDivElement, { 
   item: ContentItem, 
@@ -66,6 +67,13 @@ export const ContentCard = forwardRef<HTMLDivElement, {
          <RoadmapCard item={item as unknown as RoadmapItem} />
        </div>
      );
+  }
+  if (type === 'patchnotes') {
+    return (
+      <div ref={ref} className="h-full w-full">
+        <PatchNoteCard item={item as unknown as PatchNoteItem} index={index} onClick={() => onView(item)} />
+      </div>
+    );
   }
 
   return <DefaultContentCard ref={ref} item={item} />;

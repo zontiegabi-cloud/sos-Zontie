@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play } from "lucide-react";
 import { MapItem, MapMediaItem } from "@/lib/content-store";
 import { MediaLightbox } from "./MediaLightbox";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 
 export function MapDetail({ map, onClose }: { map: MapItem; onClose: () => void }) {
+  useLockBodyScroll();
   const [selectedMedia, setSelectedMedia] = useState<MapMediaItem | null>(null);
 
   return createPortal(

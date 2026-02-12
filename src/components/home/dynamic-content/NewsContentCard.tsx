@@ -13,6 +13,26 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
 }>(
   ({ item, index, onView, cardStyle = 'default' }, ref) => {
   
+  const getTagColor = (tag?: string) => {
+    if (!tag) return 'bg-primary/90 text-primary-foreground';
+    
+    const lowerTag = tag.toLowerCase();
+    
+    if (lowerTag.includes('patch') || lowerTag.includes('update') || lowerTag.includes('hotfix')) {
+      return 'bg-blue-600/90 text-white'; // Blue for Patch Notes/Updates
+    }
+    
+    if (lowerTag.includes('event')) {
+      return 'bg-purple-600/90 text-white'; // Purple for Events
+    }
+    
+    if (lowerTag.includes('community')) {
+      return 'bg-green-600/90 text-white'; // Green for Community
+    }
+    
+    return 'bg-primary/90 text-primary-foreground'; // Default Primary
+  };
+
   // Tech Style
   if (cardStyle === 'tech') {
     return (
@@ -87,7 +107,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
             {item.tag && (
-              <span className="absolute top-3 left-3 px-2 py-0.5 bg-primary/90 text-primary-foreground text-[10px] font-heading uppercase tracking-wider rounded-sm">
+              <span className={`absolute top-3 left-3 px-2 py-0.5 text-[10px] font-heading uppercase tracking-wider rounded-sm ${getTagColor(item.tag)}`}>
                 {item.tag}
               </span>
             )}
@@ -179,10 +199,10 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
           <div className="absolute inset-0 p-6 flex flex-col justify-end">
             <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
               {item.tag && (
-                <span className="inline-block px-2 py-1 bg-primary text-primary-foreground text-xs font-heading uppercase tracking-wider rounded mb-3">
-                  {item.tag}
-                </span>
-              )}
+              <span className={`inline-block px-2 py-1 ${getTagColor(item.tag)} text-xs font-heading uppercase tracking-wider rounded mb-3`}>
+                {item.tag}
+              </span>
+            )}
               <h3 className="font-display text-2xl text-white mb-2 leading-tight">
                 {item.title}
               </h3>
@@ -225,7 +245,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
           
           <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end items-start">
             <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-              <span className="inline-block px-4 py-1.5 bg-primary text-primary-foreground text-sm font-bold uppercase tracking-widest rounded mb-4 shadow-lg shadow-primary/20">
+              <span className={`inline-block px-4 py-1.5 ${getTagColor(item.tag || 'Featured')} text-sm font-bold uppercase tracking-widest rounded mb-4 shadow-lg shadow-primary/20`}>
                 {item.tag || 'Featured'}
               </span>
               
@@ -274,7 +294,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
             />
              {item.tag && (
-              <div className="absolute top-0 left-0 bg-foreground text-background px-3 py-1 text-xs font-bold uppercase tracking-widest">
+              <div className={`absolute top-0 left-0 ${getTagColor(item.tag).replace('bg-primary/90 text-primary-foreground', 'bg-foreground text-background').replace('bg-blue-600/90 text-white', 'bg-blue-600 text-white').replace('bg-purple-600/90 text-white', 'bg-purple-600 text-white').replace('bg-green-600/90 text-white', 'bg-green-600 text-white')} px-3 py-1 text-xs font-bold uppercase tracking-widest`}>
                 {item.tag}
               </div>
             )}
@@ -318,7 +338,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
         <div className="flex flex-col h-full">
           <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-primary">
+              <span className={`text-xs font-bold uppercase tracking-widest ${item.tag && (item.tag.toLowerCase().includes('patch') || item.tag.toLowerCase().includes('update')) ? 'text-blue-500' : 'text-primary'}`}>
                 {item.tag || 'News'}
               </span>
               <span className="text-xs text-muted-foreground font-medium">
@@ -367,7 +387,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
           </div>
           <div className="flex-1 flex flex-col justify-center py-1">
             {item.tag && (
-              <span className="text-[10px] text-primary font-heading uppercase tracking-wide mb-1">
+              <span className={`text-[10px] ${item.tag.toLowerCase().includes('patch') || item.tag.toLowerCase().includes('update') ? 'text-blue-500' : 'text-primary'} font-heading uppercase tracking-wide mb-1`}>
                 {item.tag}
               </span>
             )}
@@ -414,7 +434,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
            </span>
         </div>
         {item.tag && (
-          <span className="absolute top-4 left-4 px-3 py-1 bg-background/80 backdrop-blur-sm text-foreground text-xs font-bold uppercase tracking-wider rounded-md border border-border/50">
+          <span className={`absolute top-4 left-4 px-3 py-1 bg-background/80 backdrop-blur-sm ${item.tag.toLowerCase().includes('patch') || item.tag.toLowerCase().includes('update') ? 'text-blue-500 border-blue-500/30' : 'text-foreground border-border/50'} text-xs font-bold uppercase tracking-wider rounded-md border`}>
             {item.tag}
           </span>
         )}

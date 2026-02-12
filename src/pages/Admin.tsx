@@ -44,8 +44,9 @@ import { FAQTab } from "@/components/admin/tabs/FAQTab";
 import { UsersTab } from "@/components/admin/tabs/UsersTab";
 import { RoadMapTab } from "@/components/admin/tabs/RoadMapTab";
 import { NavbarTab } from "@/components/admin/tabs/NavbarTab";
+import { PatchNotesTab } from "@/components/admin/tabs/PatchNotesTab";
 
-type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar";
+type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar" | "patchnotes";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -127,6 +128,7 @@ export default function Admin() {
     { id: "features" as Tab, label: "Features", icon: Shield, roles: ['admin'] },
     { id: "faq" as Tab, label: "FAQ", icon: HelpCircle, roles: ['admin'] },
     { id: "roadmap" as Tab, label: "Roadmap", icon: Map, roles: ['admin'] },
+    { id: "patchnotes" as Tab, label: "Patch Notes", icon: FileText, roles: ['admin'] },
     { id: "users" as Tab, label: "Users", icon: UserCog, roles: ['admin'] },
     { id: "settings" as Tab, label: "Settings", icon: Settings, roles: ['admin'] },
   ];
@@ -338,6 +340,7 @@ export default function Admin() {
             {activeTab === "features" && <FeaturesTab />}
             {activeTab === "faq" && <FAQTab />}
             {activeTab === "roadmap" && <RoadMapTab />}
+            {activeTab === "patchnotes" && <PatchNotesTab />}
             {activeTab === "settings" && <SettingsPanel />}
             {activeTab === "users" && <UsersTab />}
           </motion.div>

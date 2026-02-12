@@ -3,8 +3,10 @@ import { X } from "lucide-react";
 import { FeatureItem } from "@/lib/content-store";
 import { createPortal } from "react-dom";
 import { iconMap } from "@/lib/icon-map";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 
 export function FeatureDetail({ feature, onClose }: { feature: FeatureItem; onClose: () => void }) {
+  useLockBodyScroll();
   
   return createPortal(
     <motion.div

@@ -199,7 +199,7 @@ border-color: hsl(var(--border));
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--surface-darker));
+    background: hsl(var(--background)); 
   }
 
   ::-webkit-scrollbar-thumb {
@@ -208,8 +208,30 @@ border-color: hsl(var(--border));
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.5);
+    background: hsl(var(--primary));
   }
+
+  /* Custom scrollbar class for specific containers */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.5);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+
+
 
   /* Custom Animations */
   @keyframes pulsate-shadow {

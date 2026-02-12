@@ -9,3 +9,6 @@ export * from './RoadmapCard';
 export * from './InteractiveClassList';
 export * from './ClassesContentCard';
 export * from './FeatureDetail';
+export * from './PatchNoteDetail';
+export * from './PatchNoteCard';
+
