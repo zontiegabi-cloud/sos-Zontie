@@ -43,6 +43,175 @@ import { ServerFilePicker } from "@/components/admin/server-file-picker";
 
 type ContentItem = NewsItem | ClassItem | MediaItem | FeatureItem | WeaponItem | MapItem | GameDeviceItem | PatchNoteItem;
 
+type SectionSettings = CustomSection["settings"];
+type AnimationSettings = NonNullable<SectionSettings["animation"]>;
+
+const FONT_FAMILY_OPTIONS: { value: string; label: string }[] = [
+  { value: "var(--font-heading)", label: "Theme Heading" },
+  { value: "var(--font-display)", label: "Theme Display" },
+  { value: "var(--font-body)", label: "Theme Body" },
+  { value: "'Anton', sans-serif", label: "Anton" },
+  { value: "'Audiowide', cursive", label: "Audiowide" },
+  { value: "'Bebas Neue', sans-serif", label: "Bebas Neue" },
+  { value: "'Black Ops One', cursive", label: "Black Ops One" },
+  { value: "'Bungee', cursive", label: "Bungee" },
+  { value: "'Exo 2', sans-serif", label: "Exo 2" },
+  { value: "'Inter', sans-serif", label: "Inter" },
+  { value: "'Lato', sans-serif", label: "Lato" },
+  { value: "'Nunito', sans-serif", label: "Nunito" },
+  { value: "'Open Sans', sans-serif", label: "Open Sans" },
+  { value: "'Orbitron', sans-serif", label: "Orbitron" },
+  { value: "'Oswald', sans-serif", label: "Oswald" },
+  { value: "'PT Sans', sans-serif", label: "PT Sans" },
+  { value: "'Quantico', sans-serif", label: "Quantico" },
+  { value: "'Rajdhani', sans-serif", label: "Rajdhani" },
+  { value: "'Roboto', sans-serif", label: "Roboto" },
+  { value: "'Russo One', sans-serif", label: "Russo One" },
+  { value: "'Saira', sans-serif", label: "Saira" },
+  { value: "'Source Sans 3', sans-serif", label: "Source Sans 3" },
+  { value: "'Teko', sans-serif", label: "Teko" },
+  { value: "'Titillium Web', sans-serif", label: "Titillium Web" },
+  { value: "sans-serif", label: "Sans Serif" },
+  { value: "serif", label: "Serif" },
+  { value: "monospace", label: "Monospace" },
+];
+
+const renderFontFamilyOptions = (customFontName?: string) => (
+  <>
+    {FONT_FAMILY_OPTIONS.map((opt) => (
+      <SelectItem key={opt.value} value={opt.value}>
+        {opt.label}
+      </SelectItem>
+    ))}
+    {customFontName && (
+      <SelectItem value={customFontName}>
+        Custom: {customFontName}
+      </SelectItem>
+    )}
+  </>
+);
+
+const TRANSFORM_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "uppercase", label: "Uppercase" },
+  { value: "lowercase", label: "Lowercase" },
+  { value: "capitalize", label: "Capitalize" },
+];
+
+const renderTransformOptions = () => (
+  <>
+    {TRANSFORM_OPTIONS.map((opt) => (
+      <SelectItem key={opt.value} value={opt.value}>
+        {opt.label}
+      </SelectItem>
+    ))}
+  </>
+);
+
+const TITLE_FONT_WEIGHT_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "medium", label: "Medium" },
+  { value: "bold", label: "Bold" },
+  { value: "extrabold", label: "Extra Bold" },
+  { value: "black", label: "Black" },
+];
+
+const BODY_FONT_WEIGHT_OPTIONS = [
+  { value: "light", label: "Light" },
+  { value: "normal", label: "Normal" },
+  { value: "medium", label: "Medium" },
+  { value: "semibold", label: "Semibold" },
+];
+
+const renderTitleFontWeightOptions = () => (
+  <>
+    {TITLE_FONT_WEIGHT_OPTIONS.map((opt) => (
+      <SelectItem key={opt.value} value={opt.value}>
+        {opt.label}
+      </SelectItem>
+    ))}
+  </>
+);
+
+const renderBodyFontWeightOptions = () => (
+  <>
+    {BODY_FONT_WEIGHT_OPTIONS.map((opt) => (
+      <SelectItem key={opt.value} value={opt.value}>
+        {opt.label}
+      </SelectItem>
+    ))}
+  </>
+);
+
+const ANIMATION_TYPE_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "fade-in", label: "Fade In" },
+  { value: "slide-up", label: "Slide Up" },
+  { value: "slide-right", label: "Slide Right" },
+  { value: "zoom-in", label: "Zoom In" },
+  { value: "reveal", label: "Reveal" },
+];
+
+const renderAnimationTypeOptions = () => (
+  <>
+    {ANIMATION_TYPE_OPTIONS.map((opt) => (
+      <SelectItem key={opt.value} value={opt.value}>
+        {opt.label}
+      </SelectItem>
+    ))}
+  </>
+);
+
+interface SpacingFieldConfig {
+  topKey: keyof SectionSettings;
+  rightKey: keyof SectionSettings;
+  bottomKey: keyof SectionSettings;
+  leftKey: keyof SectionSettings;
+}
+
+const SpacingInputs = ({
+  label,
+  hint,
+  settings,
+  config,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  settings: SectionSettings;
+  config: SpacingFieldConfig;
+  onChange: (updates: Partial<SectionSettings>) => void;
+}) => (
+  <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
+    <Label className="text-xs font-semibold text-muted-foreground uppercase">
+      {label}
+    </Label>
+    {hint && <p className="text-[10px] text-muted-foreground">{hint}</p>}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <Input
+        placeholder="Top"
+        value={(settings[config.topKey] as string) || ""}
+        onChange={(e) => onChange({ [config.topKey]: e.target.value })}
+      />
+      <Input
+        placeholder="Right"
+        value={(settings[config.rightKey] as string) || ""}
+        onChange={(e) => onChange({ [config.rightKey]: e.target.value })}
+      />
+      <Input
+        placeholder="Bottom"
+        value={(settings[config.bottomKey] as string) || ""}
+        onChange={(e) => onChange({ [config.bottomKey]: e.target.value })}
+      />
+      <Input
+        placeholder="Left"
+        value={(settings[config.leftKey] as string) || ""}
+        onChange={(e) => onChange({ [config.leftKey]: e.target.value })}
+      />
+    </div>
+  </div>
+);
+
 interface SectionEditorProps {
   section: CustomSection;
   onChange: (updates: Partial<CustomSection>) => void;
@@ -195,15 +364,18 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
     updateContent({ buttons: newButtons });
   };
 
-  const updateScrollIndicator = (updates: any) => {
-    const current = safeSettings.scrollIndicator || {
-      enabled: false,
-      style: 'bounce',
-      icon: 'chevron-down',
-      color: 'text-muted-foreground'
-    };
+  const updateScrollIndicator = (
+    updates: Partial<NonNullable<SectionSettings["scrollIndicator"]>>
+  ) => {
+    const current: NonNullable<SectionSettings["scrollIndicator"]> =
+      safeSettings.scrollIndicator || {
+        enabled: false,
+        style: "bounce",
+        icon: "chevron-down",
+        color: "text-muted-foreground",
+      };
     updateSettings({
-      scrollIndicator: { ...current, ...updates }
+      scrollIndicator: { ...current, ...updates },
     });
   };
 
@@ -397,7 +569,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             onValueChange={(val) => {
                               const newSources = [...(section.content.dynamicSources || [])];
                               
-                              let defaultMode = 'grid';
+                              let defaultMode: DynamicContentSource["displayMode"] = 'grid';
                               let defaultCount = 3;
 
                               switch(val) {
@@ -411,6 +583,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 case 'faq': defaultMode = 'accordion'; defaultCount = 10; break;
                                 case 'gamemodetab': defaultMode = 'grid'; defaultCount = 8; break;
                                 case 'roadmap': defaultMode = 'grid'; defaultCount = 4; break;
+                                case 'events': defaultMode = 'list'; defaultCount = 6; break;
                                 case 'patchnotes': defaultMode = 'list'; defaultCount = 5; break;
                                 case 'alert-bar': defaultMode = 'alert-bar'; defaultCount = 1; break;
                                 case 'popup': defaultMode = 'popup'; defaultCount = 1; break;
@@ -421,7 +594,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
 
                               newSources[idx] = { 
                                 ...newSources[idx], 
-                                type: val,
+                                type: val as DynamicContentSource["type"],
                                 displayMode: defaultMode,
                                 count: defaultCount,
                                 ids: undefined
@@ -443,6 +616,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               <SelectItem value="faq">FAQ</SelectItem>
                               <SelectItem value="gamemodetab">Game Modes</SelectItem>
                               <SelectItem value="roadmap">Roadmap</SelectItem>
+                              <SelectItem value="events">Events (from Roadmap)</SelectItem>
                               <SelectItem value="patchnotes">Patch Notes</SelectItem>
                               <SelectItem value="alert-bar">Alert Bar</SelectItem>
                               <SelectItem value="popup">Announcement Popup</SelectItem>
@@ -459,7 +633,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             value={source.displayMode}
                             onValueChange={(val) => {
                               const newSources = [...(section.content.dynamicSources || [])];
-                              newSources[idx] = { ...newSources[idx], displayMode: val };
+                              newSources[idx] = { ...newSources[idx], displayMode: val as DynamicContentSource["displayMode"] };
                               updateContent({ dynamicSources: newSources });
                             }}
                           >
@@ -467,43 +641,64 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="grid">Grid</SelectItem>
-                              <SelectItem value="list">List</SelectItem>
-                              <SelectItem value="carousel">Carousel</SelectItem>
-                              <SelectItem value="cards">Cards</SelectItem>
-                              <SelectItem value="spotlight">Spotlight (Hero + List)</SelectItem>
-                              <SelectItem value="masonry">Masonry</SelectItem>
-                              <SelectItem value="featured">Featured</SelectItem>
-                              {source.type === 'news' && (
+                              {/* General Display Modes */}
+                              {['news', 'media', 'weapons', 'maps', 'features', 'gameDevices', 'faq', 'gameModes', 'gamemodetab', 'patchnotes', 'events'].includes(source.type) && (
                                 <>
-                                  <SelectItem value="ticker">News Ticker</SelectItem>
+                                  <SelectItem value="grid">Grid</SelectItem>
+                                  <SelectItem value="list">List</SelectItem>
+                                  <SelectItem value="carousel">Carousel</SelectItem>
+                                  <SelectItem value="cards">Cards</SelectItem>
+                                  <SelectItem value="spotlight">Spotlight (Hero + List)</SelectItem>
+                                  <SelectItem value="masonry">Masonry</SelectItem>
+                                  <SelectItem value="featured">Featured</SelectItem>
                                 </>
                               )}
+
+                              {/* Type-Specific Display Modes */}
+                              {source.type === 'news' && (
+                                <SelectItem value="ticker">News Ticker</SelectItem>
+                              )}
+
                               {source.type === 'roadmap' && (
                                 <>
                                   <SelectItem value="timeline">Timeline</SelectItem>
                                   <SelectItem value="showcase">Showcase</SelectItem>
                                 </>
                               )}
+
+                              {source.type === 'faq' && (
+                                <SelectItem value="accordion">Accordion (FAQ)</SelectItem>
+                              )}
+
+                              {source.type === 'media' && (
+                                <SelectItem value="showcase">Showcase (Media)</SelectItem>
+                              )}
+
                               {source.type === 'alert-bar' && <SelectItem value="alert-bar">Alert Bar</SelectItem>}
                               {source.type === 'popup' && <SelectItem value="popup">Announcement Popup</SelectItem>}
                               {source.type === 'release-status' && <SelectItem value="release-status">Release Status</SelectItem>}
                               {source.type === 'countdown' && <SelectItem value="countdown">Countdown Timer</SelectItem>}
+
                               {source.type === 'discord-widget' && (
                                 <>
                                   <SelectItem value="discord-widget">Server Widget</SelectItem>
                                   <SelectItem value="bug-report-form">Bug Report Form</SelectItem>
+                                  <SelectItem value="discord-chat">Live Community Chat</SelectItem>
+                                  <SelectItem value="discord-lfg">LFG / Voice Channels</SelectItem>
+                                  <SelectItem value="discord-recruitment">Recruitment Feed</SelectItem>
+                                  <SelectItem value="discord-fan-art">Fan Art Gallery</SelectItem>
                                 </>
                               )}
+
                               {source.type === 'classes' && (
                                 <>
                                   <SelectItem value="detailed-interactive">Standard Interactive</SelectItem>
                                   <SelectItem value="classes-hex">Elite Interactive (AAA)</SelectItem>
-                    <SelectItem value="classes-operator">Operator Interactive (Pro)</SelectItem>
-                    <SelectItem value="classes-vanguard">Vanguard Action (New)</SelectItem>
-                    <SelectItem value="classes-command">Command Center (Tactical)</SelectItem>
-                  </>
-                )}
+                                  <SelectItem value="classes-operator">Operator Interactive (Pro)</SelectItem>
+                                  <SelectItem value="classes-vanguard">Vanguard Action (New)</SelectItem>
+                                  <SelectItem value="classes-command">Command Center (Tactical)</SelectItem>
+                                </>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -516,7 +711,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 value={source.sortBy || 'date'}
                                 onValueChange={(val) => {
                                   const newSources = [...(section.content.dynamicSources || [])];
-                                  newSources[idx] = { ...newSources[idx], sortBy: val as any };
+                                  newSources[idx] = { ...newSources[idx], sortBy: val as DynamicContentSource["sortBy"] };
                                   updateContent({ dynamicSources: newSources });
                                 }}
                              >
@@ -535,7 +730,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 value={source.sortOrder || 'desc'}
                                 onValueChange={(val) => {
                                   const newSources = [...(section.content.dynamicSources || [])];
-                                  newSources[idx] = { ...newSources[idx], sortOrder: val as any };
+                                  newSources[idx] = { ...newSources[idx], sortOrder: val as DynamicContentSource["sortOrder"] };
                                   updateContent({ dynamicSources: newSources });
                                 }}
                              >
@@ -575,7 +770,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               value={source.cardStyle || 'default'}
                               onValueChange={(val) => {
                                 const newSources = [...(section.content.dynamicSources || [])];
-                                newSources[idx] = { ...newSources[idx], cardStyle: val };
+                                newSources[idx] = { ...newSources[idx], cardStyle: val as DynamicContentSource["cardStyle"] };
                                 updateContent({ dynamicSources: newSources });
                               }}
                             >
@@ -634,9 +829,9 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 <Label>Patch Note Popup Style</Label>
                                 <Select
                                   value={source.detailStyle || 'side-panel'}
-                                  onValueChange={(val: any) => {
+                                  onValueChange={(val) => {
                                     const newSources = [...(section.content.dynamicSources || [])];
-                                    newSources[idx] = { ...newSources[idx], detailStyle: val };
+                                    newSources[idx] = { ...newSources[idx], detailStyle: val as NonNullable<DynamicContentSource["detailStyle"]> };
                                     updateContent({ dynamicSources: newSources });
                                   }}
                                 >
@@ -659,9 +854,9 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 <Label>Popup Style</Label>
                                 <Select
                                   value={source.detailStyle || 'default'}
-                                  onValueChange={(val: any) => {
+                                  onValueChange={(val) => {
                                     const newSources = [...(section.content.dynamicSources || [])];
-                                    newSources[idx] = { ...newSources[idx], detailStyle: val };
+                                    newSources[idx] = { ...newSources[idx], detailStyle: val as NonNullable<DynamicContentSource["detailStyle"]> };
                                     updateContent({ dynamicSources: newSources });
                                   }}
                                 >
@@ -681,7 +876,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                  checked={source.viewAllSettings?.enabled || false}
                                  onCheckedChange={(checked) => {
                                    const newSources = [...(section.content.dynamicSources || [])];
-                                   const defaultSettings = { label: 'View All', url: '#', alignment: 'center' };
+                                   const defaultSettings: NonNullable<DynamicContentSource["viewAllSettings"]> = { label: 'View All', url: '#', alignment: 'center', enabled: false };
                                    newSources[idx] = { 
                                      ...newSources[idx], 
                                      viewAllSettings: { 
@@ -780,7 +975,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           </div>
                         )}
 
-                        {source.type === 'roadmap' && (
+                        {['roadmap', 'events'].includes(source.type) && (
                           <div className="space-y-2">
                             <Label>Filter by Category</Label>
                             <Select
@@ -900,9 +1095,9 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 <Label>Alert Type</Label>
                                 <Select
                                    value={source.alertType || 'info'}
-                                   onValueChange={(val: any) => {
+                                   onValueChange={(val) => {
                                       const newSources = [...(section.content.dynamicSources || [])];
-                                      newSources[idx] = { ...newSources[idx], alertType: val };
+                                      newSources[idx] = { ...newSources[idx], alertType: val as NonNullable<DynamicContentSource["alertType"]> };
                                       updateContent({ dynamicSources: newSources });
                                    }}
                                 >
@@ -951,9 +1146,9 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                                 <Label>Status</Label>
                                 <Select
                                    value={source.releaseStatus || 'planned'}
-                                   onValueChange={(val: any) => {
+                                   onValueChange={(val) => {
                                       const newSources = [...(section.content.dynamicSources || [])];
-                                      newSources[idx] = { ...newSources[idx], releaseStatus: val };
+                                      newSources[idx] = { ...newSources[idx], releaseStatus: val as NonNullable<DynamicContentSource["releaseStatus"]> };
                                       updateContent({ dynamicSources: newSources });
                                    }}
                                 >
@@ -1098,21 +1293,63 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
 
                         {source.type === 'discord-widget' && (
                           <div className="space-y-4 pt-2 border-t mt-2">
-                             {source.displayMode === 'discord-widget' && (
-                               <div className="space-y-2">
-                                  <Label>Discord Server ID</Label>
-                                  <Input 
-                                    value={source.discordServerId || ''} 
-                                    onChange={(e) => {
-                                      const newSources = [...(section.content.dynamicSources || [])];
-                                      newSources[idx] = { ...newSources[idx], discordServerId: e.target.value };
-                                      updateContent({ dynamicSources: newSources });
-                                    }}
-                                    placeholder="e.g. 123456789012345678"
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    Enable "Widget" in your Discord Server Settings to get this ID.
-                                  </p>
+                             {(source.displayMode === 'discord-widget' || source.displayMode === 'discord-chat' || source.displayMode === 'discord-lfg' || source.displayMode === 'discord-recruitment' || source.displayMode === 'discord-fan-art') && (
+                               <div className="space-y-4">
+                                 <div className="space-y-2">
+                                    <Label>Discord Server ID</Label>
+                                    <Input 
+                                      value={source.discordServerId || ''} 
+                                      onChange={(e) => {
+                                        const newSources = [...(section.content.dynamicSources || [])];
+                                        newSources[idx] = { ...newSources[idx], discordServerId: e.target.value };
+                                        updateContent({ dynamicSources: newSources });
+                                      }}
+                                      placeholder="e.g. 123456789012345678"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                      Enable "Widget" in your Discord Server Settings to get this ID.
+                                    </p>
+                                 </div>
+
+                                 {['discord-chat', 'discord-lfg', 'discord-recruitment', 'discord-fan-art'].includes(source.displayMode || '') && (
+                                   <div className="space-y-4">
+                                     <div className="space-y-2">
+                                        <Label>Discord Channel ID</Label>
+                                        <Input 
+                                          value={source.discordChannelId || ''} 
+                                          onChange={(e) => {
+                                            const newSources = [...(section.content.dynamicSources || [])];
+                                            newSources[idx] = { ...newSources[idx], discordChannelId: e.target.value };
+                                            updateContent({ dynamicSources: newSources });
+                                          }}
+                                          placeholder="e.g. 123456789012345678"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                          The ID of the specific channel to display.
+                                        </p>
+                                     </div>
+
+                                     <div className="p-3 bg-primary/10 border border-primary/20 rounded-md space-y-2">
+                                       <h5 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                                         <Plus className="w-3 h-3" />
+                                         Required: Invite WidgetBot
+                                       </h5>
+                                       <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                         To show live chat and channels, you <strong>must</strong> invite the WidgetBot to your server.
+                                       </p>
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm" 
+                                         className="h-7 text-[10px] w-full bg-background"
+                                         asChild
+                                       >
+                                         <a href="https://add.widgetbot.io/" target="_blank" rel="noopener noreferrer">
+                                           Invite WidgetBot to Server
+                                         </a>
+                                       </Button>
+                                     </div>
+                                   </div>
+                                 )}
                                </div>
                              )}
 
@@ -1206,7 +1443,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
 
                                 return items.map((item: ContentItem) => {
                                    const label = 'title' in item && item.title ? item.title : 
-                                                 'version' in item ? `v${(item as any).version}` : 
+                                                 'version' in item ? `v${(item as PatchNoteItem).version}` : 
                                                  'name' in item ? item.name : "Untitled";
                                    return (
                                    <div key={item.id} className="flex items-center space-x-2">
@@ -1437,7 +1674,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           <Label>Style Variant</Label>
                           <Select 
                             value={btn.variant} 
-                            onValueChange={(val: any) => updateButton(idx, { variant: val })}
+                            onValueChange={(val) => updateButton(idx, { variant: val as HeroButton["variant"] })}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -1461,7 +1698,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           <Label>Icon</Label>
                           <Select 
                             value={btn.icon || 'none'} 
-                            onValueChange={(val: any) => updateButton(idx, { icon: val })}
+                            onValueChange={(val) => updateButton(idx, { icon: val })}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -1523,7 +1760,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                   <Label>Background Type</Label>
                   <Select 
                     value={safeBackground.type} 
-                    onValueChange={(val: any) => updateBackground({ type: val })}
+                    onValueChange={(val) => updateBackground({ type: val as BackgroundSettings["type"] })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1704,60 +1941,27 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             <Label>Font Size</Label>
                             <Input value={safeSettings.titleFontSize || ''} onChange={(e) => updateSettings({ titleFontSize: e.target.value })} placeholder="e.g. 3rem" />
                         </div>
-                         <div className="space-y-2">
+                        <div className="space-y-2">
                             <Label>Font Weight</Label>
-                            <Select value={safeSettings.titleFontWeight || 'bold'} onValueChange={(v: any) => updateSettings({ titleFontWeight: v })}>
+                            <Select value={safeSettings.titleFontWeight || 'bold'} onValueChange={(v) => updateSettings({ titleFontWeight: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="bold">Bold</SelectItem>
-                                    <SelectItem value="extrabold">Extra Bold</SelectItem>
-                                    <SelectItem value="black">Black</SelectItem>
+                                  {renderTitleFontWeightOptions()}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Font Family</Label>
-                            <Select value={safeSettings.titleFontFamily || 'var(--font-heading)'} onValueChange={(v) => updateSettings({ titleFontFamily: v })}>
+                      <Label>Font Family</Label>
+                      <Select value={safeSettings.titleFontFamily || 'var(--font-heading)'} onValueChange={(v) => updateSettings({ titleFontFamily: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="var(--font-heading)">Theme Heading</SelectItem>
-                                    <SelectItem value="var(--font-display)">Theme Display</SelectItem>
-                                    <SelectItem value="var(--font-body)">Theme Body</SelectItem>
-                                    <SelectItem value="'Anton', sans-serif">Anton</SelectItem>
-                                    <SelectItem value="'Audiowide', cursive">Audiowide</SelectItem>
-                                    <SelectItem value="'Bebas Neue', sans-serif">Bebas Neue</SelectItem>
-                                    <SelectItem value="'Black Ops One', cursive">Black Ops One</SelectItem>
-                                    <SelectItem value="'Bungee', cursive">Bungee</SelectItem>
-                                    <SelectItem value="'Exo 2', sans-serif">Exo 2</SelectItem>
-                                    <SelectItem value="'Inter', sans-serif">Inter</SelectItem>
-                                    <SelectItem value="'Lato', sans-serif">Lato</SelectItem>
-                                    <SelectItem value="'Nunito', sans-serif">Nunito</SelectItem>
-                                    <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
-                                    <SelectItem value="'Orbitron', sans-serif">Orbitron</SelectItem>
-                                    <SelectItem value="'Oswald', sans-serif">Oswald</SelectItem>
-                                    <SelectItem value="'PT Sans', sans-serif">PT Sans</SelectItem>
-                                    <SelectItem value="'Quantico', sans-serif">Quantico</SelectItem>
-                                    <SelectItem value="'Rajdhani', sans-serif">Rajdhani</SelectItem>
-                                    <SelectItem value="'Roboto', sans-serif">Roboto</SelectItem>
-                                    <SelectItem value="'Russo One', sans-serif">Russo One</SelectItem>
-                                    <SelectItem value="'Saira', sans-serif">Saira</SelectItem>
-                                    <SelectItem value="'Source Sans 3', sans-serif">Source Sans 3</SelectItem>
-                                    <SelectItem value="'Teko', sans-serif">Teko</SelectItem>
-                                    <SelectItem value="'Titillium Web', sans-serif">Titillium Web</SelectItem>
-                                    <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                                    <SelectItem value="serif">Serif</SelectItem>
-                                    <SelectItem value="monospace">Monospace</SelectItem>
-                                    {safeSettings.customFontName && (
-                                        <SelectItem value={safeSettings.customFontName}>Custom: {safeSettings.customFontName}</SelectItem>
-                                    )}
+                                  {renderFontFamilyOptions(safeSettings.customFontName)}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>Style</Label>
-                            <Select value={safeSettings.titleStyle || 'default'} onValueChange={(v: any) => updateSettings({ titleStyle: v })}>
+                            <Select value={safeSettings.titleStyle || 'default'} onValueChange={(v) => updateSettings({ titleStyle: v as SectionSettings["titleStyle"] })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="default">Default</SelectItem>
@@ -1776,13 +1980,10 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                         </div>
                         <div className="space-y-2">
                              <Label>Transform</Label>
-                             <Select value={safeSettings.titleTransform || 'none'} onValueChange={(v: any) => updateSettings({ titleTransform: v })}>
+                             <Select value={safeSettings.titleTransform || 'none'} onValueChange={(v) => updateSettings({ titleTransform: v as SectionSettings["titleTransform"] })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    <SelectItem value="uppercase">Uppercase</SelectItem>
-                                    <SelectItem value="lowercase">Lowercase</SelectItem>
-                                    <SelectItem value="capitalize">Capitalize</SelectItem>
+                                  {renderTransformOptions()}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1794,24 +1995,28 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             <Label>Letter Spacing</Label>
                             <Input value={safeSettings.titleLetterSpacing || ''} onChange={(e) => updateSettings({ titleLetterSpacing: e.target.value })} placeholder="e.g. -0.02em" />
                         </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Title Padding (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.titlePaddingTop || ''} onChange={(e) => updateSettings({ titlePaddingTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.titlePaddingRight || ''} onChange={(e) => updateSettings({ titlePaddingRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.titlePaddingBottom || ''} onChange={(e) => updateSettings({ titlePaddingBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.titlePaddingLeft || ''} onChange={(e) => updateSettings({ titlePaddingLeft: e.target.value })} />
-                            </div>
-                        </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Title Margin (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.titleMarginTop || ''} onChange={(e) => updateSettings({ titleMarginTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.titleMarginRight || ''} onChange={(e) => updateSettings({ titleMarginRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.titleMarginBottom || ''} onChange={(e) => updateSettings({ titleMarginBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.titleMarginLeft || ''} onChange={(e) => updateSettings({ titleMarginLeft: e.target.value })} />
-                            </div>
-                        </div>
+                        <SpacingInputs
+                          label="Title Padding (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "titlePaddingTop",
+                            rightKey: "titlePaddingRight",
+                            bottomKey: "titlePaddingBottom",
+                            leftKey: "titlePaddingLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
+                        <SpacingInputs
+                          label="Title Margin (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "titleMarginTop",
+                            rightKey: "titleMarginRight",
+                            bottomKey: "titleMarginBottom",
+                            leftKey: "titleMarginLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
                     </div>
                  </div>
 
@@ -1823,15 +2028,12 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             <Label>Font Size</Label>
                             <Input value={safeSettings.subtitleFontSize || ''} onChange={(e) => updateSettings({ subtitleFontSize: e.target.value })} placeholder="e.g. 1.5rem" />
                         </div>
-                         <div className="space-y-2">
+                        <div className="space-y-2">
                             <Label>Font Weight</Label>
-                            <Select value={safeSettings.subtitleFontWeight || 'normal'} onValueChange={(v: any) => updateSettings({ subtitleFontWeight: v })}>
+                            <Select value={safeSettings.subtitleFontWeight || 'normal'} onValueChange={(v) => updateSettings({ subtitleFontWeight: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="bold">Bold</SelectItem>
-                                    <SelectItem value="extrabold">Extra Bold</SelectItem>
+                                  {renderTitleFontWeightOptions()}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1840,36 +2042,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             <Select value={safeSettings.subtitleFontFamily || 'var(--font-heading)'} onValueChange={(v) => updateSettings({ subtitleFontFamily: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="var(--font-heading)">Theme Heading</SelectItem>
-                                    <SelectItem value="var(--font-display)">Theme Display</SelectItem>
-                                    <SelectItem value="var(--font-body)">Theme Body</SelectItem>
-                                    <SelectItem value="'Anton', sans-serif">Anton</SelectItem>
-                                    <SelectItem value="'Audiowide', cursive">Audiowide</SelectItem>
-                                    <SelectItem value="'Bebas Neue', sans-serif">Bebas Neue</SelectItem>
-                                    <SelectItem value="'Black Ops One', cursive">Black Ops One</SelectItem>
-                                    <SelectItem value="'Bungee', cursive">Bungee</SelectItem>
-                                    <SelectItem value="'Exo 2', sans-serif">Exo 2</SelectItem>
-                                    <SelectItem value="'Inter', sans-serif">Inter</SelectItem>
-                                    <SelectItem value="'Lato', sans-serif">Lato</SelectItem>
-                                    <SelectItem value="'Nunito', sans-serif">Nunito</SelectItem>
-                                    <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
-                                    <SelectItem value="'Orbitron', sans-serif">Orbitron</SelectItem>
-                                    <SelectItem value="'Oswald', sans-serif">Oswald</SelectItem>
-                                    <SelectItem value="'PT Sans', sans-serif">PT Sans</SelectItem>
-                                    <SelectItem value="'Quantico', sans-serif">Quantico</SelectItem>
-                                    <SelectItem value="'Rajdhani', sans-serif">Rajdhani</SelectItem>
-                                    <SelectItem value="'Roboto', sans-serif">Roboto</SelectItem>
-                                    <SelectItem value="'Russo One', sans-serif">Russo One</SelectItem>
-                                    <SelectItem value="'Saira', sans-serif">Saira</SelectItem>
-                                    <SelectItem value="'Source Sans 3', sans-serif">Source Sans 3</SelectItem>
-                                    <SelectItem value="'Teko', sans-serif">Teko</SelectItem>
-                                    <SelectItem value="'Titillium Web', sans-serif">Titillium Web</SelectItem>
-                                    <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                                    <SelectItem value="serif">Serif</SelectItem>
-                                    <SelectItem value="monospace">Monospace</SelectItem>
-                                    {safeSettings.customFontName && (
-                                        <SelectItem value={safeSettings.customFontName}>Custom: {safeSettings.customFontName}</SelectItem>
-                                    )}
+                                  {renderFontFamilyOptions(safeSettings.customFontName)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1882,34 +2055,35 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                         </div>
                         <div className="space-y-2">
                             <Label>Transform</Label>
-                            <Select value={safeSettings.subtitleTransform || 'none'} onValueChange={(v: any) => updateSettings({ subtitleTransform: v })}>
+                            <Select value={safeSettings.subtitleTransform || 'none'} onValueChange={(v) => updateSettings({ subtitleTransform: v as SectionSettings["subtitleTransform"] })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    <SelectItem value="uppercase">Uppercase</SelectItem>
-                                    <SelectItem value="capitalize">Capitalize</SelectItem>
-                                    <SelectItem value="lowercase">Lowercase</SelectItem>
+                                  {renderTransformOptions()}
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Subtitle Padding (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.subtitlePaddingTop || ''} onChange={(e) => updateSettings({ subtitlePaddingTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.subtitlePaddingRight || ''} onChange={(e) => updateSettings({ subtitlePaddingRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.subtitlePaddingBottom || ''} onChange={(e) => updateSettings({ subtitlePaddingBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.subtitlePaddingLeft || ''} onChange={(e) => updateSettings({ subtitlePaddingLeft: e.target.value })} />
-                            </div>
-                        </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Subtitle Margin (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.subtitleMarginTop || ''} onChange={(e) => updateSettings({ subtitleMarginTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.subtitleMarginRight || ''} onChange={(e) => updateSettings({ subtitleMarginRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.subtitleMarginBottom || ''} onChange={(e) => updateSettings({ subtitleMarginBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.subtitleMarginLeft || ''} onChange={(e) => updateSettings({ subtitleMarginLeft: e.target.value })} />
-                            </div>
-                        </div>
+                        <SpacingInputs
+                          label="Subtitle Padding (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "subtitlePaddingTop",
+                            rightKey: "subtitlePaddingRight",
+                            bottomKey: "subtitlePaddingBottom",
+                            leftKey: "subtitlePaddingLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
+                        <SpacingInputs
+                          label="Subtitle Margin (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "subtitleMarginTop",
+                            rightKey: "subtitleMarginRight",
+                            bottomKey: "subtitleMarginBottom",
+                            leftKey: "subtitleMarginLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
                     </div>
                  </div>
                  
@@ -1923,13 +2097,10 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                         </div>
                         <div className="space-y-2">
                             <Label>Font Weight</Label>
-                             <Select value={safeSettings.bodyFontWeight || 'normal'} onValueChange={(v: any) => updateSettings({ bodyFontWeight: v })}>
+                             <Select value={safeSettings.bodyFontWeight || 'normal'} onValueChange={(v) => updateSettings({ bodyFontWeight: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="light">Light</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="semibold">Semibold</SelectItem>
+                                  {renderBodyFontWeightOptions()}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1938,36 +2109,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                             <Select value={safeSettings.bodyFontFamily || 'var(--font-body)'} onValueChange={(v) => updateSettings({ bodyFontFamily: v })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="var(--font-heading)">Theme Heading</SelectItem>
-                                    <SelectItem value="var(--font-display)">Theme Display</SelectItem>
-                                    <SelectItem value="var(--font-body)">Theme Body</SelectItem>
-                                    <SelectItem value="'Anton', sans-serif">Anton</SelectItem>
-                                    <SelectItem value="'Audiowide', cursive">Audiowide</SelectItem>
-                                    <SelectItem value="'Bebas Neue', sans-serif">Bebas Neue</SelectItem>
-                                    <SelectItem value="'Black Ops One', cursive">Black Ops One</SelectItem>
-                                    <SelectItem value="'Bungee', cursive">Bungee</SelectItem>
-                                    <SelectItem value="'Exo 2', sans-serif">Exo 2</SelectItem>
-                                    <SelectItem value="'Inter', sans-serif">Inter</SelectItem>
-                                    <SelectItem value="'Lato', sans-serif">Lato</SelectItem>
-                                    <SelectItem value="'Nunito', sans-serif">Nunito</SelectItem>
-                                    <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
-                                    <SelectItem value="'Orbitron', sans-serif">Orbitron</SelectItem>
-                                    <SelectItem value="'Oswald', sans-serif">Oswald</SelectItem>
-                                    <SelectItem value="'PT Sans', sans-serif">PT Sans</SelectItem>
-                                    <SelectItem value="'Quantico', sans-serif">Quantico</SelectItem>
-                                    <SelectItem value="'Rajdhani', sans-serif">Rajdhani</SelectItem>
-                                    <SelectItem value="'Roboto', sans-serif">Roboto</SelectItem>
-                                    <SelectItem value="'Russo One', sans-serif">Russo One</SelectItem>
-                                    <SelectItem value="'Saira', sans-serif">Saira</SelectItem>
-                                    <SelectItem value="'Source Sans 3', sans-serif">Source Sans 3</SelectItem>
-                                    <SelectItem value="'Teko', sans-serif">Teko</SelectItem>
-                                    <SelectItem value="'Titillium Web', sans-serif">Titillium Web</SelectItem>
-                                    <SelectItem value="sans-serif">Sans Serif</SelectItem>
-                                    <SelectItem value="serif">Serif</SelectItem>
-                                    <SelectItem value="monospace">Monospace</SelectItem>
-                                    {safeSettings.customFontName && (
-                                        <SelectItem value={safeSettings.customFontName}>Custom: {safeSettings.customFontName}</SelectItem>
-                                    )}
+                                  {renderFontFamilyOptions(safeSettings.customFontName)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -2010,7 +2152,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select value={safeSettings.titleDecorationType || 'none'} onValueChange={(v: any) => updateSettings({ titleDecorationType: v })}>
+                        <Select value={safeSettings.titleDecorationType || 'none'} onValueChange={(v) => updateSettings({ titleDecorationType: v as SectionSettings["titleDecorationType"] })}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                                <SelectItem value="none">None</SelectItem>
@@ -2024,7 +2166,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                    </div>
                    <div className="space-y-2">
                        <Label>Position</Label>
-                        <Select value={safeSettings.titleDecorationPosition || 'top'} onValueChange={(v: any) => updateSettings({ titleDecorationPosition: v })}>
+                        <Select value={safeSettings.titleDecorationPosition || 'top'} onValueChange={(v) => updateSettings({ titleDecorationPosition: v as SectionSettings["titleDecorationPosition"] })}>
                            <SelectTrigger><SelectValue /></SelectTrigger>
                            <SelectContent>
                                <SelectItem value="top">Top</SelectItem>
@@ -2116,7 +2258,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                         </div>
                         <div className="space-y-2">
                              <Label>Alignment</Label>
-                              <Select value={safeSettings.titleDecorationAlignment || 'center'} onValueChange={(v: any) => updateSettings({ titleDecorationAlignment: v })}>
+                              <Select value={safeSettings.titleDecorationAlignment || 'center'} onValueChange={(v) => updateSettings({ titleDecorationAlignment: v as SectionSettings["titleDecorationAlignment"] })}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="start">Start</SelectItem>
@@ -2129,24 +2271,28 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                              <Label>Opacity (0-1)</Label>
                              <Input type="number" step="0.1" min="0" max="1" value={safeSettings.titleDecorationOpacity ?? 1} onChange={(e) => updateSettings({ titleDecorationOpacity: parseFloat(e.target.value) })} />
                         </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2 border-t">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Decoration Padding (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.titleDecorationPaddingTop || ''} onChange={(e) => updateSettings({ titleDecorationPaddingTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.titleDecorationPaddingRight || ''} onChange={(e) => updateSettings({ titleDecorationPaddingRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.titleDecorationPaddingBottom || ''} onChange={(e) => updateSettings({ titleDecorationPaddingBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.titleDecorationPaddingLeft || ''} onChange={(e) => updateSettings({ titleDecorationPaddingLeft: e.target.value })} />
-                            </div>
-                        </div>
-                        <div className="col-span-1 sm:col-span-2 space-y-2 pt-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase">Decoration Margin (Top, Right, Bottom, Left)</Label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <Input placeholder="Top" value={safeSettings.titleDecorationMarginTop || ''} onChange={(e) => updateSettings({ titleDecorationMarginTop: e.target.value })} />
-                                <Input placeholder="Right" value={safeSettings.titleDecorationMarginRight || ''} onChange={(e) => updateSettings({ titleDecorationMarginRight: e.target.value })} />
-                                <Input placeholder="Bottom" value={safeSettings.titleDecorationMarginBottom || ''} onChange={(e) => updateSettings({ titleDecorationMarginBottom: e.target.value })} />
-                                <Input placeholder="Left" value={safeSettings.titleDecorationMarginLeft || ''} onChange={(e) => updateSettings({ titleDecorationMarginLeft: e.target.value })} />
-                            </div>
-                        </div>
+                        <SpacingInputs
+                          label="Decoration Padding (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "titleDecorationPaddingTop",
+                            rightKey: "titleDecorationPaddingRight",
+                            bottomKey: "titleDecorationPaddingBottom",
+                            leftKey: "titleDecorationPaddingLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
+                        <SpacingInputs
+                          label="Decoration Margin (Top, Right, Bottom, Left)"
+                          settings={safeSettings}
+                          config={{
+                            topKey: "titleDecorationMarginTop",
+                            rightKey: "titleDecorationMarginRight",
+                            bottomKey: "titleDecorationMarginBottom",
+                            leftKey: "titleDecorationMarginLeft",
+                          }}
+                          onChange={updateSettings}
+                        />
                      </div>
                  )}
                </CardContent>
@@ -2181,7 +2327,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                    <Label>Container Width</Label>
                    <Select 
                       value={safeSettings.containerWidth} 
-                      onValueChange={(val: any) => updateSettings({ containerWidth: val })}
+                      onValueChange={(val) => updateSettings({ containerWidth: val as SectionSettings["containerWidth"] })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -2272,15 +2418,17 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                 </CardTitle>
                </CardHeader>
                <CardContent className="space-y-4">
-                 <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-muted-foreground uppercase">Padding (Top, Right, Bottom, Left)</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <Input placeholder="Top" value={safeSettings.paddingTop || ''} onChange={(e) => updateSettings({ paddingTop: e.target.value })} />
-                        <Input placeholder="Right" value={safeSettings.paddingRight || ''} onChange={(e) => updateSettings({ paddingRight: e.target.value })} />
-                        <Input placeholder="Bottom" value={safeSettings.paddingBottom || ''} onChange={(e) => updateSettings({ paddingBottom: e.target.value })} />
-                        <Input placeholder="Left" value={safeSettings.paddingLeft || ''} onChange={(e) => updateSettings({ paddingLeft: e.target.value })} />
-                    </div>
-                 </div>
+                 <SpacingInputs
+                   label="Padding (Top, Right, Bottom, Left)"
+                   settings={safeSettings}
+                   config={{
+                     topKey: "paddingTop",
+                     rightKey: "paddingRight",
+                     bottomKey: "paddingBottom",
+                     leftKey: "paddingLeft",
+                   }}
+                   onChange={updateSettings}
+                 />
                </CardContent>
             </Card>
 
@@ -2296,18 +2444,13 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                   <Label>Animation Type</Label>
                   <Select 
                     value={safeSettings.animation?.type || 'none'} 
-                    onValueChange={(val: any) => updateAnimation({ type: val })}
+                    onValueChange={(val) => updateAnimation({ type: val as AnimationSettings["type"] })}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="fade-in">Fade In</SelectItem>
-                      <SelectItem value="slide-up">Slide Up</SelectItem>
-                      <SelectItem value="slide-right">Slide Right</SelectItem>
-                      <SelectItem value="zoom-in">Zoom In</SelectItem>
-                      <SelectItem value="reveal">Reveal</SelectItem>
+                      {renderAnimationTypeOptions()}
                     </SelectContent>
                   </Select>
                 </div>
@@ -2371,9 +2514,9 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                    <>
                      <div className="space-y-2">
                        <Label>Icon</Label>
-                       <Select 
+                          <Select 
                           value={safeSettings.scrollIndicator.icon || 'chevron-down'} 
-                          onValueChange={(val) => updateScrollIndicator({ icon: val })}
+                          onValueChange={(val) => updateScrollIndicator({ icon: val as NonNullable<SectionSettings["scrollIndicator"]>["icon"] })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -2389,7 +2532,7 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                        <Label>Animation Style</Label>
                        <Select 
                           value={safeSettings.scrollIndicator.style || 'bounce'} 
-                          onValueChange={(val) => updateScrollIndicator({ style: val })}
+                          onValueChange={(val) => updateScrollIndicator({ style: val as NonNullable<SectionSettings["scrollIndicator"]>["style"] })}
                         >
                           <SelectTrigger>
                             <SelectValue />

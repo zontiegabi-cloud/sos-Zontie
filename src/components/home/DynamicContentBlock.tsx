@@ -114,6 +114,30 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       return [];
     }
 
+    if (source.type === 'events') {
+      const EVENT_CATEGORIES = ['event', 'tournament', 'scrim', 'playtest'];
+      const roadmapItems = (content.roadmap || []) as RoadmapItem[];
+
+      let allItems = roadmapItems.filter(
+        (item) =>
+          item.category &&
+          EVENT_CATEGORIES.includes(item.category.toLowerCase())
+      );
+
+      if (source.category && source.category !== 'all') {
+        const target = source.category.toLowerCase();
+        allItems = allItems.filter(
+          (item) => (item.category || '').toLowerCase() === target
+        );
+      }
+
+      if (source.count && !source.fetchAll) {
+        allItems = allItems.slice(0, source.count);
+      }
+
+      return allItems as unknown as ContentItem[];
+    }
+
     const key = source.type as keyof SiteContent;
     let allItems = (content[key] as ContentItem[]) || [];
     
@@ -142,7 +166,9 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
 
     // Filter by Configured Category (e.g. for Roadmap or Media)
     if ((source.type === 'roadmap' || source.type === 'media') && source.category && source.category !== 'all') {
-      allItems = allItems.filter((item) => 'category' in item && (item as any).category === source.category);
+      allItems = allItems.filter(
+        (item) => 'category' in item && item.category === source.category
+      );
     }
 
     // Filter by Specific IDs (Manual Selection)
@@ -154,8 +180,8 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     const currentSortBy = activeSortBy || source.sortBy;
     if (currentSortBy) {
       allItems = [...allItems].sort((a, b) => {
-        let valA: any = '';
-        let valB: any = '';
+        let valA: string | number = '';
+        let valB: string | number = '';
 
         switch (currentSortBy) {
           case 'date':
@@ -163,26 +189,50 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
             valB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             break;
           case 'title':
-            valA = 'title' in a ? (a as any).title : 'name' in a ? (a as any).name : '';
-            valB = 'title' in b ? (b as any).title : 'name' in b ? (b as any).name : '';
+            valA =
+              'title' in a && typeof a.title === 'string'
+                ? a.title ?? ''
+                : 'name' in a && typeof (a as { name?: string }).name === 'string'
+                  ? (a as { name?: string }).name ?? ''
+                  : '';
+            valB =
+              'title' in b && typeof b.title === 'string'
+                ? b.title ?? ''
+                : 'name' in b && typeof (b as { name?: string }).name === 'string'
+                  ? (b as { name?: string }).name ?? ''
+                  : '';
             break;
           case 'category':
             // Prioritize explicit category, then tag (news), then role (classes), then environment (maps), then type (weapons)
-            valA = 'category' in a ? (a as any).category : 
-                   'tag' in a ? (a as any).tag : 
-                   'role' in a ? (a as any).role : 
-                   'environment' in a ? (a as any).environment : 
-                   'type' in a ? (a as any).type : ''; // Fallback to type for weapons if no category
+            valA =
+              'category' in a && a.category
+                ? a.category
+                : 'tag' in a && a.tag
+                  ? a.tag
+                  : 'role' in a && a.role
+                    ? a.role
+                    : 'environment' in a && a.environment
+                      ? a.environment
+                      : 'type' in a && a.type
+                        ? a.type
+                        : '';
 
-            valB = 'category' in b ? (b as any).category : 
-                   'tag' in b ? (b as any).tag : 
-                   'role' in b ? (b as any).role : 
-                   'environment' in b ? (b as any).environment : 
-                   'type' in b ? (b as any).type : '';
+            valB =
+              'category' in b && b.category
+                ? b.category
+                : 'tag' in b && b.tag
+                  ? b.tag
+                  : 'role' in b && b.role
+                    ? b.role
+                    : 'environment' in b && b.environment
+                      ? b.environment
+                      : 'type' in b && b.type
+                        ? b.type
+                        : '';
             break;
           case 'type':
-            valA = 'type' in a ? (a as any).type : '';
-            valB = 'type' in b ? (b as any).type : '';
+            valA = 'type' in a && a.type ? a.type : '';
+            valB = 'type' in b && b.type ? b.type : '';
             break;
         }
 
@@ -193,9 +243,11 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     } else if (['news', 'media'].includes(source.type)) {
       // Default fallback sort for news/media
       allItems = [...allItems].sort((a, b) => {
-        const dateA = 'date' in a ? new Date((a as any).date).getTime() : 0;
-        const dateB = 'date' in b ? new Date((b as any).date).getTime() : 0;
-        return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+        const dateA =
+          'date' in a && a.date ? new Date(a.date).getTime() : 0;
+        const dateB =
+          'date' in b && b.date ? new Date(b.date).getTime() : 0;
+        return (Number.isNaN(dateB) ? 0 : dateB) - (Number.isNaN(dateA) ? 0 : dateA);
       });
     }
 
@@ -216,7 +268,7 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
       if ('category' in item && item.category) cats.add(item.category);
       else if ('tag' in item && item.tag) cats.add(item.tag);
       else if ('role' in item && item.role) cats.add(item.role);
-      else if ('type' in item && (item as any).type) cats.add((item as any).type);
+      else if ('type' in item && item.type) cats.add(item.type);
     });
     
     return Array.from(cats);
@@ -227,10 +279,16 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     if (activeCategory === "All") return baseItems;
     
     return baseItems.filter(item => {
-      const cat = 'category' in item ? item.category : 
-                  'tag' in item ? item.tag : 
-                  'role' in item ? item.role : 
-                  'type' in item ? (item as any).type : null;
+      const cat =
+        'category' in item
+          ? item.category
+          : 'tag' in item
+            ? item.tag
+            : 'role' in item
+              ? item.role
+              : 'type' in item
+                ? item.type
+                : null;
       return cat === activeCategory;
     });
   }, [baseItems, activeCategory]);
@@ -369,7 +427,11 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         source.displayMode === 'bug-report-form' ? (
           <BugReportForm webhookUrl={source.discordWebhookUrl} />
         ) : (
-          <DiscordWidget serverId={source.discordServerId} />
+          <DiscordWidget 
+            serverId={source.discordServerId} 
+            channelId={source.discordChannelId}
+            displayMode={source.displayMode}
+          />
         )
       ) : ['detailed-interactive', 'classes-hex', 'classes-operator', 'classes-vanguard', 'classes-command'].includes(source.displayMode) && source.type === 'classes' ? (
         <InteractiveClassList 
@@ -419,12 +481,17 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
         <DialogContent className="max-w-2xl bg-card border-border">
           <DialogHeader>
             <DialogTitle className="font-heading text-2xl uppercase">
-              {selectedItem && ('title' in selectedItem ? (selectedItem as any).title : 'name' in selectedItem ? (selectedItem as any).name : 'Details')}
+              {selectedItem &&
+                ('title' in selectedItem
+                  ? (selectedItem as { title: string }).title
+                  : 'name' in selectedItem
+                    ? (selectedItem as { name: string }).name
+                    : 'Details')}
             </DialogTitle>
             <DialogDescription>
               {selectedItem && 'date' in selectedItem && (
                 <span className="block mb-2 text-primary">
-                  {new Date((selectedItem as any).date).toLocaleDateString()}
+                  {new Date((selectedItem as { date: string }).date).toLocaleDateString()}
                 </span>
               )}
             </DialogDescription>
@@ -434,7 +501,11 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
               {('image' in selectedItem || 'src' in selectedItem) && (
                 <div className="aspect-video rounded-lg overflow-hidden mb-6">
                   <img 
-                    src={'image' in selectedItem ? (selectedItem as any).image : (selectedItem as any).src} 
+                    src={
+                      'image' in selectedItem
+                        ? (selectedItem as { image: string }).image
+                        : (selectedItem as { src: string }).src
+                    } 
                     alt="Content" 
                     className="w-full h-full object-cover"
                   />
@@ -442,7 +513,9 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
               )}
               <div className="prose prose-invert max-w-none">
                 <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
-                  {'description' in selectedItem ? (selectedItem as any).description : ''}
+                  {'description' in selectedItem
+                    ? (selectedItem as { description?: string }).description ?? ''
+                    : ''}
                 </p>
               </div>
             </div>

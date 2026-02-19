@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 
 interface ReleaseStatusProps {
   items: RoadmapItem[];
-  source?: any;
+  source?: {
+    forceFullWidth?: boolean;
+    primaryButtonLink?: string;
+    secondaryButtonLink?: string;
+    primaryButtonLabel?: string;
+    secondaryButtonLabel?: string;
+  } | null;
   onView?: (item: RoadmapItem) => void;
 }
 

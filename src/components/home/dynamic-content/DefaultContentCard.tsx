@@ -1,17 +1,15 @@
 import React, { forwardRef } from 'react';
 import { motion } from 'framer-motion';
-import { MediaItem } from '@/lib/content-store';
 import { ContentItem } from './types';
-import { formatDate } from './utils';
+import { formatDate, getItemImage, getItemTitle, getItemDescription, getItemTag } from './utils';
 
 export const DefaultContentCard = forwardRef<HTMLDivElement, { item: ContentItem }>(
   ({ item }, ref) => {
-  // Use type assertion for optional properties that might not exist on all types
-  const title = 'title' in item ? (item as { title: string }).title : 'name' in item ? (item as { name: string }).name : undefined;
-  const image = 'image' in item ? (item as { image: string }).image : ('src' in item ? (item as MediaItem).src : '/placeholder.jpg');
-  const description = 'description' in item ? (item as { description: string }).description : '';
+  const title = getItemTitle(item) || undefined;
+  const image = getItemImage(item);
+  const description = getItemDescription(item);
   const date = 'date' in item ? (item as { date: string }).date : undefined;
-  const tag = 'tag' in item ? (item as { tag: string }).tag : undefined;
+  const tag = getItemTag(item) || undefined;
 
   return (
     <motion.div

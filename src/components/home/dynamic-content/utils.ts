@@ -1,4 +1,5 @@
-import { MediaItem } from '@/lib/content-store';
+import { MediaItem, NewsItem, DynamicContentSource } from '@/lib/content-store';
+import { ContentItem } from './types';
 
 // Helper to format date strings that might be non-standard (e.g. "Coming Soon")
 export const formatDate = (dateString: string) => {
@@ -44,4 +45,77 @@ export const getDisplayThumbnail = (item: MediaItem): string => {
     if (ytThumb) return ytThumb;
   }
   return item.src;
+};
+
+type SourceType = DynamicContentSource['type'];
+
+export const getItemTitle = (item: ContentItem): string => {
+  if ('title' in item && typeof item.title === 'string') {
+    return item.title ?? '';
+  }
+  if ('name' in item && typeof (item as { name?: string }).name === 'string') {
+    return (item as { name?: string }).name ?? '';
+  }
+  return '';
+};
+
+export const getItemDescription = (item: ContentItem): string => {
+  if ('description' in item && typeof (item as { description?: string }).description === 'string') {
+    return (item as { description?: string }).description ?? '';
+  }
+  return '';
+};
+
+export const getItemTag = (item: ContentItem, fallback?: string): string => {
+  if ('tag' in item && typeof (item as { tag?: string }).tag === 'string') {
+    const value = (item as { tag?: string }).tag;
+    if (value) return value;
+  }
+  return fallback ?? '';
+};
+
+export const getItemQuestion = (item: ContentItem): string => {
+  if ('question' in item && typeof (item as { question?: string }).question === 'string') {
+    return (item as { question?: string }).question ?? '';
+  }
+  const title = getItemTitle(item);
+  if (title) return title;
+  return '';
+};
+
+export const getItemAnswer = (item: ContentItem): string => {
+  if ('answer' in item && typeof (item as { answer?: string }).answer === 'string') {
+    return (item as { answer?: string }).answer ?? '';
+  }
+  const description = getItemDescription(item);
+  if (description) return description;
+  return '';
+};
+
+export const getItemImage = (item: ContentItem, sourceType?: SourceType): string => {
+  if (sourceType === 'media') {
+    return getDisplayThumbnail(item as MediaItem);
+  }
+
+  if (sourceType === 'news') {
+    const news = item as NewsItem;
+    return news.bgImage || news.thumbnail || news.image || '/placeholder.jpg';
+  }
+
+  if ('image' in item) {
+    const image = (item as { image?: string }).image;
+    if (image) return image;
+  }
+
+  if ('thumbnail' in item) {
+    const thumb = (item as { thumbnail?: string }).thumbnail;
+    if (thumb) return thumb;
+  }
+
+  if ('src' in item) {
+    const src = (item as { src?: string }).src;
+    if (src) return src;
+  }
+
+  return '/placeholder.jpg';
 };

@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import { PoolConnection } from 'mariadb';
 import { 
   NewsItem, 
@@ -19,6 +20,8 @@ import {
   GameDeviceItem, 
   GameModeItem,
   RoadmapItem,
+  PatchNoteItem,
+  Page,
   DynamicContentSource 
 } from '../src/lib/content-store';
 
@@ -39,6 +42,8 @@ const formatDateForDb = (isoDate: string | undefined | null): string | null => {
 const app = express();
 const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+const STEAM_API_KEY = process.env.STEAM_API_KEY || '';
+const CLIENT_URL = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'localhost:8080';
 
 // Configure Multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -101,13 +106,16 @@ app.get('/api/uploads', (req, res) => {
   }
 });
 
-// Login Route
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   let conn;
   try {
     conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM users WHERE username = ?', [username || 'admin']); // Default to admin if no username provided for backward compatibility
+    const identifier = username || 'admin';
+    const rows = await conn.query(
+      'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1',
+      [identifier, identifier]
+    );
     
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -126,13 +134,341 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({ token, role: user.role, username: user.username });
+    res.json({
+      token,
+      role: user.role,
+      username: user.username,
+      displayName: user.display_name || user.username,
+      avatarUrl: user.avatar_url || null,
+    });
 
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   } finally {
     if (conn) conn.release();
+  }
+});
+
+app.post('/api/register', async (req, res) => {
+  const { email, password, username } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+
+    const existing = await conn.query(
+      'SELECT id FROM users WHERE email = ? OR username = ?',
+      [email, username || email]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'User with this email or username already exists' });
+    }
+
+    const countRows = await conn.query('SELECT COUNT(*) as count FROM users');
+    const totalUsers = Number(countRows[0].count ?? 0);
+    const isFirstUser = totalUsers === 0;
+    const role = isFirstUser ? 'admin' : 'member';
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const finalUsername = (username && username.trim()) || email;
+    const displayName = finalUsername;
+
+    await conn.query(
+      'INSERT INTO users (username, email, display_name, password_hash, role) VALUES (?, ?, ?, ?, ?)',
+      [finalUsername, email, displayName, hashedPassword, role]
+    );
+
+    const rows = await conn.query(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(500).json({ error: 'Failed to create user' });
+    }
+
+    const user = rows[0];
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      token,
+      role: user.role,
+      username: user.username,
+      displayName: user.display_name || user.username,
+      avatarUrl: user.avatar_url || null,
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// Helper to POST back to Steam OpenID endpoint for verification
+const verifySteamOpenIdResponse = (body: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        host: 'steamcommunity.com',
+        path: '/openid/login',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(body),
+        },
+      },
+      (resp) => {
+        let data = '';
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+        resp.on('end', () => resolve(data));
+      }
+    );
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.write(body);
+    req.end();
+  });
+};
+
+const fetchSteamProfile = (steamId: string): Promise<{ personaName: string; avatar: string | null }> => {
+  return new Promise((resolve) => {
+    if (!STEAM_API_KEY) {
+      resolve({ personaName: `Steam ${steamId}`, avatar: null });
+      return;
+    }
+
+    const url = `/ISteamUser/GetPlayerSummaries/v2/?key=${encodeURIComponent(
+      STEAM_API_KEY
+    )}&steamids=${encodeURIComponent(steamId)}`;
+
+    const req = https.request(
+      {
+        host: 'api.steampowered.com',
+        path: url,
+        method: 'GET',
+      },
+      (resp) => {
+        let data = '';
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+        resp.on('end', () => {
+          try {
+            const parsed = JSON.parse(data) as {
+              response?: { players?: Array<{ personaname?: string; avatarfull?: string }> };
+            };
+            const player = parsed.response?.players && parsed.response.players[0];
+            if (player) {
+              resolve({
+                personaName: player.personaname || `Steam ${steamId}`,
+                avatar: player.avatarfull || null,
+              });
+            } else {
+              resolve({ personaName: `Steam ${steamId}`, avatar: null });
+            }
+          } catch {
+            resolve({ personaName: `Steam ${steamId}`, avatar: null });
+          }
+        });
+      }
+    );
+
+    req.on('error', () => {
+      resolve({ personaName: `Steam ${steamId}`, avatar: null });
+    });
+
+    req.end();
+  });
+};
+
+// Begin Steam OpenID login flow
+app.get('/auth/steam/start', (req, res) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const preferredRedirect =
+    typeof (req.query as any)?.redirect === 'string' ? (req.query as any).redirect : '';
+  const callbackUrl = new URL(`${baseUrl}/auth/steam/callback`);
+  if (preferredRedirect) {
+    callbackUrl.searchParams.set('redirect', preferredRedirect);
+  }
+  const returnTo = callbackUrl.toString();
+
+  const params = new URLSearchParams({
+    'openid.ns': 'http://specs.openid.net/auth/2.0',
+    'openid.mode': 'checkid_setup',
+    'openid.return_to': returnTo,
+    'openid.realm': baseUrl,
+    'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+    'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
+  });
+
+  res.redirect(`https://steamcommunity.com/openid/login?${params.toString()}`);
+});
+
+// Steam OpenID callback
+app.get('/auth/steam/callback', async (req, res) => {
+  const query = req.query as Record<string, string | string[]>;
+  const preferredRedirect =
+    typeof query['redirect'] === 'string'
+      ? (query['redirect'] as string)
+      : Array.isArray(query['redirect'])
+      ? (query['redirect'] as string[])[0]
+      : '';
+
+  const claimedIdRaw = query['openid.claimed_id'];
+  const claimedId =
+    typeof claimedIdRaw === 'string' ? claimedIdRaw : Array.isArray(claimedIdRaw) ? claimedIdRaw[0] : '';
+
+  if (!claimedId) {
+    res.status(400).send('Invalid Steam login response');
+    return;
+  }
+
+  const verificationParams = new URLSearchParams();
+  Object.keys(query).forEach((key) => {
+    const value = query[key];
+    if (key.startsWith('openid.') && typeof value === 'string') {
+      verificationParams.append(key, value);
+    }
+  });
+  verificationParams.set('openid.mode', 'check_authentication');
+
+  try {
+    const verificationBody = verificationParams.toString();
+    const verificationResponse = await verifySteamOpenIdResponse(verificationBody);
+
+    if (!verificationResponse.includes('is_valid:true')) {
+      res.status(400).send('Steam login verification failed');
+      return;
+    }
+
+    const match = claimedId.match(/\/(\d+)$/);
+    const steamId = match ? match[1] : null;
+
+    if (!steamId) {
+      res.status(400).send('Unable to extract Steam ID');
+      return;
+    }
+
+    const profile = await fetchSteamProfile(steamId);
+
+    let conn: PoolConnection | undefined;
+    try {
+      conn = await pool.getConnection();
+
+      let users = await conn.query('SELECT * FROM users WHERE steam_id = ?', [steamId]);
+
+      if (users.length === 0) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(`${steamId}:${JWT_SECRET}`, salt);
+        const username = `steam_${steamId}`;
+        const displayName = profile.personaName;
+
+        await conn.query(
+          'INSERT INTO users (username, email, display_name, password_hash, role, steam_id, avatar_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [username, null, displayName, hashedPassword, 'member', steamId, profile.avatar]
+        );
+
+        users = await conn.query('SELECT * FROM users WHERE steam_id = ?', [steamId]);
+      } else {
+        const existing = users[0];
+        const updates: string[] = [];
+        const values: unknown[] = [];
+
+        // Only keep avatar in sync; do not overwrite a custom display name
+        if (profile.avatar && profile.avatar !== existing.avatar_url) {
+          updates.push('avatar_url = ?');
+          values.push(profile.avatar);
+        }
+
+        if (updates.length > 0) {
+          values.push(existing.id);
+          await conn.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+          users = await conn.query('SELECT * FROM users WHERE steam_id = ?', [steamId]);
+        }
+      }
+
+      const user = users[0];
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      const payload = {
+        token,
+        role: user.role,
+        username: user.username,
+        displayName: user.display_name || user.username,
+        avatarUrl: user.avatar_url || null,
+      };
+
+      // If a client URL is configured, redirect there with the auth payload encoded,
+      // so the frontend can store it under its own origin.
+      const targetClient = preferredRedirect || CLIENT_URL;
+      if (targetClient) {
+        const redirectUrl = `${targetClient}/?steam_auth=${encodeURIComponent(JSON.stringify(payload))}`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Steam Login</title></head><body><script>location.replace(${JSON.stringify(redirectUrl)});</script></body></html>`);
+        return;
+      }
+
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Steam Login</title>
+  </head>
+  <body>
+    <script>
+      (function() {
+        var data = ${JSON.stringify(payload)};
+        try {
+          localStorage.setItem('sos_admin_token', data.token);
+          localStorage.setItem('sos_admin_user', JSON.stringify({
+            username: data.username,
+            role: data.role,
+            displayName: data.displayName || data.username,
+            avatarUrl: data.avatarUrl || null
+          }));
+        } catch (e) {
+          console.error('Failed to store Steam login data', e);
+        }
+        window.location.href = '/';
+      })();
+    </script>
+  </body>
+</html>
+`;
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } finally {
+      if (conn) conn.release();
+    }
+  } catch (error) {
+    console.error('Steam auth error:', error);
+    res.status(500).send('Steam authentication failed');
   }
 });
 
@@ -175,13 +511,94 @@ app.post('/api/change-password', async (req, res) => {
   }
 });
 
+// Update basic profile fields (username/display name/avatar)
+app.post('/api/update-profile', async (req, res) => {
+  const { username, newUsername, displayName, avatarUrl } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  if (!newUsername && !displayName && typeof avatarUrl === 'undefined') {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+
+    const rows = await conn.query('SELECT * FROM users WHERE username = ?', [username]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = rows[0];
+
+    if (newUsername && newUsername !== user.username) {
+      const existing = await conn.query(
+        'SELECT id FROM users WHERE username = ? AND id <> ?',
+        [newUsername, user.id]
+      );
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Username already taken' });
+      }
+    }
+
+    const updates: string[] = [];
+    const values: unknown[] = [];
+
+    if (newUsername && newUsername !== user.username) {
+      updates.push('username = ?');
+      values.push(newUsername);
+    }
+
+    if (typeof displayName !== 'undefined') {
+      updates.push('display_name = ?');
+      values.push(displayName);
+    }
+
+    if (typeof avatarUrl !== 'undefined') {
+      updates.push('avatar_url = ?');
+      values.push(avatarUrl);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    values.push(user.id);
+
+    await conn.query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    const updatedRows = await conn.query('SELECT * FROM users WHERE id = ?', [user.id]);
+    const updated = updatedRows[0];
+
+    res.json({
+      username: updated.username,
+      role: updated.role,
+      displayName: updated.display_name || updated.username,
+      avatarUrl: updated.avatar_url || null,
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 // GET /users - List all users (Admin only - middleware should check this ideally)
 app.get('/api/users', async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
     // Exclude password_hash from the result
-    const users = await conn.query('SELECT id, username, role, created_at FROM users');
+    const users = await conn.query(
+      'SELECT id, username, role, created_at, email, display_name FROM users'
+    );
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -191,9 +608,9 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// POST /users - Create a new user
+// POST /users - Create a new user (admin panel)
 app.post('/api/users', async (req, res) => {
-  const { username, password, role } = req.body;
+  const { username, password, role, email, displayName } = req.body;
 
   if (!username || !password || !role) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -203,24 +620,58 @@ app.post('/api/users', async (req, res) => {
   try {
     conn = await pool.getConnection();
     
-    // Check if user exists
-    const existing = await conn.query('SELECT id FROM users WHERE username = ?', [username]);
+    // Check if username or email already exists
+    const existing = await conn.query(
+      'SELECT id FROM users WHERE username = ? OR email = ?',
+      [username, email || username]
+    );
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'Username already exists' });
+      return res.status(409).json({ error: 'Username or email already exists' });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const finalDisplayName = displayName && displayName.trim().length > 0 ? displayName : username;
+
     await conn.query(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-      [username, hashedPassword, role]
+      'INSERT INTO users (username, email, display_name, password_hash, role) VALUES (?, ?, ?, ?, ?)',
+      [username, email || null, finalDisplayName, hashedPassword, role]
     );
 
     res.status(201).json({ message: 'User created successfully' });
 
   } catch (error) {
     console.error('Error creating user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// POST /users/:id/role - Update a user's role (admin-only in UI)
+app.post('/api/users/:id/role', async (req, res) => {
+  const userId = req.params.id;
+  const { role } = req.body as { role?: string };
+
+  if (!role || !['admin', 'moderator', 'member'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+
+    const rows = await conn.query('SELECT * FROM users WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await conn.query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+
+    res.json({ message: 'Role updated successfully' });
+  } catch (error) {
+    console.error('Error updating user role:', error);
     res.status(500).json({ error: 'Internal server error' });
   } finally {
     if (conn) conn.release();
@@ -557,23 +1008,31 @@ app.post('/api/data', async (req, res) => {
     // 12. Patch Notes
     await conn.query('TRUNCATE TABLE patchnotes');
     if (content.patchnotes?.length) {
-      const batch = content.patchnotes.map((item: any) => [
-        item.id, item.version, item.title, item.subtitle, item.date, item.image, JSON.stringify(item.content), item.category, formatDateForDb(item.createdAt)
+      const batch = content.patchnotes.map((item: PatchNoteItem) => [
+        item.id,
+        item.version,
+        item.title,
+        item.subtitle,
+        item.date,
+        item.image,
+        JSON.stringify(item.content),
+        item.category,
+        formatDateForDb(item.createdAt),
       ]);
       await conn.batch('INSERT INTO patchnotes (id, version, title, subtitle, date, image, content, category, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', batch);
     }
 
     // 13. Pages
     if (content.pages && content.pages.length > 0) {
-      await conn.query('DELETE FROM pages'); // Full sync approach for simplicity, or use upsert
-      const batch = content.pages.map((p: any) => [
+      await conn.query('DELETE FROM pages');
+      const batch = content.pages.map((p: Page) => [
         p.id,
         p.slug,
         p.title,
         p.status || 'draft',
         JSON.stringify(p.sections || []),
         JSON.stringify(p.seo || {}),
-        formatDateForDb(p.createdAt)
+        formatDateForDb(p.createdAt),
       ]);
       await conn.batch('INSERT INTO pages (id, slug, title, status, sections, seo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', batch);
     }

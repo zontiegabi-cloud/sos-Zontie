@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ClassItem, SpecializationNode, WeaponItem } from "@/lib/content-store";
+import { ClassItem, SpecializationNode, WeaponItem, ClassSpecialization, ClassDevice } from "@/lib/content-store";
 import { useContent } from "@/hooks/use-content";
 import { iconMap } from "@/lib/icon-map";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 export type InteractiveClassListVariant = 'default' | 'hex-tech' | 'operator' | 'vanguard' | 'command';
 
-const WeaponPreviewPanel = ({ weapon, mousePos, previewMode }: { weapon: WeaponItem | null, mousePos: { x: number, y: number }, previewMode: 'follow' | 'fixed' }) => {
+const WeaponPreviewPanel = ({ weapon, mousePos, previewMode }: { weapon: WeaponItem | null; mousePos: { x: number; y: number }; previewMode: 'follow' | 'fixed' }) => {
    if (!weapon) return null;
    
    // Dynamic positioning based on mode
@@ -302,7 +302,14 @@ const TreeView = ({ nodes, isRoot = true, variant = 'default', onHoverWeapon }: 
 };
 
 // --- Standard Layout ---
-const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: any) => {
+interface StandardLayoutProps {
+  selectedClass: ClassItem;
+  expandedSlotId: string | null;
+  setExpandedSlotId: (slotId: string | null) => void;
+  onHoverWeapon: (weapon: WeaponItem | null) => void;
+}
+
+const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: StandardLayoutProps) => {
    const { weapons } = useContent();
 
    return (
@@ -376,7 +383,7 @@ const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                               <Cpu className="w-4 h-4" /> Class Devices
                            </h3>
                            <div className="grid grid-cols-1 gap-3">
-                              {selectedClass.devices.map((device: any, i: number) => {
+                              {selectedClass.devices.map((device, i: number) => {
                                  const Icon = iconMap[device.icon] || Zap;
                                  return (
                                     <div key={i} className="bg-card/50 border border-white/5 rounded-lg p-3 flex items-center gap-3">
@@ -407,19 +414,18 @@ const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
 
                   <div className="space-y-1">
                      {(selectedClass.specializations || []).length > 0 ? (
-                        selectedClass.specializations!.map((spec: any, idx: number) => {
+                        selectedClass.specializations!.map((spec, idx: number) => {
                            const uniqueId = spec.id || `spec-${idx}`;
-                        const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
+                           const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
-                        let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
-                        let slotLabel = spec.slot;
+                           let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
+                           const slotLabel = spec.slot;
 
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
                            if (linkedWeapon) {
                               firstItemLabel = linkedWeapon.name;
-                              slotLabel = slotLabel;
                            }
                         }
 
@@ -490,7 +496,16 @@ const StandardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
 };
 
 // --- Elite Layout (Replaces Hex-Tech) ---
-const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: any) => {
+type LayoutProps = {
+   selectedClass: ClassItem;
+   expandedSlotId: string | null;
+   setExpandedSlotId: (id: string | null) => void;
+   onHoverWeapon: (weapon: WeaponItem | null) => void;
+};
+
+type ClassSpecializationWithLegacy = ClassSpecialization & { item?: string };
+
+const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: LayoutProps) => {
    const { weapons } = useContent();
 
    return (
@@ -569,14 +584,14 @@ const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHover
                         </div>
                      )}
                   </div>
-
+                 
                   {selectedClass.devices?.length > 0 && (
                      <div className="space-y-2">
                         <h3 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
                            <Cpu className="w-3 h-3" /> Equipment
                         </h3>
                         <div className="grid grid-cols-1 gap-2">
-                           {selectedClass.devices.map((device: any, i: number) => {
+                           {selectedClass.devices.map((device: ClassDevice, i: number) => {
                               const Icon = iconMap[device.icon] || Zap;
                               return (
                                  <div key={i} className="bg-white/5 border border-white/10 rounded p-2 flex items-center gap-3 group hover:bg-white/10 transition-colors">
@@ -599,19 +614,18 @@ const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHover
                   </h3>
                   
                   <div className="space-y-2">
-                     {(selectedClass.specializations || []).map((spec: any, idx: number) => {
+                     {(selectedClass.specializations || []).map((spec: ClassSpecializationWithLegacy, idx: number) => {
                         const uniqueId = spec.id || `spec-${idx}`;
                         const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
                         let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
-                        let slotLabel = spec.slot;
+                        const slotLabel = spec.slot;
 
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
                            if (linkedWeapon) {
                               firstItemLabel = linkedWeapon.name;
-                              slotLabel = slotLabel;
                            }
                         }
 
@@ -667,7 +681,7 @@ const EliteLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHover
 };
 
 // --- Operator Layout ---
-const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: any) => {
+const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: LayoutProps) => {
    const { weapons } = useContent();
 
    return (
@@ -749,20 +763,19 @@ const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                      </h3>
                      
                      <div className="border border-border bg-card/30">
-                        {(selectedClass.specializations || []).map((spec: any, idx: number) => {
+                        {(selectedClass.specializations || []).map((spec: ClassSpecializationWithLegacy, idx: number) => {
                            const uniqueId = spec.id || `spec-${idx}`;
                            const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                            
                            let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
-                           let slotLabel = spec.slot;
+                           const slotLabel = spec.slot;
 
                            // Overwrite label if linked to a weapon
                            if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                               const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
-                              if (linkedWeapon) {
-                                 firstItemLabel = linkedWeapon.name;
-                                 slotLabel = slotLabel;
-                              }
+                           if (linkedWeapon) {
+                              firstItemLabel = linkedWeapon.name;
+                           }
                            }
 
                            const hasMultipleItems = treeNodes.length > 1 || (treeNodes.length === 1 && (treeNodes[0].children?.length || 0) > 0);
@@ -811,7 +824,7 @@ const OperatorLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
 };
 
 // --- Vanguard Layout (New Action) ---
-const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: any) => {
+const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: LayoutProps) => {
   const { weapons } = useContent();
 
   return (
@@ -899,7 +912,7 @@ const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
 
                 {selectedClass.devices?.length > 0 && (
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-                      {selectedClass.devices.map((device: any, i: number) => {
+                      {selectedClass.devices.map((device: ClassDevice, i: number) => {
                          const Icon = iconMap[device.icon] || Zap;
                          return (
                             <div key={i} className="bg-card/30 p-3 -skew-x-12 border-l-2 border-muted hover:border-primary transition-colors flex items-center gap-3">
@@ -921,19 +934,19 @@ const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
                 </h3>
                 
                 <div className="space-y-2">
-                   {(selectedClass.specializations || []).map((spec: any, idx: number) => {
+                   {(selectedClass.specializations || []).map((spec: ClassSpecializationWithLegacy, idx: number) => {
                       const uniqueId = spec.id || `spec-${idx}`;
                       const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                       
                       let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
-                      let slotLabel = spec.slot;
+                      const slotLabel = spec.slot;
 
                       // Overwrite label if linked to a weapon
                       if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                          const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
                          if (linkedWeapon) {
                             firstItemLabel = linkedWeapon.name;
-                            slotLabel = slotLabel;
+                            // keep existing slotLabel
                          }
                       }
 
@@ -989,7 +1002,7 @@ const VanguardLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHo
 };
 
 // --- Command Layout (New Pro) ---
-const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: any) => {
+const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHoverWeapon }: LayoutProps) => {
    const { weapons } = useContent();
 
    return (
@@ -1063,7 +1076,7 @@ const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHov
                            <Cpu className="w-4 h-4" /> Assets
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                           {selectedClass.devices.map((device: any, i: number) => {
+                           {selectedClass.devices.map((device: ClassDevice, i: number) => {
                               const Icon = iconMap[device.icon] || Zap;
                               return (
                                  <div key={i} className="bg-muted/50 border border-border rounded px-2 py-1 flex items-center gap-2">
@@ -1111,19 +1124,19 @@ const CommandLayout = ({ selectedClass, expandedSlotId, setExpandedSlotId, onHov
                   </div>
 
                   <div className="space-y-3">
-                     {(selectedClass.specializations || []).map((spec: any, idx: number) => {
+                     {(selectedClass.specializations || []).map((spec: ClassSpecializationWithLegacy, idx: number) => {
                         const uniqueId = spec.id || `spec-${idx}`;
                         const treeNodes = spec.tree || (spec.item ? [{ id: 'legacy', label: spec.item, children: [] }] : []);
                         
                         let firstItemLabel = treeNodes.length > 0 ? treeNodes[0].label : null;
-                        let slotLabel = spec.slot;
+                        const slotLabel = spec.slot;
 
                         // Overwrite label if linked to a weapon
                         if (treeNodes.length > 0 && treeNodes[0].linkedContentId && treeNodes[0].linkedContentType === 'weapon') {
                            const linkedWeapon = weapons.find(w => w.id === treeNodes[0].linkedContentId);
                            if (linkedWeapon) {
                               firstItemLabel = linkedWeapon.name;
-                              slotLabel = slotLabel;
+                              // keep existing slotLabel
                            }
                         }
 

@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { DynamicContentSource } from '@/lib/content-store';
 import { cn } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { ContentItem } from './types';
+import { getItemImage, getItemTitle, getItemDescription, getItemTag } from './utils';
 
 export function HeroCarouselView({ items, source, onView }: { items: ContentItem[], source: DynamicContentSource, onView: (item: ContentItem) => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  const paginate = useCallback((newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prev) => (prev + newDirection + items.length) % items.length);
+  }, [items.length]);
 
   // Auto-rotation
   useEffect(() => {
@@ -17,15 +23,10 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
 
     const interval = setInterval(() => {
       paginate(1);
-    }, 5000); // Rotate every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentIndex, isPaused, items.length]);
-
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    setCurrentIndex((prev) => (prev + newDirection + items.length) % items.length);
-  };
+  }, [isPaused, items.length, paginate]);
 
   const getVisibleItems = () => {
     if (items.length === 0) return [];
@@ -62,6 +63,9 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
 
   if (items.length === 0) return null;
 
+  const current = items[currentIndex];
+  const backgroundSrc = getItemImage(current, source.type);
+
   return (
     <div 
       className="w-screen relative left-[calc(-50vw+50%)] h-[700px] lg:h-[40vw] min-h-[700px] overflow-hidden bg-background group"
@@ -73,11 +77,7 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
-            src={
-              'image' in items[currentIndex] ? (items[currentIndex] as any).image : 
-              'src' in items[currentIndex] ? (items[currentIndex] as any).src : 
-              '/placeholder.jpg'
-            }
+            src={backgroundSrc}
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.2 }}
             exit={{ opacity: 0 }}
@@ -105,7 +105,7 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
             let opacity = 1;
             let zIndex = 0;
             let rotateY = 0;
-            let xOffset = "-50%";
+            const xOffset = "-50%";
 
             if (isCenter) {
               leftPos = 50;
@@ -167,6 +167,10 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
               );
             }
 
+            const imageSrc = getItemImage(item, source.type);
+            const title = getItemTitle(item);
+            const description = getItemDescription(item);
+            const tag = getItemTag(item, source.type);
             return (
               <motion.div
                 key={item.id}
@@ -196,14 +200,9 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
                    else if (isFarRight) paginate(2);
                 }}
               >
-                {/* Image */}
                 <img 
-                  src={
-                    'image' in item ? (item as any).image : 
-                    'src' in item ? (item as any).src : 
-                    '/placeholder.jpg'
-                  } 
-                  alt={(item as any).title || ''}
+                  src={imageSrc}
+                  alt={title}
                   className="w-full h-full object-cover"
                 />
                 
@@ -242,11 +241,11 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
                        <div className="absolute top-0 right-0 p-1">
                           <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                        </div>
-                       <h2 className="text-xl md:text-2xl lg:text-[2vw] font-display text-primary mb-2 leading-none uppercase tracking-wider">
-                          {(item as any).title}
-                       </h2>
+                          <h2 className="text-xl md:text-2xl lg:text-[2vw] font-display text-primary mb-2 leading-none uppercase tracking-wider">
+                            {title}
+                          </h2>
                        <p className="text-primary/60 line-clamp-2 text-xs md:text-sm font-mono mb-3">
-                          {(item as any).description}
+                          {description}
                        </p>
                        <Button size="sm" variant="outline" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] w-full border-primary text-primary hover:bg-primary hover:text-black uppercase tracking-widest text-xs rounded-none" onClick={(e) => { e.stopPropagation(); onView(item); }}>
                           Initialize <ChevronRight className="w-3 h-3 ml-2" />
@@ -264,14 +263,14 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
                     <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-4 lg:p-[1.5vw] shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                        <div className="flex items-center gap-2 mb-2">
                           <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] lg:text-[0.7vw] font-medium text-white uppercase tracking-wide">
-                            {'tag' in item ? (item as any).tag : source.type}
+                            {tag}
                           </span>
                        </div>
                        <h2 className="text-xl md:text-2xl lg:text-[2.2vw] font-bold text-white mb-2 leading-tight">
-                          {(item as any).title}
+                          {title}
                        </h2>
                        <p className="text-white/80 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] mb-4">
-                          {(item as any).description}
+                          {description}
                        </p>
                        <Button size="sm" className="h-8 lg:h-[2.5vw] lg:text-[0.8vw] bg-white text-black hover:bg-white/90 rounded-lg w-full font-bold" onClick={(e) => { e.stopPropagation(); onView(item); }}>
                           Explore
@@ -288,10 +287,10 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
                   )}>
                     <div className="absolute inset-0 bg-black/60 z-[-1]" />
                     <span className="inline-block px-3 py-1 mb-4 text-xs lg:text-[0.8vw] font-bold uppercase tracking-[0.2em] text-primary border-y border-primary/50">
-                        {'tag' in item ? (item as any).tag : source.type}
+                        {'tag' in item ? (item as { tag?: string }).tag ?? source.type : source.type}
                      </span>
                      <h2 className="text-3xl md:text-4xl lg:text-[3.5vw] font-display text-white mb-4 drop-shadow-2xl uppercase tracking-tighter">
-                        {(item as any).title}
+                        {title}
                      </h2>
                      <Button size="lg" className="rounded-full px-8 lg:px-[2vw] lg:h-[3vw] lg:text-[1vw] bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest" onClick={(e) => { e.stopPropagation(); onView(item); }}>
                         Discover
@@ -308,13 +307,13 @@ export function HeroCarouselView({ items, source, onView }: { items: ContentItem
                     <div className="bg-gradient-to-t from-black/95 via-black/60 to-transparent absolute inset-0" />
                     <div className="relative z-10">
                        <span className="inline-block px-2 py-0.5 mb-2 text-[10px] lg:text-[0.7vw] lg:px-[0.5vw] lg:py-[0.1vw] font-bold uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 rounded backdrop-blur-md">
-                          {'tag' in item ? (item as any).tag : source.type}
+                          {'tag' in item ? (item as { tag?: string }).tag ?? source.type : source.type}
                        </span>
                        <h2 className="text-2xl md:text-3xl lg:text-[2.5vw] font-display text-white mb-2 drop-shadow-xl leading-none">
-                          {(item as any).title}
+                          {title}
                        </h2>
                        <p className="text-white/70 line-clamp-2 text-xs md:text-sm lg:text-[0.9vw] font-light mb-4 lg:mb-[1vw] max-w-lg lg:max-w-[80%]">
-                          {(item as any).description}
+                          {description}
                        </p>
                        <Button size="sm" className="h-8 lg:h-[2.5vw] text-xs lg:text-[0.8vw] lg:px-[1.5vw] uppercase tracking-wider" onClick={(e) => { e.stopPropagation(); onView(item); }}>
                           View Details <ArrowRight className="w-3 h-3 lg:w-[0.8vw] lg:h-[0.8vw] ml-2" />

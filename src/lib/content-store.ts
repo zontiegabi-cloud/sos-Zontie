@@ -31,8 +31,9 @@ export interface SpecializationNode {
 
 export interface ClassSpecialization {
   id: string;
-  slot: string; // The name of the slot (e.g., "PRIMARY WEAPON")
-  tree: SpecializationNode[]; // The content tree
+  slot: string;
+  tree: SpecializationNode[];
+  item?: string;
 }
 
 export interface ClassItem {
@@ -348,8 +349,8 @@ export interface CustomSection {
     description?: string; // HTML allowed
     buttons?: HeroButton[];
     image?: string;
-    html?: string; // For raw HTML sections
-    [key: string]: any;
+    html?: string;
+    dynamicSources?: DynamicContentSource[];
   };
   settings: {
     paddingTop: string; 
@@ -421,13 +422,13 @@ export interface CustomSection {
     overlayOpacity?: number;
     scrollIndicator?: {
       enabled: boolean;
-      style: 'bounce' | 'pulse' | 'static';
-      color?: string; // e.g. "text-primary", "text-white"
+      style: 'bounce' | 'pulse' | 'static' | 'fade';
+      color?: string;
       icon: 'chevron-down' | 'arrow-down' | 'mouse';
       text?: string;
-      opacity?: number; // 0-1
+      opacity?: number;
       position?: {
-        bottom?: string; // e.g. "2rem"
+        bottom?: string;
         align?: 'left' | 'center' | 'right';
       };
       paddingTop?: string;
@@ -446,12 +447,11 @@ export interface CustomSection {
       delay?: number;
     };
   };
-  dynamicSources?: DynamicContentSource[];
 }
 
 export interface DynamicContentSource {
-  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap' | 'patchnotes' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures' | 'patch-notes' | 'ticker' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'bug-report-form';
+  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap' | 'events' | 'patchnotes' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures' | 'patch-notes' | 'ticker' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'bug-report-form' | 'discord-chat' | 'discord-lfg' | 'discord-recruitment' | 'discord-fan-art';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured' | 'hero-carousel';
   count: number;
   fetchAll?: boolean;
@@ -489,7 +489,9 @@ export interface DynamicContentSource {
   forceFullWidth?: boolean;
   // Discord Integration
   discordServerId?: string;
+  discordChannelId?: string;
   discordWebhookUrl?: string;
+  discordWidgetType?: 'standard' | 'chat' | 'lfg' | 'recruitment' | 'fan-art';
 }
 
 export interface NavbarItem {
@@ -553,7 +555,7 @@ export interface Page {
   updatedAt?: string;
   settings?: {
     showGameContentNav?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -697,16 +699,17 @@ const defaultPages: Page[] = [
         id: "news-list",
         type: "dynamic-content",
         name: "News List",
-        content: {},
+        content: {
+          dynamicSources: [
+            { type: "news", displayMode: "grid", count: 12, gridColumns: 3 }
+          ]
+        },
         settings: {
           paddingTop: "2rem",
           paddingBottom: "6rem",
           containerWidth: "default",
           background: { type: "color", color: "transparent" }
-        },
-        dynamicSources: [
-          { type: "news", displayMode: "grid", count: 12, gridColumns: 3 }
-        ]
+        }
       }
     ],
     createdAt: new Date().toISOString(),
@@ -738,16 +741,17 @@ const defaultPages: Page[] = [
         id: "media-list",
         type: "dynamic-content",
         name: "Media List",
-        content: {},
+        content: {
+          dynamicSources: [
+            { type: "media", displayMode: "masonry", count: 20 }
+          ]
+        },
         settings: {
           paddingTop: "2rem",
           paddingBottom: "6rem",
           containerWidth: "default",
           background: { type: "color", color: "transparent" }
-        },
-        dynamicSources: [
-          { type: "media", displayMode: "masonry", count: 20 }
-        ]
+        }
       }
     ],
     createdAt: new Date().toISOString(),
@@ -779,16 +783,17 @@ const defaultPages: Page[] = [
         id: "faq-list",
         type: "dynamic-content",
         name: "FAQ List",
-        content: {},
+        content: {
+          dynamicSources: [
+            { type: "faq", displayMode: "accordion", count: 50 }
+          ]
+        },
         settings: {
           paddingTop: "2rem",
           paddingBottom: "6rem",
           containerWidth: "narrow",
           background: { type: "color", color: "transparent" }
-        },
-        dynamicSources: [
-          { type: "faq", displayMode: "accordion", count: 50 }
-        ]
+        }
       }
     ],
     createdAt: new Date().toISOString(),
@@ -892,7 +897,12 @@ const defaultPages: Page[] = [
         id: "weapons-section",
         type: "dynamic-content",
         name: "Weapons",
-        content: { title: "Weapons" },
+        content: { 
+          title: "Weapons",
+          dynamicSources: [
+            { type: "weapons", displayMode: "grid", count: 20, gridColumns: 3 }
+          ]
+        },
         settings: {
           paddingTop: "4rem",
           paddingBottom: "4rem",
@@ -900,16 +910,18 @@ const defaultPages: Page[] = [
           background: { type: "color", color: "transparent" },
           showInNav: true,
           navLabel: "Weapons"
-        },
-        dynamicSources: [
-          { type: "weapons", displayMode: "grid", count: 20, gridColumns: 3 }
-        ]
+        }
       },
       {
         id: "maps-section",
         type: "dynamic-content",
         name: "Maps",
-        content: { title: "Maps" },
+        content: { 
+          title: "Maps",
+          dynamicSources: [
+            { type: "maps", displayMode: "grid", count: 20, gridColumns: 2 }
+          ]
+        },
         settings: {
           paddingTop: "4rem",
           paddingBottom: "4rem",
@@ -917,16 +929,18 @@ const defaultPages: Page[] = [
           background: { type: "color", color: "transparent" },
           showInNav: true,
           navLabel: "Maps"
-        },
-        dynamicSources: [
-          { type: "maps", displayMode: "grid", count: 20, gridColumns: 2 }
-        ]
+        }
       },
       {
         id: "devices-section",
         type: "dynamic-content",
         name: "Devices",
-        content: { title: "Devices" },
+        content: { 
+          title: "Devices",
+          dynamicSources: [
+            { type: "gameDevices", displayMode: "grid", count: 20, gridColumns: 3 }
+          ]
+        },
         settings: {
           paddingTop: "4rem",
           paddingBottom: "4rem",
@@ -934,16 +948,18 @@ const defaultPages: Page[] = [
           background: { type: "color", color: "transparent" },
           showInNav: true,
           navLabel: "Devices"
-        },
-        dynamicSources: [
-          { type: "gameDevices", displayMode: "grid", count: 20, gridColumns: 3 }
-        ]
+        }
       },
       {
         id: "modes-section",
         type: "dynamic-content",
         name: "Game Modes",
-        content: { title: "Game Modes" },
+        content: { 
+          title: "Game Modes",
+          dynamicSources: [
+            { type: "gameModes", displayMode: "grid", count: 20, gridColumns: 3 }
+          ]
+        },
         settings: {
           paddingTop: "4rem",
           paddingBottom: "4rem",
@@ -951,10 +967,105 @@ const defaultPages: Page[] = [
           background: { type: "color", color: "transparent" },
           showInNav: true,
           navLabel: "Game Modes"
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "events",
+    slug: "events",
+    title: "Events & Tournaments",
+    status: "published",
+    sections: [
+      {
+        id: "events-hero",
+        type: "hero",
+        name: "Events Hero",
+        content: {
+          title: "EVENTS & TOURNAMENTS",
+          subtitle: "Weekend events, tournaments, scrims and special playtests."
         },
-        dynamicSources: [
-          { type: "gameModes", displayMode: "grid", count: 20, gridColumns: 3 }
-        ]
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "loadouts",
+    slug: "loadouts",
+    title: "Loadout Builder",
+    status: "published",
+    sections: [
+      {
+        id: "loadouts-hero",
+        type: "hero",
+        name: "Loadouts Hero",
+        content: {
+          title: "LOADOUT BUILDER",
+          subtitle: "Create and share your favorite Shadows of Soldiers builds."
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      }
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: "start-here",
+    slug: "start-here",
+    title: "Start Here",
+    status: "published",
+    sections: [
+      {
+        id: "start-hero",
+        type: "hero",
+        name: "Start Here Hero",
+        content: {
+          title: "START HERE",
+          subtitle: "New to Shadows of Soldiers? Read this first."
+        },
+        settings: {
+          paddingTop: "8rem",
+          paddingBottom: "4rem",
+          containerWidth: "default",
+          background: { type: "color", color: "transparent" },
+          textAlign: "center"
+        }
+      },
+      {
+        id: "start-guide",
+        type: "rich-text",
+        name: "New Player Guide",
+        content: {
+          title: "New Player Guide",
+          description: `<h2>Core Game Modes</h2>
+<p>Learn the main ways to play Shadows of Soldiers, from objective-based modes to tactical elimination.</p>
+<h2>Recommended Classes & Loadouts</h2>
+<p>Start with a simple, forgiving class and a reliable weapon setup. You can explore more advanced classes later.</p>
+<h2>Next Steps</h2>
+<p>Visit the <a href="/game-content">Game Content</a> page to explore weapons, maps and devices, and try the <a href="/loadouts">Loadout Builder</a> to prepare your first build.</p>`
+        },
+        settings: {
+          paddingTop: "2rem",
+          paddingBottom: "4rem",
+          containerWidth: "narrow",
+          background: { type: "color", color: "transparent" }
+        }
       }
     ],
     createdAt: new Date().toISOString(),
@@ -1612,8 +1723,8 @@ export function getContent(): SiteContent {
     const parsed = JSON.parse(stored);
     
     // Migration: Migrate Home Page from Settings to Pages if missing
-    let pages = parsed.pages || [];
-    const hasHomePage = pages.some((p: any) => p.slug === 'home');
+    const pages: Page[] = parsed.pages || [];
+    const hasHomePage = pages.some((p: Page) => p.slug === 'home');
     
     if (!hasHomePage && parsed.settings && parsed.settings.homepageSections) {
       const homeSections = (parsed.settings.homepageSections as HomepageSection[])

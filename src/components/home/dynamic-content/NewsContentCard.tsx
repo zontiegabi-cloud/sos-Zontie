@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { NewsItem } from '@/lib/content-store';
 import { ContentItem } from './types';
-import { formatDate } from './utils';
+import { formatDate, getItemImage } from './utils';
 
 export const NewsContentCard = forwardRef<HTMLDivElement, { 
   item: NewsItem, 
@@ -33,6 +33,8 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
     return 'bg-primary/90 text-primary-foreground'; // Default Primary
   };
 
+  const image = getItemImage(item, 'news');
+
   // Tech Style
   if (cardStyle === 'tech') {
     return (
@@ -49,7 +51,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
       >
         <div className="relative aspect-video overflow-hidden border-b border-primary/30 shrink-0">
           <img 
-            src={item.thumbnail || item.image || '/placeholder.jpg'} 
+            src={image}
             alt={item.title}
             className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
           />
@@ -101,7 +103,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
         <div className="flex flex-col h-full">
           <div className="aspect-[4/3] overflow-hidden relative">
             <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
+              src={image}
               alt={item.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -147,7 +149,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
       >
         <div className="absolute inset-0">
           <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
+            src={image}
             alt={item.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-40"
           />
@@ -190,7 +192,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
       >
         <div className="block w-full h-full relative">
           <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
+            src={image}
             alt={item.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -237,7 +239,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
       >
         <div className="block w-full h-full">
           <img 
-            src={item.image || item.thumbnail || '/placeholder.jpg'} 
+            src={image}
             alt={item.title}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
@@ -289,7 +291,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
         <div className="grid grid-cols-1 gap-4 h-full">
           <div className="aspect-video overflow-hidden rounded-md relative">
             <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
+              src={image}
               alt={item.title}
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
             />
@@ -380,7 +382,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
         <div className="flex gap-4 h-full">
           <div className="w-1/3 aspect-square max-w-[120px] rounded overflow-hidden flex-shrink-0">
             <img 
-              src={item.thumbnail || item.image || '/placeholder.jpg'} 
+              src={image}
               alt={item.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -424,7 +426,7 @@ export const NewsContentCard = forwardRef<HTMLDivElement, {
     >
       <div className="aspect-video overflow-hidden relative">
         <img 
-          src={item.image || item.thumbnail || '/placeholder.jpg'} 
+          src={image}
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />

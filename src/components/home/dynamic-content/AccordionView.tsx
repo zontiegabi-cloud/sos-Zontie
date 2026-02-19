@@ -1,15 +1,15 @@
 import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { DynamicContentSource, FAQItem } from '@/lib/content-store';
+import { DynamicContentSource } from '@/lib/content-store';
 import { ContentItem } from './types';
+import { getItemQuestion, getItemAnswer } from './utils';
 
 export function AccordionView({ items, source }: { items: ContentItem[], source: DynamicContentSource }) {
   return (
     <Accordion type="single" collapsible className="space-y-4 w-full">
       {items.map((item, index) => {
-        // Safe access for FAQ items or fallback properties
-        const question = 'question' in item ? (item as FAQItem).question : 'title' in item ? (item as { title: string }).title : 'name' in item ? (item as { name: string }).name : 'Item';
-        const answer = 'answer' in item ? (item as FAQItem).answer : 'description' in item ? (item as { description: string }).description : '';
+        const question = getItemQuestion(item) || 'Item';
+        const answer = getItemAnswer(item);
 
         return (
           <AccordionItem

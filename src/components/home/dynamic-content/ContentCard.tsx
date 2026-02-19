@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { DynamicContentSource, NewsItem, ClassItem, MediaItem, WeaponItem, MapItem, GameDeviceItem, GameModeItem, RoadmapItem, PatchNoteItem } from '@/lib/content-store';
+import { DynamicContentSource, NewsItem, ClassItem, MediaItem, WeaponItem, MapItem, GameDeviceItem, GameModeItem, RoadmapItem, PatchNoteItem, FeatureItem } from '@/lib/content-store';
 import { ContentItem } from './types';
 import { FeaturesContentCard } from './FeaturesContentCard';
 import { NewsContentCard } from './NewsContentCard';
@@ -19,7 +19,7 @@ export const ContentCard = forwardRef<HTMLDivElement, {
   onView: (item: ContentItem) => void
 }>(({ item, type, displayMode, cardStyle, index, onView }, ref) => {
   if (type === 'features') {
-    return <FeaturesContentCard ref={ref} item={item as any} index={index} onView={onView} />;
+    return <FeaturesContentCard ref={ref} item={item as FeatureItem} index={index} onView={onView} />;
   }
   if (type === 'news') {
     return <NewsContentCard ref={ref} item={item as NewsItem} index={index} onView={onView} cardStyle={cardStyle} />;

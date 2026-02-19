@@ -38,7 +38,6 @@ export async function initDB() {
     // Now connect to the specific database using the pool
     connection = await pool.getConnection();
 
-    // 0. Users Table (for Admin Auth)
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,15 +48,13 @@ export async function initDB() {
       )
     `);
 
-    // Check if admin user exists, if not create one
-    const users = await connection.query('SELECT * FROM users WHERE username = ?', ['admin']);
-    if (users.length === 0) {
-      const hashedPassword = await bcrypt.hash('admin', 10);
-      await connection.query(
-        'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-        ['admin', hashedPassword]
-      );
-      console.log('Default admin user created');
+    try {
+      await connection.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE');
+      await connection.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS steam_id VARCHAR(100) UNIQUE');
+      await connection.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(100)');
+      await connection.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url LONGTEXT');
+    } catch (e) {
+      console.log('Error migrating users table:', e);
     }
 
     // 1. News Table

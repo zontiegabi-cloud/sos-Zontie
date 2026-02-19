@@ -9,10 +9,13 @@ import Index from "./pages/Index";
 import Media from "./pages/Media";
 import FAQ from "./pages/FAQ";
 import GameContent from "./pages/GameContent";
+import Events from "./pages/Events";
 import News from "./pages/News";
 import NewsArticle from "./pages/NewsArticle";
 import CustomPage from "./pages/CustomPage";
+import Loadouts from "./pages/Loadouts";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,8 +33,11 @@ const App = () => (
             <Route path="/media" element={<Media />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/game-content" element={<GameContent />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/loadouts" element={<Loadouts />} />
             <Route path="/news" element={<News />} />
             <Route path="/news/:id" element={<NewsArticle />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/404" element={<NotFound />} />
             <Route path="/:slug" element={<CustomPage />} />

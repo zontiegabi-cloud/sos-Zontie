@@ -21,12 +21,10 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { useAdminAuth } from "@/hooks/use-admin-auth";
-import { AdminLogin } from "@/components/admin/AdminLogin";
 import { SettingsPanel } from "@/components/admin/SettingsPanel";
 
 // Import modular tabs
@@ -45,6 +43,7 @@ import { UsersTab } from "@/components/admin/tabs/UsersTab";
 import { RoadMapTab } from "@/components/admin/tabs/RoadMapTab";
 import { NavbarTab } from "@/components/admin/tabs/NavbarTab";
 import { PatchNotesTab } from "@/components/admin/tabs/PatchNotesTab";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar" | "patchnotes";
 
@@ -57,12 +56,6 @@ export default function Admin() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Update URL when tab changes
-  const handleTabChange = (tab: Tab) => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
-  };
-
   const {
     isAuthenticated,
     user,
@@ -72,20 +65,17 @@ export default function Admin() {
     login,
     logout,
     changePassword,
+    register,
   } = useAdminAuth();
 
-  // Close mobile menu when tab changes
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
+
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [activeTab]);
-
-  const handleSetPassword = (password: string) => {
-    setPassword(password);
-  };
-
-  const handleLogin = async (username: string, password: string) => {
-    return await login(username, password);
-  };
 
   const handleChangePassword = async () => {
     setIsChangingPassword(true);
@@ -104,12 +94,22 @@ export default function Admin() {
   }
 
   if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user || user.role === "member") {
     return (
-      <AdminLogin 
-        isPasswordSet={isPasswordSet}
-        onLogin={handleLogin}
-        onSetPassword={handleSetPassword}
-      />
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Access denied</h1>
+          <p className="text-muted-foreground">
+            Your account does not have permission to access the admin panel.
+          </p>
+          <Link to="/">
+            <Button>Back to site</Button>
+          </Link>
+        </div>
+      </div>
     );
   }
 

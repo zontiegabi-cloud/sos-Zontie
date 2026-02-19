@@ -29,7 +29,7 @@ export function ClassEditModal({
   const { classes } = useContent();
   
   // Normalize specializations to new format if needed
-  const normalizeSpecializations = (specs: any[]): ClassSpecialization[] => {
+  const normalizeSpecializations = (specs: ClassSpecialization[]): ClassSpecialization[] => {
     if (!specs) return [];
     return specs.map(s => {
       if (s.tree) return s; // Already new format

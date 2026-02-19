@@ -350,18 +350,47 @@ export function RoadMapTab() {
 
               <div className="space-y-2">
                 <Label>Category (Optional)</Label>
-                <div className="relative">
-                  <Input 
-                    value={editingItem.category || ""} 
-                    onChange={e => setEditingItem({...editingItem, category: e.target.value})}
-                    placeholder="e.g. Crowdfunding, Prototype, Alpha..."
-                    list="categories-list"
-                  />
-                  <datalist id="categories-list">
-                    {uniqueCategories.map(cat => (
-                      <option key={cat} value={cat} />
-                    ))}
-                  </datalist>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input 
+                        value={editingItem.category || ""} 
+                        onChange={e => setEditingItem({...editingItem, category: e.target.value})}
+                        placeholder="e.g. Crowdfunding, Prototype, Alpha..."
+                        list="categories-list"
+                      />
+                      <datalist id="categories-list">
+                        {uniqueCategories.map(cat => (
+                          <option key={cat} value={cat} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <Select
+                      value={
+                        ['event', 'tournament', 'scrim', 'playtest'].includes(
+                          (editingItem.category || '').toLowerCase()
+                        )
+                          ? (editingItem.category || '').toLowerCase()
+                          : ''
+                      }
+                      onValueChange={(val) =>
+                        setEditingItem({
+                          ...editingItem,
+                          category: val,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Quick select" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[100]">
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="tournament">Tournament</SelectItem>
+                        <SelectItem value="scrim">Scrim</SelectItem>
+                        <SelectItem value="playtest">Playtest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Use categories to group phases together. You can filter by this category in the Page Builder.

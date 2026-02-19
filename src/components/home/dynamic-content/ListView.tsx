@@ -1,15 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { NewsItem, PatchNoteItem } from '@/lib/content-store';
+import { NewsItem, PatchNoteItem, DynamicContentSource } from '@/lib/content-store';
 import { ContentItem } from './types';
 import { ExternalLink, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getItemTitle, getItemDescription } from './utils';
 
 interface ListViewProps {
   items: ContentItem[];
   onView: (item: ContentItem) => void;
-  source?: any;
+  source?: DynamicContentSource;
 }
 
 export function ListView({ items, onView, source }: ListViewProps) {
@@ -18,9 +19,17 @@ export function ListView({ items, onView, source }: ListViewProps) {
   return (
     <div className="flex flex-col gap-3 w-full">
       {items.map((item, index) => {
-        const isPatch = '_isPatchNote' in item || (('tag' in item) && (item as any).tag?.toLowerCase().includes('patch'));
-        const title = 'title' in item ? (item as any).title : 'name' in item ? (item as any).name : '';
-        const description = 'description' in item ? (item as any).description : 'subtitle' in item ? (item as any).subtitle : '';
+        const typedItem = item as NewsItem | PatchNoteItem;
+        const isPatch =
+          '_isPatchNote' in item ||
+          (('tag' in item ? typedItem.tag : undefined)?.toLowerCase().includes('patch') ?? false);
+
+        const title = getItemTitle(item) || '';
+        const description =
+          getItemDescription(item) ||
+          (('_isPatchNote' in item && 'subtitle' in (typedItem as PatchNoteItem) && typeof (typedItem as PatchNoteItem).subtitle === 'string')
+            ? ((typedItem as PatchNoteItem).subtitle ?? '')
+            : '');
 
         return (
           <motion.div

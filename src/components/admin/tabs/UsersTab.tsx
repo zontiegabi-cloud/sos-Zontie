@@ -46,12 +46,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 interface User {
   id: number;
   username: string;
-  role: string;
+  role: "admin" | "moderator" | "member";
   created_at: string;
+  email?: string | null;
+  display_name?: string | null;
 }
 
 export function UsersTab() {
@@ -66,6 +69,9 @@ export function UsersTab() {
   const [newUserUsername, setNewUserUsername] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState("moderator");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserDisplayName, setNewUserDisplayName] = useState("");
+  const { user: currentUser } = useAdminAuth();
 
   const fetchUsers = async () => {
     try {
@@ -89,8 +95,13 @@ export function UsersTab() {
   }, []);
 
   const handleAddUser = async () => {
+    if (newUserEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newUserEmail.toLowerCase())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     if (!newUserUsername || !newUserPassword) {
-      toast.error("Please fill in all fields");
+      toast.error("Please fill in username and password");
       return;
     }
 
@@ -101,7 +112,9 @@ export function UsersTab() {
         body: JSON.stringify({
           username: newUserUsername,
           password: newUserPassword,
-          role: newUserRole
+          role: newUserRole,
+          email: newUserEmail || undefined,
+          displayName: newUserDisplayName || undefined,
         }),
       });
 
@@ -111,6 +124,8 @@ export function UsersTab() {
         setNewUserUsername("");
         setNewUserPassword("");
         setNewUserRole("moderator");
+        setNewUserEmail("");
+        setNewUserDisplayName("");
         fetchUsers();
       } else {
         const data = await response.json();
@@ -152,6 +167,34 @@ export function UsersTab() {
     return <div>Loading users...</div>;
   }
 
+  const handleChangeRole = async (id: number, role: User["role"]) => {
+    if (!currentUser || currentUser.role !== "admin") {
+      toast.error("Only admins can change roles");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/${id}/role`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+
+      if (response.ok) {
+        toast.success("Role updated");
+        setUsers((prev) =>
+          prev.map((u) => (u.id === id ? { ...u, role } : u))
+        );
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to update role");
+      }
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Error connecting to server");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -188,6 +231,31 @@ export function UsersTab() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Optional, used for login"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="displayName" className="text-right">
+                  Display name
+                </Label>
+                <Input
+                  id="displayName"
+                  value={newUserDisplayName}
+                  onChange={(e) => setNewUserDisplayName(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Optional, shown in navbar"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="password" className="text-right">
                   Password
                 </Label>
@@ -210,6 +278,7 @@ export function UsersTab() {
                   <SelectContent>
                     <SelectItem value="admin">Admin (Full Access)</SelectItem>
                     <SelectItem value="moderator">Moderator (Limited)</SelectItem>
+                    <SelectItem value="member">Member (Site user)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -234,6 +303,7 @@ export function UsersTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Username</TableHead>
+                <TableHead>Display Name</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Created At</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -243,14 +313,35 @@ export function UsersTab() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.username}</TableCell>
+                  <TableCell>{user.display_name || user.username}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.role === 'admin' 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                    }`}>
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                    </span>
+                    {currentUser?.role === "admin" ? (
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) =>
+                          handleChangeRole(user.id, value as User["role"])
+                        }
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="moderator">Moderator</SelectItem>
+                          <SelectItem value="member">Member</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === "admin"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                        }`}
+                      >
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">

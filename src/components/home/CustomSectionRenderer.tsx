@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { CustomSection, HeroButton, DynamicContentSource, BackgroundSettings } from "@/lib/content-store";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { DynamicContentBlock } from "@/components/home/DynamicContentBlock";
@@ -56,7 +56,7 @@ interface CustomSectionRendererProps {
   section: CustomSection;
 }
 
-const decorationIcons: Record<string, any> = {
+const decorationIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   zap: Zap,
   star: Star,
   crown: Crown,
@@ -101,7 +101,7 @@ const decorationIcons: Record<string, any> = {
 };
 
 interface VideoBackgroundProps {
-  settings: any;
+  settings: CustomSection['settings'];
   isMuted: boolean;
   isPlaying: boolean;
   volume: number;
@@ -110,7 +110,7 @@ interface VideoBackgroundProps {
 
 function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: VideoBackgroundProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const background = settings.background || {};
+  const background = (settings.background || {}) as BackgroundSettings;
   const youtubeId = getYoutubeId(background.videoUrl || '');
 
   // Handle mute/unmute
@@ -165,7 +165,7 @@ function YoutubeBackground({ settings, isMuted, isPlaying, volume, videoDims }: 
 
 function NativeVideoBackground({ settings, isMuted, isPlaying, volume }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const background = settings.background || {};
+  const background = (settings.background || {}) as BackgroundSettings;
 
   useEffect(() => {
     if (videoRef.current) {
@@ -765,7 +765,7 @@ function SectionContent({ section, sectionStyle, backgroundStyle, overlayOpacity
                 {content.buttons.map((btn: HeroButton, idx: number) => (
                   <Button 
                     key={idx} 
-                    variant={getButtonVariant(btn.variant) as any}
+                    variant={getButtonVariant(btn.variant) as ButtonProps["variant"]}
                     asChild
                     className={getButtonClasses(btn.variant)}
                     style={{
