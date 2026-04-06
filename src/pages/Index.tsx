@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
 import { useContent } from "@/hooks/use-content";
+import { PageSkeleton } from "@/components/common/LoadingSkeleton";
 
 const Index = () => {
   const { pages, isLoading } = useContent();
@@ -9,7 +10,7 @@ const Index = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">Loading...</div>
+        <PageSkeleton />
       </Layout>
     );
   }
