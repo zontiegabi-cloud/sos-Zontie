@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Key, Plus, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { API_BASE_URL } from "@/config";
@@ -71,7 +71,13 @@ export function UsersTab() {
   const [newUserRole, setNewUserRole] = useState("moderator");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserDisplayName, setNewUserDisplayName] = useState("");
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
   const { user: currentUser } = useAdminAuth();
+
+  // Reset password state
+  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -160,6 +166,30 @@ export function UsersTab() {
       toast.error("Error connecting to server");
     } finally {
       setDeleteId(null);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordId || !resetPasswordValue) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/${resetPasswordId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: resetPasswordValue }),
+      });
+
+      if (response.ok) {
+        toast.success("Password reset successfully");
+        setResetPasswordId(null);
+        setResetPasswordValue("");
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to reset password");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      toast.error("Error connecting to server");
     }
   };
 
@@ -259,13 +289,22 @@ export function UsersTab() {
                 <Label htmlFor="password" className="text-right">
                   Password
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3 relative">
+                  <Input
+                    id="password"
+                    type={showNewUserPassword ? "text" : "password"}
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewUserPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="role" className="text-right">
@@ -344,7 +383,17 @@ export function UsersTab() {
                     )}
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setResetPasswordId(user.id);
+                        setResetPasswordValue("");
+                      }}
+                    >
+                      <Key className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -378,6 +427,44 @@ export function UsersTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!resetPasswordId} onOpenChange={(open) => !open && setResetPasswordId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for this user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reset-password" className="text-right">
+                New Password
+              </Label>
+              <div className="col-span-3 relative">
+                <Input
+                  id="reset-password"
+                  type={showResetPassword ? "text" : "password"}
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword(!showResetPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showResetPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordId(null)}>Cancel</Button>
+            <Button onClick={handleResetPassword}>Reset Password</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

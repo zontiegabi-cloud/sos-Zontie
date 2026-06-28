@@ -678,6 +678,38 @@ app.post('/api/users/:id/role', async (req, res) => {
   }
 });
 
+// POST /users/:id/reset-password - Reset a user's password (admin-only in UI)
+app.post('/api/users/:id/reset-password', async (req, res) => {
+  const userId = req.params.id;
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).json({ error: 'New password is required' });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+
+    const rows = await conn.query('SELECT * FROM users WHERE id = ?', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await conn.query('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, userId]);
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 // DELETE /users/:id - Delete a user
 app.delete('/api/users/:id', async (req, res) => {
   const userId = req.params.id;
