@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Search, Copy, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Copy, ThumbsUp, ThumbsDown, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -130,7 +130,8 @@ export function NewsTab() {
       bgImage: "",
       description: "",
       content: "",
-      tag: "News"
+      tag: "News",
+      videoUrl: ""
     });
     setIsCreating(true);
   };
@@ -223,7 +224,8 @@ export function NewsTab() {
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>{item.date}</TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      {item.videoUrl ? <Video className="h-3 w-3" /> : null}
                       {item.tag}
                     </span>
                   </TableCell>

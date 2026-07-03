@@ -99,6 +99,10 @@ export const getItemImage = (item: ContentItem, sourceType?: SourceType): string
 
   if (sourceType === 'news') {
     const news = item as NewsItem;
+    if (news.videoUrl) {
+      const videoThumb = getYouTubeThumbnail(news.videoUrl);
+      if (videoThumb) return videoThumb;
+    }
     return news.bgImage || news.thumbnail || news.image || '/placeholder.jpg';
   }
 

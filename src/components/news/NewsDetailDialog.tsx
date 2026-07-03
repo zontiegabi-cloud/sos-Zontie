@@ -4,6 +4,8 @@ import { Calendar, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { NewsItem } from '@/lib/content-store';
 import { useContent } from '@/hooks/use-content';
 import { cn } from "@/lib/utils";
+import { isSupportedVideoUrl } from '@/components/home/VideoEmbed';
+import { InteractiveVideoPlayer } from '@/components/home/InteractiveVideoPlayer';
 
 interface NewsDetailDialogProps {
   item: NewsItem | null;
@@ -102,6 +104,8 @@ export function NewsDetailDialog({ item, open, onOpenChange }: NewsDetailDialogP
 
   if (!localItem) return null;
 
+  const hasVideo = isSupportedVideoUrl(localItem.videoUrl);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-md max-h-[90vh] overflow-y-auto border-primary/20">
@@ -111,8 +115,8 @@ export function NewsDetailDialog({ item, open, onOpenChange }: NewsDetailDialogP
               <DialogTitle className="font-display text-3xl lg:text-4xl uppercase text-foreground">
                 {localItem.title}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground mt-2 text-base">
-                {localItem.description}
+              <DialogDescription className={localItem.description ? "text-muted-foreground mt-2 text-base" : "sr-only"}>
+                {localItem.description || "News article details with rich content, media, and reactions."}
               </DialogDescription>
             </div>
           </div>
@@ -121,7 +125,15 @@ export function NewsDetailDialog({ item, open, onOpenChange }: NewsDetailDialogP
         <div className="mt-6 space-y-6">
           <div className="w-full animate-in fade-in duration-500 slide-in-from-bottom-4">
             {/* Hero Image - Prefer bgImage, fallback to image */}
-            {(localItem.bgImage || localItem.image) && (
+            {hasVideo ? (
+              <div className="mb-8 overflow-hidden rounded-xl border border-border/50 shadow-2xl">
+                <InteractiveVideoPlayer
+                  url={localItem.videoUrl!}
+                  className="w-full rounded-none"
+                  aspectRatio={16 / 9}
+                />
+              </div>
+            ) : (localItem.bgImage || localItem.image) ? (
               <div className="relative w-full aspect-[21/9] rounded-xl overflow-hidden mb-8 border border-border/50 shadow-2xl">
                 <img 
                   src={localItem.bgImage || localItem.image} 
@@ -130,7 +142,7 @@ export function NewsDetailDialog({ item, open, onOpenChange }: NewsDetailDialogP
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-80" />
               </div>
-            )}
+            ) : null}
             
             {/* Meta Bar */}
             <div className="flex flex-wrap items-center gap-4 mb-8 pb-6 border-b border-border/40">

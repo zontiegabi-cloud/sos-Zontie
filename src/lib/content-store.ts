@@ -10,6 +10,7 @@ export interface NewsItem {
   image: string;
   thumbnail?: string;
   bgImage?: string;
+  videoUrl?: string;
   tag: string;
   likes?: number;
   dislikes?: number;
@@ -450,8 +451,8 @@ export interface CustomSection {
 }
 
 export interface DynamicContentSource {
-  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap' | 'events' | 'patchnotes' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget';
-  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures' | 'patch-notes' | 'ticker' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'bug-report-form' | 'discord-chat' | 'discord-lfg' | 'discord-recruitment' | 'discord-fan-art';
+  type: 'news' | 'media' | 'classes' | 'weapons' | 'maps' | 'features' | 'gameDevices' | 'faq' | 'gameModes' | 'gamemodetab' | 'roadmap' | 'events' | 'patchnotes' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'featured-content' | 'hero-banners';
+  displayMode: 'grid' | 'list' | 'carousel' | 'featured' | 'cards' | 'spotlight' | 'masonry' | 'accordion' | 'timeline' | 'showcase' | 'detailed-interactive' | 'classes-hex' | 'classes-operator' | 'classes-vanguard' | 'classes-command' | 'mansory' | 'spotlight-hero-list' | 'Spotlight(hero+list)' | 'features' | 'Feautures' | 'patch-notes' | 'ticker' | 'alert-bar' | 'popup' | 'release-status' | 'countdown' | 'discord-widget' | 'bug-report-form' | 'discord-chat' | 'discord-lfg' | 'discord-recruitment' | 'discord-fan-art' | 'hero-banner-carousel';
   cardStyle?: 'default' | 'minimal' | 'overlay' | 'glass' | 'magazine' | 'compact' | 'tech' | 'corporate' | 'featured' | 'hero-carousel';
   count: number;
   fetchAll?: boolean;

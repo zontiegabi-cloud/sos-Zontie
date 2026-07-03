@@ -319,6 +319,38 @@ export async function initDB() {
       )
     `);
 
+    // 13. Featured Content Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS featured_content (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        content_source VARCHAR(50) NOT NULL,
+        source_id VARCHAR(36) NOT NULL,
+        title VARCHAR(255),
+        description TEXT,
+        thumbnail LONGTEXT,
+        sort_order INT DEFAULT 0,
+        category_group VARCHAR(50) DEFAULT 'grid-featured',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 14. Homepage Hero Banners Table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS homepage_hero_banners (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        banner_url LONGTEXT NOT NULL,
+        thumbnail_url LONGTEXT,
+        title VARCHAR(255),
+        description TEXT,
+        call_to_action VARCHAR(255),
+        cta_link LONGTEXT,
+        sort_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // 11. Settings Table
     // Check if table exists
     const tableExists = await connection.query("SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_name = 'settings'", [process.env.DB_NAME]);

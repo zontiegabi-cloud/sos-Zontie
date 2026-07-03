@@ -19,7 +19,8 @@ import {
   Home,
   UserCog,
   Menu,
-  X
+  X,
+  Star
 } from "lucide-react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,9 +44,10 @@ import { UsersTab } from "@/components/admin/tabs/UsersTab";
 import { RoadMapTab } from "@/components/admin/tabs/RoadMapTab";
 import { NavbarTab } from "@/components/admin/tabs/NavbarTab";
 import { PatchNotesTab } from "@/components/admin/tabs/PatchNotesTab";
+import { FeaturedContentTab } from "@/components/admin/tabs/FeaturedContentTab";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
-type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar" | "patchnotes";
+type Tab = "dashboard" | "news" | "section_builder" | "pages" | "classes" | "media" | "faq" | "features" | "weapons" | "maps" | "devices" | "gamemodes" | "settings" | "users" | "roadmap" | "navbar" | "patchnotes" | "featured";
 
 export default function Admin() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -119,6 +121,7 @@ export default function Admin() {
     { id: "news" as Tab, label: "News", icon: Newspaper, roles: ['admin', 'moderator', 'editor'] },
     { id: "pages" as Tab, label: "Pages", icon: Layout, roles: ['admin', 'editor'] },
     { id: "navbar" as Tab, label: "Navbar", icon: Menu, roles: ['admin'] },
+    { id: "featured" as Tab, label: "Featured", icon: Star, roles: ['admin', 'moderator'] },
     { id: "classes" as Tab, label: "Classes", icon: Users, roles: ['admin'] },
     { id: "weapons" as Tab, label: "Weapons", icon: Crosshair, roles: ['admin', 'moderator'] },
     { id: "maps" as Tab, label: "Maps", icon: Map, roles: ['admin', 'moderator'] },
@@ -331,6 +334,7 @@ export default function Admin() {
             {activeTab === "news" && <NewsTab />}
             {activeTab === "pages" && <PageBuilderTab />}
             {activeTab === "navbar" && <NavbarTab />}
+            {activeTab === "featured" && <FeaturedContentTab />}
             {activeTab === "classes" && <ClassesTab />}
             {activeTab === "weapons" && <WeaponsTab />}
             {activeTab === "maps" && <MapsTab />}

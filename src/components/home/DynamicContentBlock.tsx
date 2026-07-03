@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { 
-  DynamicContentSource, 
+import {
+  DynamicContentSource,
   SiteContent,
   MediaItem,
   RoadmapItem,
@@ -12,41 +12,45 @@ import {
   GameDeviceItem,
   GameModeItem,
   FeatureItem,
-  PatchNoteItem
-} from '@/lib/content-store';
-import { useContent } from '@/hooks/use-content';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+  PatchNoteItem,
+} from "@/lib/content-store";
+import { useContent } from "@/hooks/use-content";
+import { useFeaturedContent } from "@/hooks/use-featured-content";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { NewsDetailDialog } from '@/components/news/NewsDetailDialog';
-import { MediaDetailDialog } from '@/components/home/MediaDetailDialog';
-import { 
-  WeaponDetail, 
-  MapDetail, 
-  DeviceDetail, 
+import { NewsDetailDialog } from "@/components/news/NewsDetailDialog";
+import { MediaDetailDialog } from "@/components/home/MediaDetailDialog";
+import {
+  WeaponDetail,
+  MapDetail,
+  DeviceDetail,
   GameModeDetail,
   FeatureDetail,
-  PatchNoteDetail
-} from '@/components/game';
-import { RoadmapTimeline } from '@/components/game/RoadmapTimeline';
-import { RoadmapShowcase } from '@/components/game/RoadmapShowcase';
+  PatchNoteDetail,
+} from "@/components/game";
+import { RoadmapTimeline } from "@/components/game/RoadmapTimeline";
+import { RoadmapShowcase } from "@/components/game/RoadmapShowcase";
 import { Button } from "@/components/ui/button";
 
-import { ContentItem } from './dynamic-content/types';
-import { ContentCard } from './dynamic-content/ContentCard';
-import { ListView } from './dynamic-content/ListView';
-import { CarouselView } from './dynamic-content/CarouselView';
-import { HeroCarouselView } from './dynamic-content/HeroCarouselView';
-import { AccordionView } from './dynamic-content/AccordionView';
-import { MasonryView } from './dynamic-content/MasonryView';
-import { SpotlightView } from './dynamic-content/SpotlightView';
-import { FeaturedView } from './dynamic-content/FeaturedView';
-import { NewsTicker } from './dynamic-content/NewsTicker';
-import { AlertBar } from './dynamic-content/AlertBar';
-import { ReleaseStatus, CountdownTimer } from './dynamic-content/ReleaseStatus';
-import { DiscordWidget } from './dynamic-content/DiscordWidget';
-import { BugReportForm } from './dynamic-content/BugReportForm';
-import { InteractiveClassList } from '@/components/game/InteractiveClassList';
-import { ClassItem } from '@/lib/content-store';
+import { ContentItem } from "./dynamic-content/types";
+import { ContentCard } from "./dynamic-content/ContentCard";
+import { ListView } from "./dynamic-content/ListView";
+import { CarouselView } from "./dynamic-content/CarouselView";
+import { HeroCarouselView } from "./dynamic-content/HeroCarouselView";
+import { AccordionView } from "./dynamic-content/AccordionView";
+import { MasonryView } from "./dynamic-content/MasonryView";
+import { SpotlightView } from "./dynamic-content/SpotlightView";
+import { FeaturedView } from "./dynamic-content/FeaturedView";
+import { NewsTicker } from "./dynamic-content/NewsTicker";
+import { AlertBar } from "./dynamic-content/AlertBar";
+import { ReleaseStatus, CountdownTimer } from "./dynamic-content/ReleaseStatus";
+import { DiscordWidget } from "./dynamic-content/DiscordWidget";
+import { BugReportForm } from "./dynamic-content/BugReportForm";
+import { InteractiveClassList } from "@/components/game/InteractiveClassList";
+import { ClassItem } from "@/lib/content-store";
+import { HeroBanners } from "./HeroBanners";
+import { FeaturedContentGrid } from "./FeaturedContentGrid";
+import { FeaturedPopup } from "./FeaturedPopup";
 
 export function DynamicContentBlock({ source, alignment = 'left' }: { source: DynamicContentSource, alignment?: 'left' | 'center' | 'right' }) {
   const { content } = useContent();
@@ -300,7 +304,18 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
     4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
 
-  if (!baseItems.length && source.type !== 'discord-widget') return null;
+  if (source.type === "hero-banners") {
+    return <HeroBanners />;
+  }
+
+  if (source.type === "featured-content") {
+    if (source.displayMode === "popup") {
+      return <FeaturedPopup />;
+    }
+    return <FeaturedContentGrid title={source.title} />;
+  }
+
+  if (!baseItems.length && source.type !== "discord-widget") return null;
 
   // Determine grid class
   let currentGridClass = gridCols[source.gridColumns as keyof typeof gridCols] || gridCols[3];

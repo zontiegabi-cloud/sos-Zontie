@@ -623,6 +623,8 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               <SelectItem value="release-status">Release Status</SelectItem>
                               <SelectItem value="countdown">Countdown Timer</SelectItem>
                               <SelectItem value="discord-widget">Discord Integration</SelectItem>
+                              <SelectItem value="featured-content">Featured Content</SelectItem>
+                              <SelectItem value="hero-banners">Hero Banners</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -678,6 +680,13 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               {source.type === 'popup' && <SelectItem value="popup">Announcement Popup</SelectItem>}
                               {source.type === 'release-status' && <SelectItem value="release-status">Release Status</SelectItem>}
                               {source.type === 'countdown' && <SelectItem value="countdown">Countdown Timer</SelectItem>}
+
+                              {source.type === 'featured-content' && (
+                                <>
+                                  <SelectItem value="grid">Grid</SelectItem>
+                                  <SelectItem value="popup">Steam-like Popup</SelectItem>
+                                </>
+                              )}
 
                               {source.type === 'discord-widget' && (
                                 <>

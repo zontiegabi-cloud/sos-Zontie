@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { X, Save, Image as ImageIcon } from "lucide-react";
+import { X, Save, Image as ImageIcon, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { useContent } from "@/hooks/use-content";
 import { FileUpload } from "@/components/ui/file-upload";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { ServerFilePicker } from "../server-file-picker";
+import { detectSupportedVideoPlatform } from "@/components/home/VideoEmbed";
 
 export function NewsEditModal({
   item,
@@ -27,6 +28,11 @@ export function NewsEditModal({
   const { addMediaItem, media, news } = useContent();
   const [formData, setFormData] = useState<NewsItem>(item);
   const [useBgAsThumbnail, setUseBgAsThumbnail] = useState(false);
+
+  const getYoutubeThumbnail = (url: string): string | null => {
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/i);
+    return match?.[1] ? `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg` : null;
+  };
 
   const handleSave = () => {
     // Check for duplicates (if creating or if title changed)
@@ -48,7 +54,7 @@ export function NewsEditModal({
     if (media.some(m => m.src === url)) return;
 
     // Simple type detection
-    const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i) || url.includes('youtube') || url.includes('vimeo');
+    const isVideo = !!detectSupportedVideoPlatform(url);
     const type = isVideo ? 'video' : 'image';
     
     // Create title from filename or use default
@@ -84,6 +90,28 @@ export function NewsEditModal({
       updates.image = url;
     }
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const applyVideoUrl = (url: string) => {
+    const normalizedUrl = url.trim();
+    if (detectSupportedVideoPlatform(normalizedUrl)) {
+      addToLibrary(normalizedUrl);
+    }
+
+    const nextUpdates: Partial<NewsItem> = { videoUrl: normalizedUrl };
+    const youtubeThumb = getYoutubeThumbnail(normalizedUrl);
+
+    if (youtubeThumb) {
+      if (!formData.bgImage) {
+        nextUpdates.bgImage = youtubeThumb;
+      }
+      if (!formData.thumbnail && !useBgAsThumbnail) {
+        nextUpdates.thumbnail = youtubeThumb;
+        nextUpdates.image = youtubeThumb;
+      }
+    }
+
+    setFormData(prev => ({ ...prev, ...nextUpdates }));
   };
 
   const handleUseBgAsThumbnailChange = (checked: boolean) => {
@@ -185,6 +213,40 @@ export function NewsEditModal({
                     onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
                     placeholder="Or enter URL..."
                   />
+                </div>
+              </div>
+
+              <div>
+                <Label>Article Video (Optional)</Label>
+                <div className="space-y-2 mt-1.5">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <FileUpload
+                        currentValue={formData.videoUrl || ""}
+                        onUploadComplete={applyVideoUrl}
+                        accept="video/*"
+                        label="Upload Article Video"
+                      />
+                    </div>
+                    <ServerFilePicker
+                      onSelect={applyVideoUrl}
+                      accept="video"
+                      trigger={
+                        <Button variant="outline" className="h-full px-3 gap-2" title="Select video from Uploads">
+                          <Video className="h-4 w-4" />
+                          <span>Uploads</span>
+                        </Button>
+                      }
+                    />
+                  </div>
+                  <Input
+                    value={formData.videoUrl || ""}
+                    onChange={(e) => applyVideoUrl(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or https://.../video.mp4"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional. When set, the article opens with this video above the content.
+                  </p>
                 </div>
               </div>
             </div>

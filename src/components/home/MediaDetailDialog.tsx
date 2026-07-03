@@ -1,5 +1,6 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaItem } from '@/lib/content-store';
+import { InteractiveVideoPlayer } from './InteractiveVideoPlayer';
 
 interface MediaDetailDialogProps {
   item: MediaItem | null;
@@ -10,23 +11,6 @@ interface MediaDetailDialogProps {
 export function MediaDetailDialog({ item, open, onOpenChange }: MediaDetailDialogProps) {
   if (!item) return null;
 
-  const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    if (url.includes("youtube.com/watch")) {
-      const videoId = url.split("v=")[1]?.split("&")[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes("youtu.be/")) {
-      const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes("vimeo.com/")) {
-      const videoId = url.split("vimeo.com/")[1]?.split("?")[0];
-      return `https://player.vimeo.com/video/${videoId}`;
-    }
-    return url;
-  };
-
   const isVideo = item.type === 'video';
 
   return (
@@ -34,11 +18,10 @@ export function MediaDetailDialog({ item, open, onOpenChange }: MediaDetailDialo
       <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-md p-0 border-primary/20 overflow-hidden">
         <div className="relative w-full aspect-video bg-black flex items-center justify-center">
           {isVideo ? (
-            <iframe
-              src={getEmbedUrl(item.src)}
-              className="w-full h-full"
-              allowFullScreen
-              allow="autoplay; encrypted-media"
+            <InteractiveVideoPlayer
+              url={item.src}
+              className="w-full h-full rounded-none"
+              aspectRatio={16 / 9}
             />
           ) : (
             <img
@@ -52,6 +35,9 @@ export function MediaDetailDialog({ item, open, onOpenChange }: MediaDetailDialo
         <div className="p-6">
            <DialogHeader>
               <DialogTitle className="text-2xl font-display uppercase">{item.title}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {item.description || `Media details for ${item.title}.`}
+              </DialogDescription>
            </DialogHeader>
            {item.description && (
              <p className="mt-4 text-muted-foreground">{item.description}</p>

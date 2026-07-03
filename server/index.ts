@@ -9,6 +9,7 @@ import path from 'path';
 import fs from 'fs';
 import https from 'https';
 import { PoolConnection } from 'mariadb';
+import featuredContentRoutes from './routes/featured-content';
 import { 
   NewsItem, 
   ClassItem, 
@@ -73,6 +74,9 @@ app.use(express.json({ limit: '50mb' })); // Increased limit for large content
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(uploadDir));
+
+// Register featured content routes
+app.use('/api/featured', featuredContentRoutes);
 
 // File Upload Route
 app.post('/api/upload', upload.single('file'), (req, res) => {
