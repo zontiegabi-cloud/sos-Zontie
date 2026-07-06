@@ -56,7 +56,7 @@ export function HeroBannerCarouselView({
 
   return (
     <div
-      className="relative w-screen left-1/2 -translate-x-1/2 overflow-hidden"
+      className="relative w-full left-1/2 -translate-x-1/2 overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

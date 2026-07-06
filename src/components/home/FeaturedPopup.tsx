@@ -58,7 +58,7 @@ export function FeaturedPopup() {
             setIsOpen(false);
             setDismissed(true);
           }}
-          className="absolute top-3 right-3 p-1 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors"
+          className="absolute top-3 right-3 p-1 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors z-50"
         >
           <X className="w-5 h-5" />
         </button>
