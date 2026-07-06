@@ -493,6 +493,11 @@ export interface DynamicContentSource {
   discordChannelId?: string;
   discordWebhookUrl?: string;
   discordWidgetType?: 'standard' | 'chat' | 'lfg' | 'recruitment' | 'fan-art';
+  // Hero Banner Carousel customization
+  bannerHeight?: number; // pixels
+  autoplayInterval?: number; // milliseconds
+  showCta?: boolean;
+  ctaLabel?: string;
 }
 
 export interface NavbarItem {
