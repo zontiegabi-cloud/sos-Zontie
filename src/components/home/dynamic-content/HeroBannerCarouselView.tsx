@@ -25,13 +25,18 @@ export function HeroBannerCarouselView({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const bannerHeight = source.bannerHeight ?? 600;
+  const autoplayInterval = source.autoplayInterval ?? 5000;
+  const showCta = source.showCta ?? true;
+  const ctaLabel = source.ctaLabel || 'View Details';
+
   useEffect(() => {
     if (items.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 5000);
+    }, Math.max(1000, autoplayInterval));
     return () => clearInterval(interval);
-  }, [items.length, isPaused]);
+  }, [items.length, isPaused, autoplayInterval]);
 
   if (items.length === 0) return null;
 
@@ -69,7 +74,8 @@ export function HeroBannerCarouselView({
           return (
             <div
               key={item.id}
-              className="relative w-full h-[600px] flex-shrink-0 flex items-center justify-center bg-cover bg-center cursor-pointer"
+              className="relative w-full flex-shrink-0 flex items-center justify-center bg-cover bg-center cursor-pointer"
+              style={{ height: `${bannerHeight}px` }}
               onClick={() => onView(item)}
             >
               {isSupportedVideoUrl(bannerUrl) ? (
@@ -108,16 +114,18 @@ export function HeroBannerCarouselView({
                     {description}
                   </p>
                 )}
-                <Button
-                  size="lg"
-                  className="text-lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onView(item);
-                  }}
-                >
-                  View Details
-                </Button>
+                {showCta && (
+                  <Button
+                    size="lg"
+                    className="text-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onView(item);
+                    }}
+                  >
+                    {ctaLabel}
+                  </Button>
+                )}
               </div>
             </div>
           );
