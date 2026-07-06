@@ -673,7 +673,10 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                               )}
 
                               {source.type === 'media' && (
-                                <SelectItem value="showcase">Showcase (Media)</SelectItem>
+                                <>
+                                  <SelectItem value="showcase">Showcase (Media)</SelectItem>
+                                  <SelectItem value="hero-banner-carousel">Hero Banner Carousel</SelectItem>
+                                </>
                               )}
 
                               {source.type === 'alert-bar' && <SelectItem value="alert-bar">Alert Bar</SelectItem>}
