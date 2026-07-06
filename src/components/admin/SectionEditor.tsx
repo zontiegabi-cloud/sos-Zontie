@@ -715,6 +715,82 @@ export function SectionEditor({ section, onChange, headerActions }: SectionEdito
                           </Select>
                         </div>
 
+                        {/* Hero Banner Carousel Customization */}
+                        {source.displayMode === 'hero-banner-carousel' && (
+                          <div className="space-y-3 p-3 rounded-md border border-border/50 bg-muted/30">
+                            <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                              Hero Banner Carousel
+                            </Label>
+
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-xs">Banner Height</Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {source.bannerHeight ?? 600}px
+                                </span>
+                              </div>
+                              <Slider
+                                min={200}
+                                max={1000}
+                                step={20}
+                                value={[source.bannerHeight ?? 600]}
+                                onValueChange={([val]) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], bannerHeight: val };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <Label className="text-xs">Autoplay Interval</Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {((source.autoplayInterval ?? 5000) / 1000).toFixed(1)}s
+                                </span>
+                              </div>
+                              <Slider
+                                min={1000}
+                                max={15000}
+                                step={500}
+                                value={[source.autoplayInterval ?? 5000]}
+                                onValueChange={([val]) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], autoplayInterval: val };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between pt-1">
+                              <Label className="text-xs">Show CTA Button</Label>
+                              <Switch
+                                checked={source.showCta ?? true}
+                                onCheckedChange={(checked) => {
+                                  const newSources = [...(section.content.dynamicSources || [])];
+                                  newSources[idx] = { ...newSources[idx], showCta: checked };
+                                  updateContent({ dynamicSources: newSources });
+                                }}
+                              />
+                            </div>
+
+                            {(source.showCta ?? true) && (
+                              <div className="space-y-2">
+                                <Label className="text-xs">CTA Button Label</Label>
+                                <Input
+                                  value={source.ctaLabel ?? ''}
+                                  placeholder="View Details"
+                                  onChange={(e) => {
+                                    const newSources = [...(section.content.dynamicSources || [])];
+                                    newSources[idx] = { ...newSources[idx], ctaLabel: e.target.value };
+                                    updateContent({ dynamicSources: newSources });
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Sorting Configuration */}
                         <div className="grid grid-cols-2 gap-2">
                            <div className="space-y-2">
