@@ -37,6 +37,7 @@ import { ContentCard } from "./dynamic-content/ContentCard";
 import { ListView } from "./dynamic-content/ListView";
 import { CarouselView } from "./dynamic-content/CarouselView";
 import { HeroCarouselView } from "./dynamic-content/HeroCarouselView";
+import { HeroBannerCarouselView } from "./dynamic-content/HeroBannerCarouselView";
 import { AccordionView } from "./dynamic-content/AccordionView";
 import { MasonryView } from "./dynamic-content/MasonryView";
 import { SpotlightView } from "./dynamic-content/SpotlightView";
@@ -411,6 +412,8 @@ export function DynamicContentBlock({ source, alignment = 'left' }: { source: Dy
           <CarouselView items={filteredItems} source={source} onView={setSelectedItem} />
         )
       
+      ) : source.displayMode === 'hero-banner-carousel' ? (
+        <HeroBannerCarouselView items={filteredItems} source={source} onView={setSelectedItem} />
       ) : source.displayMode === 'accordion' ? (
         <AccordionView items={filteredItems} source={source} />
       ) : source.displayMode === 'timeline' && source.type === 'roadmap' ? (
